@@ -33,6 +33,7 @@
 #include "../gl/pixel.h"
 #endif
 #include "glx_gbm.h"
+#include "../gl/gl4es.h"
 #include "hardext.h"
 #include "streaming.h"
 #include "utils.h"
@@ -2858,6 +2859,19 @@ GLXContext gl4es_glXCreateContextAttribs(Display *dpy, GLXFBConfig config, GLXCo
 }
 
 #endif //NOX11
+
+__attribute__((visibility("default"))) const GLubyte* glXGetClientString(Display* display, int name) {
+    switch (name) {
+    case GLX_VENDOR:
+        return gl4es_glGetString(GL_VENDOR);
+    case GLX_VERSION:
+        return gl4es_glGetString(GL_VERSION);
+    case GLX_EXTENSIONS:
+        return gl4es_glGetString(GL_EXTENSIONS);
+    default:
+        return NULL;
+    }
+}
 
 // New export the Alias
 #ifndef NOX11

@@ -42,7 +42,7 @@
 #define skip_glDepthFunc
 #define skip_glDepthMask
 #define skip_glDepthRangef
-#define skip_glClearDepthf
+//#define skip_glClearDepthf
 
 // face.c
 #define skip_glCullFace
