@@ -181,7 +181,7 @@ void gl4es_glCompressedTexImage2D(GLenum target, GLint level, GLenum internalfor
     realize_bound(glstate->texture.active, target);
 
     gltexture_t* bound = glstate->texture.bound[glstate->texture.active][itarget]; 
-    DBG(printf("glCompressedTexImage2D on target=%s, level=%d with size(%i,%i), internalformat=%s, imagesize=%i, upackbuffer=%p data=%p\n", PrintEnum(target), level, width, height, PrintEnum(internalformat), imageSize, glstate->vao->unpack?glstate->vao->unpack->data:0, data);)
+    DBG(SHUT_LOGD("glCompressedTexImage2D on target=%s, level=%d with size(%i,%i), internalformat=%s, imagesize=%i, upackbuffer=%p data=%p\n", PrintEnum(target), level, width, height, PrintEnum(internalformat), imageSize, glstate->vao->unpack?glstate->vao->unpack->data:0, data);)
     // hack...
     if (internalformat==GL_RGBA8)
         internalformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -288,7 +288,7 @@ void gl4es_glCompressedTexImage2D(GLenum target, GLint level, GLenum internalfor
         GLenum new_intformat = (format==GL_RGBA)?GL_COMPRESSED_RGBA:GL_COMPRESSED_RGB;
         if(level && bound && bound->valid)
             new_intformat = (bound->format==GL_RGB)?GL_COMPRESSED_RGB:GL_COMPRESSED_RGBA;
-        DBG(printf(" => internalformat=%s (Alpha=%d/%d), %dx%d %s/%s\n\n", PrintEnum(new_intformat), simpleAlpha, complexAlpha, width, height, PrintEnum(format), PrintEnum(type));)
+        DBG(SHUT_LOGD(" => internalformat=%s (Alpha=%d/%d), %dx%d %s/%s\n\n", PrintEnum(new_intformat), simpleAlpha, complexAlpha, width, height, PrintEnum(format), PrintEnum(type));)
         gl4es_glTexImage2D(target, level, new_intformat, width, height, border, format, type, half);
         // re-update bounded texture info, but not format and type
         bound->alpha = (simpleAlpha||complexAlpha)?1:0;
@@ -354,7 +354,7 @@ void gl4es_glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, 
     realize_bound(glstate->texture.active, target);
 
     gltexture_t *bound = glstate->texture.bound[glstate->texture.active][itarget];
-    DBG(printf("glCompressedTexSubImage2D with unpack_row_length(%i), level=%d, size(%i,%i), pos(%i,%i) and skip={%i,%i}, internalformat=%s, imagesize=%i, data=%p, bound=%p, bound:%s/%s\n", glstate->texture.unpack_row_length, level, width, height, xoffset, yoffset, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), imageSize, data, bound, bound?PrintEnum(bound->format):"nil", bound?PrintEnum(bound->type):"nil");)
+    DBG(SHUT_LOGD("glCompressedTexSubImage2D with unpack_row_length(%i), level=%d, size(%i,%i), pos(%i,%i) and skip={%i,%i}, internalformat=%s, imagesize=%i, data=%p, bound=%p, bound:%s/%s\n", glstate->texture.unpack_row_length, level, width, height, xoffset, yoffset, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), imageSize, data, bound, bound?PrintEnum(bound->format):"nil", bound?PrintEnum(bound->type):"nil");)
     glbuffer_t *unpack = glstate->vao->unpack;
     glstate->vao->unpack = NULL;
     GLvoid *datab = (GLvoid*)data;
@@ -398,7 +398,7 @@ void gl4es_glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, 
         gl4es_glTexSubImage2D(target, level, xoffset/2, yoffset/2, width/2, height/2, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, half);
         if (oldalign!=1) gl4es_glPixelStorei(GL_UNPACK_ALIGNMENT, oldalign);
         #else
-        DBG(printf(" [%d] => (Alpha=%d/%d), %dx%d %s/%s\n\n", bound->glname, simpleAlpha, complexAlpha, width, height, PrintEnum(bound->format), PrintEnum(bound->type));)
+        DBG(SHUT_LOGD(" [%d] => (Alpha=%d/%d), %dx%d %s/%s\n\n", bound->glname, simpleAlpha, complexAlpha, width, height, PrintEnum(bound->format), PrintEnum(bound->type));)
         gl4es_glTexSubImage2D(target, level, xoffset, yoffset, width, height, GL_RGBA, GL_UNSIGNED_BYTE, half);
         #endif
         if (half!=pixels)
@@ -415,7 +415,7 @@ void gl4es_glGetCompressedTexImage(GLenum target, GLint lod, GLvoid *img) {
 
     const GLuint itarget = what_target(target); 
     gltexture_t* bound = glstate->texture.bound[glstate->texture.active][itarget];
-    DBG(printf("glGetCompressedTexImage(%s, %i, %p), bound=%p, bound->orig_internal=%s\n", PrintEnum(target), lod, img, bound, (bound)?PrintEnum(bound->orig_internal):"nil");)
+    DBG(SHUT_LOGD("glGetCompressedTexImage(%s, %i, %p), bound=%p, bound->orig_internal=%s\n", PrintEnum(target), lod, img, bound, (bound)?PrintEnum(bound->orig_internal):"nil");)
     errorShim(GL_INVALID_OPERATION);
     if(bound->orig_internal!=GL_COMPRESSED_RGB && bound->orig_internal!=GL_COMPRESSED_RGBA)
         return;

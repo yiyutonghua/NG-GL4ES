@@ -871,7 +871,7 @@ GLenum minmag_float(GLenum filt) {
 void gl4es_glTexImage2D(GLenum target, GLint level, GLint internalformat,
                   GLsizei width, GLsizei height, GLint border,
                   GLenum format, GLenum type, const GLvoid *data) {
-    DBG(printf("glTexImage2D on target=%s with unpack_row_length(%i), size(%i,%i) and skip(%i,%i), format(internal)=%s(%s), type=%s, data=%p, level=%i (mipmap_need=%i, mipmap_auto=%i, base_level=%i, max_level=%i) => texture=%u (streamed=%i), glstate->list.compiling=%d\n", PrintEnum(target), glstate->texture.unpack_row_length, width, height, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), (internalformat==3)?"3":(internalformat==4?"4":PrintEnum(internalformat)), PrintEnum(type), data, level, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_need, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_auto, glstate->texture.bound[glstate->texture.active][what_target(target)]->base_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->max_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->texture, glstate->texture.bound[glstate->texture.active][what_target(target)]->streamed, glstate->list.compiling);)
+    DBG(SHUT_LOGD("glTexImage2D on target=%s with unpack_row_length(%i), size(%i,%i) and skip(%i,%i), format(internal)=%s(%s), type=%s, data=%p, level=%i (mipmap_need=%i, mipmap_auto=%i, base_level=%i, max_level=%i) => texture=%u (streamed=%i), glstate->list.compiling=%d\n", PrintEnum(target), glstate->texture.unpack_row_length, width, height, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), (internalformat==3)?"3":(internalformat==4?"4":PrintEnum(internalformat)), PrintEnum(type), data, level, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_need, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_auto, glstate->texture.bound[glstate->texture.active][what_target(target)]->base_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->max_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->texture, glstate->texture.bound[glstate->texture.active][what_target(target)]->streamed, glstate->list.compiling);)
     // proxy case
     const GLuint itarget = what_target(target);
     const GLuint rtarget = map_tex_target(target);
@@ -1535,7 +1535,7 @@ void gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoff
     LOAD_GLES(glTexSubImage2D);
     LOAD_GLES(glTexParameteri);
     noerrorShim();
-    DBG(printf("glTexSubImage2D on target=%s with unpack_row_length(%d), size(%d,%d), pos(%d,%d) and skip={%d,%d}, format=%s, type=%s, level=%d(base=%d, max=%d), mipmap={need=%d, auto=%d}, texture=%u\n", PrintEnum(target), glstate->texture.unpack_row_length, width, height, xoffset, yoffset, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), PrintEnum(type), level, glstate->texture.bound[glstate->texture.active][itarget]->base_level, glstate->texture.bound[glstate->texture.active][itarget]->max_level, glstate->texture.bound[glstate->texture.active][itarget]->mipmap_need, glstate->texture.bound[glstate->texture.active][itarget]->mipmap_auto, glstate->texture.bound[glstate->texture.active][itarget]->texture);)
+    DBG(SHUT_LOGD("glTexSubImage2D on target=%s with unpack_row_length(%d), size(%d,%d), pos(%d,%d) and skip={%d,%d}, format=%s, type=%s, level=%d(base=%d, max=%d), mipmap={need=%d, auto=%d}, texture=%u\n", PrintEnum(target), glstate->texture.unpack_row_length, width, height, xoffset, yoffset, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), PrintEnum(type), level, glstate->texture.bound[glstate->texture.active][itarget]->base_level, glstate->texture.bound[glstate->texture.active][itarget]->max_level, glstate->texture.bound[glstate->texture.active][itarget]->mipmap_need, glstate->texture.bound[glstate->texture.active][itarget]->mipmap_auto, glstate->texture.bound[glstate->texture.active][itarget]->texture);)
     if (width==0 || height==0) {
         return;
     }
@@ -1763,39 +1763,39 @@ void gl4es_glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 }
 
 GLboolean gl4es_glIsTexture(GLuint texture) {
-    DBG(printf("glIsTexture(%d):", texture);)
-    if(!glstate) {DBG(printf("GL_FALSE\n");) return GL_FALSE;}
+    DBG(SHUT_LOGD("glIsTexture(%d):", texture);)
+    if(!glstate) {DBG(SHUT_LOGD("GL_FALSE\n");) return GL_FALSE;}
     noerrorShim();
     if (!texture) {
-        DBG(printf("%s\n", glstate->texture.zero->valid?"GL_TRUE":"GL_FALSE");)
+        DBG(SHUT_LOGD("%s\n", glstate->texture.zero->valid?"GL_TRUE":"GL_FALSE");)
         return glstate->texture.zero->valid;
     }
     int ret;
     khint_t k;
     khash_t(tex) *list = glstate->texture.list;
     if (! list) {
-        DBG(printf("GL_FALSE\n");)
+        DBG(SHUT_LOGD("GL_FALSE\n");)
         return GL_FALSE;
     }
     k = kh_get(tex, list, texture);
     gltexture_t *tex = NULL;
     if (k == kh_end(list)) {
-        DBG(printf("GL_FALSE\n");)
+        DBG(SHUT_LOGD("GL_FALSE\n");)
         return GL_FALSE;
     }
-    DBG(printf("GL_TRUE\n");)
+    DBG(SHUT_LOGD("GL_TRUE\n");)
     return GL_TRUE;
 }
 
 void gl4es_glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
-    DBG(printf("glTexStorage1D(%s, %d, %s, %d)\n", PrintEnum(target), levels, PrintEnum(internalformat), width);)
+    DBG(SHUT_LOGD("glTexStorage1D(%s, %d, %s, %d)\n", PrintEnum(target), levels, PrintEnum(internalformat), width);)
     gl4es_glTexImage1D(target, 0, internalformat, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 void gl4es_glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     // (could be implemented in GLES3.0)
-    DBG(printf("glTexStorage2D(%s, %d, %s, %d, %d)\n", PrintEnum(target), levels, PrintEnum(internalformat), width, height);)
+    DBG(SHUT_LOGD("glTexStorage2D(%s, %d, %s, %d, %d)\n", PrintEnum(target), levels, PrintEnum(internalformat), width, height);)
     if(!levels) {
         noerrorShim();
         return;

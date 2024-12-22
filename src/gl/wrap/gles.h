@@ -3664,6 +3664,8 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 #define glViewport_INDEXED INDEXED_void_GLint_GLint_GLsizei_GLsizei
 #define glViewport_FORMAT FORMAT_void_GLint_GLint_GLsizei_GLsizei
 
+#define glCopyBufferSubData_ARG_EXPAND GLenum readtarget, GLenum writetarget, GLintptr readoffset, GLintptr writeoffset, GLsizeiptr size
+
 void gl4es_glActiveTexture(glActiveTexture_ARG_EXPAND);
 typedef void (*glActiveTexture_PTR)(glActiveTexture_ARG_EXPAND);
 void gl4es_glAlphaFunc(glAlphaFunc_ARG_EXPAND);
@@ -4147,6 +4149,7 @@ typedef void (*glVertexPointer_PTR)(glVertexPointer_ARG_EXPAND);
 void gl4es_glViewport(glViewport_ARG_EXPAND);
 typedef void (*glViewport_PTR)(glViewport_ARG_EXPAND);
 
+typedef void (*glCopyBufferSubData_PTR)(glCopyBufferSubData_ARG_EXPAND);
 
 
 #ifndef direct_glActiveTexture

@@ -3,6 +3,7 @@
 #define GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX 	0x92da
 #define GL_UNIFORM_BLOCK 0x92e2
 
+#include "vgpu/shaderconv.h"
 #include "gles.h"
 #include "buffers.h"
 #include "shader.h"
@@ -274,6 +275,7 @@ typedef struct {
     GLint                           samplersCube[MAX_TEX];
     // that will be an fpe_cache_t*
     void*                           fpe_cache;
+    uniforms_declarations           declarations;
 } program_t;
 
 KHASH_MAP_DECLARE_INT(programlist, program_t *);

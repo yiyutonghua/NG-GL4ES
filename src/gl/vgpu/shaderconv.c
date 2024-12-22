@@ -13,6 +13,260 @@
 
 int NO_OPERATOR_VALUE = 9999;
 
+#include <GL/gl.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+// 辅助函数：解析并提取浮点数数组（用于 mat2, mat3, mat4, vec2, vec3, vec4 类型的处理）
+int parse_floats_from_string(const char* str, GLfloat* outValues, int maxCount) {
+    int count = 0;
+    const char* cursor = str;
+
+    while (*cursor && count < maxCount) {
+        // 查找数字
+        while (*cursor && !isdigit((unsigned char)*cursor) && *cursor != '-') cursor++;
+
+        if (*cursor) {
+            outValues[count++] = strtof(cursor, (char**)&cursor);
+        }
+    }
+    return count;
+}
+
+// 辅助函数：解析 bool 类型
+int parse_bool_from_string(const char* str) {
+    if (strcmp(str, "true") == 0) {
+        return GL_TRUE;
+    }
+    if (strcmp(str, "false") == 0) {
+        return GL_FALSE;
+    }
+    return -1;  // 无效的布尔值
+}
+
+bool has_valid_data(char arr[256]) {
+    for (int i = 0; i < 256; i++) {
+        if (arr[i] != '\0' && arr[i] != '\n' && arr[i] != ' ') {
+            return true;
+        }
+    }
+    return false;
+}
+
+void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVector, int uniformCount) {
+    for (int i = 0; i < uniformCount; i++) {
+        uniform_declaration_s* uniform = &uniformVector[i];
+        if (!has_valid_data(uniform->variable) || !has_valid_data(uniform->initial_value))
+        {
+            break;
+        }
+        GLint location = glGetUniformLocation(program, uniform->variable);
+
+        if (location == -1) {
+            printf("Uniform variable %s not found in shader program.\n", uniform->variable);
+            continue;
+        }
+
+        // 根据 uniform 类型和初始值进行赋值
+        if (strstr(uniform->initial_value, "mat4") != NULL) {
+            // 处理 mat4 类型
+            GLfloat matValues[16];
+            int count = parse_floats_from_string(uniform->initial_value, matValues, 16);
+
+            if (count == 16) { // 检查是否是 4x4 矩阵
+                glUniformMatrix4fv(location, 1, GL_FALSE, matValues);
+            }
+            else {
+                printf("Invalid mat4 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "mat3") != NULL) {
+            // 处理 mat3 类型
+            GLfloat matValues[9];
+            int count = parse_floats_from_string(uniform->initial_value, matValues, 9);
+
+            if (count == 9) { // 检查是否是 3x3 矩阵
+                glUniformMatrix3fv(location, 1, GL_FALSE, matValues);
+            }
+            else {
+                printf("Invalid mat3 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "mat2") != NULL) {
+            // 处理 mat2 类型
+            GLfloat matValues[4];
+            int count = parse_floats_from_string(uniform->initial_value, matValues, 4);
+
+            if (count == 4) { // 检查是否是 2x2 矩阵
+                glUniformMatrix2fv(location, 1, GL_FALSE, matValues);
+            }
+            else {
+                printf("Invalid mat2 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "vec4") != NULL) {
+            // 处理 vec4 类型
+            GLfloat vecValues[4];
+            int count = parse_floats_from_string(uniform->initial_value, vecValues, 4);
+
+            if (count == 4) { // 检查是否是 vec4
+                glUniform4fv(location, 1, vecValues);
+            }
+            else {
+                printf("Invalid vec4 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "vec3") != NULL) {
+            // 处理 vec3 类型
+            GLfloat vecValues[3];
+            int count = parse_floats_from_string(uniform->initial_value, vecValues, 3);
+
+            if (count == 3) { // 检查是否是 vec3
+                glUniform3fv(location, 1, vecValues);
+            }
+            else {
+                printf("Invalid vec3 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "vec2") != NULL) {
+            // 处理 vec2 类型
+            GLfloat vecValues[2];
+            int count = parse_floats_from_string(uniform->initial_value, vecValues, 2);
+
+            if (count == 2) { // 检查是否是 vec2
+                glUniform2fv(location, 1, vecValues);
+            }
+            else {
+                printf("Invalid vec2 initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "float") != NULL) {
+            // 处理 float 类型
+            GLfloat value = strtof(uniform->initial_value, NULL);
+            glUniform1f(location, value);
+        }
+        else if (strstr(uniform->initial_value, "int") != NULL) {
+            // 处理 int 类型
+            GLint value = strtol(uniform->initial_value, NULL, 10);
+            glUniform1i(location, value);
+        }
+        else if (strstr(uniform->initial_value, "bool") != NULL) {
+            // 处理 bool 类型
+            GLint value = parse_bool_from_string(uniform->initial_value);
+            if (value != -1) {
+                glUniform1i(location, value);
+            }
+            else {
+                printf("Invalid bool initial value for uniform %s\n", uniform->variable);
+            }
+        }
+        else if (strstr(uniform->initial_value, "sampler2D") != NULL) {
+            // 处理 sampler2D 类型（纹理）
+            glUniform1i(location, 0);  // 默认绑定到纹理单元 0
+        }
+        else {
+            SHUT_LOGE("[ERROR] Unsupported uniform type or invalid initial value for uniform %s\n", uniform->variable);
+        }
+    }
+}
+
+char* process_uniform_declarations(char* glslCode, uniforms_declarations uniformVector, int* uniformCount) {
+    char* cursor = glslCode;
+    char name[256], type[256], initial_value[1024];
+    int modifiedCodeIndex = 0;
+    size_t maxLength = 1024 * 10;  // 假设 GLSL 代码不会超过这个长度
+    char* modifiedGlslCode = (char*)malloc(maxLength * sizeof(char));  // 使用 malloc 动态分配内存
+    if (!modifiedGlslCode) return NULL;  // 内存分配失败，返回空
+
+    while (*cursor) {
+        if (strncmp(cursor, "uniform", 7) == 0) {  // 查找 "uniform"
+            cursor += 7;  // 跳过 "uniform"
+
+            // 跳过空格
+            while (isspace((unsigned char)*cursor)) cursor++;
+
+            int i = 0;
+            // 读取类型（如 float、int 等）
+            while (isalnum((unsigned char)*cursor) || *cursor == '_') {
+                type[i++] = *cursor++;
+            }
+            type[i] = '\0';  // 类型结束
+            while (isspace((unsigned char)*cursor)) cursor++;  // 跳过空格
+
+            i = 0;
+            // 读取变量名
+            while (isalnum((unsigned char)*cursor) || *cursor == '_') {
+                name[i++] = *cursor++;
+            }
+            name[i] = '\0';  // 变量名结束
+            while (isspace((unsigned char)*cursor)) cursor++;  // 跳过空格
+
+            // 检查是否有初始值
+            initial_value[0] = '\0';  // 默认没有初始值
+            if (*cursor == '=') {
+                cursor++;  // 跳过 "=" 符号
+                i = 0;
+                // 读取初始值，直到遇到分号
+                while (*cursor && *cursor != ';') {
+                    initial_value[i++] = *cursor++;
+                }
+                initial_value[i] = '\0';  // 初始值结束
+                trim(initial_value);  // 去除初始值两端的空格
+            }
+
+            // 存储 uniform 变量信息
+            strcpy(uniformVector[*uniformCount].variable, name);
+            strcpy(uniformVector[*uniformCount].initial_value, initial_value);
+            (*uniformCount)++;
+
+            // 跳过到下一个分号，结束当前声明
+            while (*cursor != ';' && *cursor) {
+                cursor++;  // 跳过变量声明部分
+            }
+
+            // 将 uniform 声明部分添加到 modifiedGlslCode
+            int spaceLeft = maxLength - modifiedCodeIndex;
+            int len = 0;
+
+            if (*initial_value) {
+                // 如果有初始值，只保留定义部分
+                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform %s %s;", type, name);
+            } else {
+                // 如果没有初始值，保留完整的声明
+                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform %s %s;", type, name);
+            }
+
+            if (len < 0 || len >= spaceLeft) {
+                // 如果发生错误或空间不足，返回NULL
+                free(modifiedGlslCode);
+                return NULL;
+            }
+            modifiedCodeIndex += len;
+
+            // 跳过分号，继续寻找下一个 uniform
+            while (*cursor == ';') cursor++;
+
+        } else {
+            // 如果不是 uniform，复制当前字符到 modifiedGlslCode
+            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+        }
+
+        // 确保修改后的 GLSL 代码没有超出分配的内存空间
+        if (modifiedCodeIndex >= maxLength - 1) {
+            maxLength *= 2;  // 扩展内存
+            modifiedGlslCode = (char*)realloc(modifiedGlslCode, maxLength);
+            if (!modifiedGlslCode) return NULL;  // 内存分配失败，返回空
+        }
+    }
+
+    modifiedGlslCode[modifiedCodeIndex] = '\0';  // 确保字符串结束
+    return modifiedGlslCode;  // 返回动态分配的内存
+}
+
+
+
 /**
  * Makes more and more destructive conversions to make the shader compile
  * @return The shader as a string
@@ -37,6 +291,8 @@ char * ConvertShaderConditionally(struct shader_s * shader_source){
         shader_source->converted = ConvertShaderVgpu(shader_source);
     }
 
+    // Process uniform declarations
+    shader_source->converted = process_uniform_declarations(shader_source->converted, shader_source->uniforms_declarations, &shader_source->uniforms_declarations_count);
     return shader_source->converted;
 }
 

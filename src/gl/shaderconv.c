@@ -125,7 +125,7 @@ static const char* gl4es_MaxTextureCoordsSource =
 #undef STR
 #undef STR_HELPER
 
-static const char* gl4es_LightSourceParametersSource = 
+static const char* gl4es_LightSourceParametersSource =
 "struct gl_LightSourceParameters\n"
 "{\n"
 "   vec4 ambient;\n"
@@ -198,7 +198,7 @@ static const char* gl4es_FogParametersSource =
 "    mediump float density;\n"
 "    mediump float start;\n"
 "    mediump float end;\n"
-"    mediump float scale;\n"   // Derived:   1.0 / (end - start) 
+"    mediump float scale;\n"   // Derived:   1.0 / (end - start)
 "};\n"
 "uniform gl_FogParameters gl_Fog;\n";
 static const char* gl4es_FogParametersSourceHighp =
@@ -207,7 +207,7 @@ static const char* gl4es_FogParametersSourceHighp =
 "    mediump float density;\n"
 "    highp   float start;\n"
 "    highp   float end;\n"
-"    highp   float scale;\n"   // Derived:   1.0 / (end - start) 
+"    highp   float scale;\n"   // Derived:   1.0 / (end - start)
 "};\n"
 "uniform gl_FogParameters gl_Fog;\n";
 
@@ -226,7 +226,7 @@ static const char* gl4es_texgenobjSource[4] = {
 "uniform vec4 gl_ObjectPlaneR[gl_MaxTextureCoords];\n",
 "uniform vec4 gl_ObjectPlaneQ[gl_MaxTextureCoords];\n" };
 
-static const char* gl4es_clipplanesSource = 
+static const char* gl4es_clipplanesSource =
 "uniform vec4  gl_ClipPlane[gl_MaxClipPlanes];\n";
 
 static const char* gl4es_normalscaleSource =
@@ -257,13 +257,13 @@ static const char* gl4es_texcoordSourceAlt =
 static const char* gl4es_fogcoordSource =
 "varying mediump float _gl4es_FogFragCoord;\n";
 
-static const char* gl4es_ftransformSource = 
+static const char* gl4es_ftransformSource =
 "\n"
 "highp vec4 ftransform() {\n"
 " return gl_ModelViewProjectionMatrix * gl_Vertex;\n"
 "}\n";
 
-static const char* gl4es_dummyClipVertex = 
+static const char* gl4es_dummyClipVertex =
 "vec4 dummyClipVertex_%d";
 
 static const char* gl_TexCoordSource = "gl_TexCoord[";
@@ -300,25 +300,25 @@ static const char* gl4es_transpose =
 "             m[3][0], m[3][1], m[3][2], m[3][3]);\n"
 "}\n";
 
-static const char* HackAltPow = 
+static const char* HackAltPow =
 "float pow(float f, int a) {\n"
 " return pow(f, float(a));\n"
 "}\n";
-static const char* HackAltMax = 
+static const char* HackAltMax =
 "float max(float a, int b) {\n"
 " return max(a, float(b));\n"
 "}\n"
 "float max(int a, float b) {\n"
 " return max(float(a), b);\n"
 "}\n";
-static const char* HackAltMin = 
+static const char* HackAltMin =
 "float min(float a, int b) {\n"
 " return min(a, float(b));\n"
 "}\n"
 "float min(int a, float b) {\n"
 " return min(float(a), b);\n"
 "}\n";
-static const char* HackAltClamp = 
+static const char* HackAltClamp =
 "float clamp(float f, int a, int b) {\n"
 " return clamp(f, float(a), float(b));\n"
 "}\n"
@@ -357,7 +357,7 @@ static const char* HackAltClamp =
 "}\n";
 
 
-static const char* HackAltMod = 
+static const char* HackAltMod =
 "float mod(float f, int a) {\n"
 " return mod(f, float(a));\n"
 "}\n"
@@ -446,7 +446,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
     printf("Shader source%s:\n%s\n", pEntry, fpeShader?" (FPEShader generated)":"");
   }
   int comments = globals4es.comments;
-  
+
   char* pBuffer = (char*)pEntry;
 
   int version120 = 0;
@@ -479,7 +479,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
   }
   int notexarray = globals4es.notexarray || need->need_notexarray || fpeShader;
 
-  //const char* GLESUseFragHighp = "#extension GL_OES_fragment_precision_high : enable\n"; // does this one is needed?  
+  //const char* GLESUseFragHighp = "#extension GL_OES_fragment_precision_high : enable\n"; // does this one is needed?
   char GLESFullHeader[512];
   int wanthighp = !fpeShader;
   if(wanthighp && !hardext.highp) wanthighp = 0;
@@ -576,10 +576,10 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
         Tmp = InplaceInsert(GetLine(Tmp, headline), HackAltMod, Tmp, &tmpsize);
     }
   }
-  if(!isVertex && hardext.shaderlod && 
-    (FindString(Tmp, "texture2DLod") || FindString(Tmp, "texture2DProjLod") 
-  || FindString(Tmp, "textureCubeLod") 
-  || FindString(Tmp, "texture2DGradARB") || FindString(Tmp, "texture2DProjGradARB")|| FindString(Tmp, "textureCubeGradARB") 
+  if(!isVertex && hardext.shaderlod &&
+    (FindString(Tmp, "texture2DLod") || FindString(Tmp, "texture2DProjLod")
+  || FindString(Tmp, "textureCubeLod")
+  || FindString(Tmp, "texture2DGradARB") || FindString(Tmp, "texture2DProjGradARB")|| FindString(Tmp, "textureCubeGradARB")
   )) {
       const char* GLESUseShaderLod = "#extension GL_EXT_shader_texture_lod : enable\n";
       Tmp = InplaceInsert(GetLine(Tmp, 1), GLESUseShaderLod, Tmp, &tmpsize);
@@ -647,7 +647,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
           state = 2;  // fractional part
         else if ((*newptr==' ') || (*newptr==0x0d) || (*newptr==0x0a) || (*newptr=='-') || (*newptr=='+') || (*newptr=='*') || (*newptr=='/') || (*newptr=='(') || (*newptr==')' || (*newptr=='>') || (*newptr=='<')))
           state = 0; // separator
-        else 
+        else
           state = 3; // something else
         break;
       case 1: // integer part
@@ -679,7 +679,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
       case 3:
         if ((*newptr==' ') || (*newptr==0x0d) || (*newptr==0x0a) || (*newptr=='-') || (*newptr=='+') || (*newptr=='*') || (*newptr=='/') || (*newptr=='(') || (*newptr==')' || (*newptr=='>') || (*newptr=='<')))
           state = 0; // separator
-        else      
+        else
           state = 3;
           break;
     }
@@ -779,7 +779,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
         if(p[1]>='0' && p[1]<='9')
           n = n*10 + (p[1] - '0');
         if (ntex<n) ntex = n;
-      } else 
+      } else
         notexarray_ok=0;
     }
     // if failed to determine, take max...
@@ -845,12 +845,12 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
             int n = 0;
             while(*p>='0' && *p<='9')
               n = n*10 + (*(p++) - '0');
-            
+
             if (ntex<n) ntex = n;
           }
         }
       }
-        
+
       // if failed to determine, take max...
       if (ntex==-1) ntex = need->need_texcoord; else ++ntex;
       // change gl_TextureMatrix[X] to gl_TextureMatrix_X if possible
@@ -943,11 +943,11 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
         if(strcmp(p2, "uniform")==0 || strcmp(p2, "varying")==0) {
           memset(p, ' ', 8);  // erase the keyword...
         }
-      } 
+      }
       p+=8;
     }
   }
-  
+
   // check for builtin OpenGL gl_LightSource & friends
   if(strstr(Tmp, "gl_LightSourceParameters") || strstr(Tmp, "gl_LightSource"))
   {
@@ -1120,7 +1120,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
           if(p[1]>='0' && p[1]<='9')
             n = n*10 + (p[1] - '0');
           if (maxind<n) maxind = n;
-        } else 
+        } else
           noarray_ok=0;
       } else
         noarray_ok=0;
@@ -1163,7 +1163,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
           if(p[1]>='0' && p[1]<='9')
             n = n*10 + (p[1] - '0');
           if (maxind<n) maxind = n;
-        } else 
+        } else
           noarray_ok=0;
       } else
         noarray_ok=0;
@@ -1230,7 +1230,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
       const char* GLESForwardPort = "#define texture texture2D\n #define textureProj texture2DProj\n #define mod(a,b) (int(a) - int(b) * int(a/b))\n";
       Tmp = InplaceInsert(GetLine(Tmp, 1), GLESForwardPort, Tmp, &tmpsize);
   }
-  
+
   // finish
   if((globals4es.dbgshaderconv&maskafter)==maskafter) {
     printf("New Shader source:\n%s\n", Tmp);
@@ -1256,7 +1256,7 @@ int isBuiltinMatrix(const char* name) {
     for (int i=0; i<n && ret==-1; i++) {
         if (strncmp(builtin_matrix[i].name, name, strlen(builtin_matrix[i].name))==0) {
             int l=strlen(builtin_matrix[i].name);
-            if(strlen(name)==l 
+            if(strlen(name)==l
             || (strlen(name)==l+3 && name[l]=='[' && builtin_matrix[i].texarray)
             || (strlen(name)==l+4 && name[l]=='[' && builtin_matrix[i].texarray)
             ) {

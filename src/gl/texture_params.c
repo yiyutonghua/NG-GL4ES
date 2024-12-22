@@ -155,7 +155,7 @@ gltexture_t* gl4es_getTexture(GLenum target, GLuint texture) {
             gles_glGenTextures(1, &tex->glname);
         else
             tex->glname = 0;    // special case for texture n# 0
-        DBG(printf("getTexture(%s, %u), failed, creating texture %u\n", PrintEnum(target), texture, tex->glname);)
+        DBG(SHUT_LOGD("getTexture(%s, %u), failed, creating texture %u\n", PrintEnum(target), texture, tex->glname);)
         tex->target = target;
         tex->adjustxy[0] = tex->adjustxy[1] = 1.f;
         tex->mipmap_auto = (globals4es.automipmap==1);
@@ -179,7 +179,7 @@ gltexture_t* gl4es_getTexture(GLenum target, GLuint texture) {
 }
 void gl4es_glBindTexture(GLenum target, GLuint texture) {
     noerrorShim();
-    DBG(printf("glBindTexture(%s, %u), active=%i, client=%i, list.active=%p (compiling=%d, pending=%d)\n", PrintEnum(target), texture, glstate->texture.active, glstate->texture.client, glstate->list.active, glstate->list.compiling, glstate->list.pending);)
+    DBG(SHUT_LOGD("glBindTexture(%s, %u), active=%i, client=%i, list.active=%p (compiling=%d, pending=%d)\n", PrintEnum(target), texture, glstate->texture.active, glstate->texture.client, glstate->list.active, glstate->list.compiling, glstate->list.pending);)
     if ((target!=GL_PROXY_TEXTURE_2D) && glstate->list.compiling && glstate->list.active && !glstate->list.pending) {
         // check if already a texture binded, if yes, create a new list
         NewStage(glstate->list.active, STAGE_BINDTEX);
@@ -224,7 +224,7 @@ void gl4es_glBindTexture(GLenum target, GLuint texture) {
 
 // TODO: also glTexParameterf(v)?
 void gl4es_glTexParameteri(GLenum target, GLenum pname, GLint param) {
-    DBG(printf("glTexParameteri(%s, %s, %d(%s))\n", PrintEnum(target), PrintEnum(pname), param, PrintEnum(param));)
+    DBG(SHUT_LOGD("glTexParameteri(%s, %s, %d(%s))\n", PrintEnum(target), PrintEnum(pname), param, PrintEnum(param));)
     if(!glstate->list.pending) {
         PUSH_IF_COMPILING(glTexParameteri);
     }
@@ -352,7 +352,7 @@ void gl4es_glTexParameterf(GLenum target, GLenum pname, GLfloat param) {
 }
 
 void gl4es_glTexParameterfv(GLenum target, GLenum pname, const GLfloat * params) {
-    DBG(printf("glTexParameterfv(%s, %s, %p {%f...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
+    DBG(SHUT_LOGD("glTexParameterfv(%s, %s, %p {%f...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
     switch (pname) {
     case GL_TEXTURE_MIN_FILTER:
     case GL_TEXTURE_MAG_FILTER:
@@ -384,7 +384,7 @@ void gl4es_glTexParameterfv(GLenum target, GLenum pname, const GLfloat * params)
 }
 
 void gl4es_glTexParameteriv(GLenum target, GLenum pname, const GLint * params) {
-    DBG(printf("glTexParameteriv(%s, %s, %p {%d...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
+    DBG(SHUT_LOGD("glTexParameteriv(%s, %s, %p {%d...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
     switch (pname) {
     case GL_TEXTURE_MIN_FILTER:
     case GL_TEXTURE_MAG_FILTER:
@@ -415,7 +415,7 @@ void gl4es_glTexParameteriv(GLenum target, GLenum pname, const GLint * params) {
 }
 
 void gl4es_glDeleteTextures(GLsizei n, const GLuint *textures) {
-    DBG(printf("glDeleteTextures(%d, %p {%d...})\n", n, textures, n?textures[0]:-1);)
+    DBG(SHUT_LOGD("glDeleteTextures(%d, %p {%d...})\n", n, textures, n?textures[0]:-1);)
     if(!glstate) return;
     FLUSH_BEGINEND;
     
@@ -476,7 +476,7 @@ void gl4es_glDeleteTextures(GLsizei n, const GLuint *textures) {
 }
 
 void gl4es_glGenTextures(GLsizei n, GLuint * textures) {
-    DBG(printf("glGenTextures(%d, %p)\n", n, textures);)
+    DBG(SHUT_LOGD("glGenTextures(%d, %p)\n", n, textures);)
     if (n<=0) 
         return;
     FLUSH_BEGINEND;
@@ -490,7 +490,7 @@ void gl4es_glGenTextures(GLsizei n, GLuint * textures) {
     
     for (int i=0; i<n; i++) {
         k = kh_get(tex, list, textures[i]);
-        DBG(printf(" -> textures[%d] = %u\n", i, textures[i]);)
+        DBG(SHUT_LOGD(" -> textures[%d] = %u\n", i, textures[i]);)
         gltexture_t *tex = NULL;
         if (k == kh_end(list)){
             k = kh_put(tex, list, textures[i], &ret);
@@ -528,7 +528,7 @@ GLboolean gl4es_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboole
 }
 
 void gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params) {
-    DBG(printf("glGetTexLevelParameteriv(%s, %d, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);)
+    DBG(SHUT_LOGD("glGetTexLevelParameteriv(%s, %d, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);)
     // simplification: (mostly) not taking "target" into account here
     FLUSH_BEGINEND;
     *params = 0;
@@ -668,7 +668,7 @@ void gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GL
 }
 
 void gl4es_glActiveTexture( GLenum texture ) {
-    DBG(printf("glActiveTexture(%s)\n", PrintEnum(texture));)
+    DBG(SHUT_LOGD("glActiveTexture(%s)\n", PrintEnum(texture));)
     int tmu = texture - GL_TEXTURE0;
     if (glstate->list.pending) {
  /*       if(glstate->texture.active == tmu) {
@@ -695,7 +695,7 @@ void gl4es_glActiveTexture( GLenum texture ) {
 }
 
 void gl4es_glClientActiveTexture( GLenum texture ) {
-    DBG(printf("glClientActiveTexture(%s)\n", PrintEnum(texture));)
+    DBG(SHUT_LOGD("glClientActiveTexture(%s)\n", PrintEnum(texture));)
     int tmu = texture - GL_TEXTURE0;
     if ((tmu<0) || (tmu >= hardext.maxtex)) {
         errorShim(GL_INVALID_ENUM);
@@ -712,7 +712,7 @@ void gl4es_glClientActiveTexture( GLenum texture ) {
 }
 
 void gl4es_glPixelStorei(GLenum pname, GLint param) {
-    DBG(printf("glPixelStorei(%s, %d)\n", PrintEnum(pname), param);)
+    DBG(SHUT_LOGD("glPixelStorei(%s, %d)\n", PrintEnum(pname), param);)
     // TODO: add to glGetIntegerv?
 
     LOAD_GLES(glPixelStorei);
@@ -782,7 +782,7 @@ void realize_bound(int TMU, GLenum target) {
     LOAD_GLES(glBindTexture);
     gltexture_t *tex = glstate->texture.bound[TMU][what_target(target)];
     GLuint t = tex->glname;
-    DBG(printf("realize_bound(%d, %s), glsate->actual_tex2d[%d]=%u / %u\n", TMU, PrintEnum(target), TMU, glstate->actual_tex2d[TMU], t);)
+    DBG(SHUT_LOGD("realize_bound(%d, %s), glsate->actual_tex2d[%d]=%u / %u\n", TMU, PrintEnum(target), TMU, glstate->actual_tex2d[TMU], t);)
 #ifdef TEXSTREAM
     LOAD_GLES(glEnable);
     LOAD_GLES(glDisable);
@@ -838,9 +838,9 @@ void realize_textures(int drawing) {
     LOAD_GLES(glBindTexture);
     LOAD_GLES(glActiveTexture);
 #ifdef TEXSTREAM
-    DBG(printf("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
+    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
 #else
-    DBG(printf("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
+    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
 #endif
     for (int i=0; i<glstate->bound_changed; i++) {
         // get highest priority texture unit

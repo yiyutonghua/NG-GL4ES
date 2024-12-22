@@ -6,6 +6,7 @@
 #include "wrap/gl4es.h"
 #include "matrix.h"
 #include "debug.h"
+#include "logs.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -15,7 +16,7 @@
 #endif
 
 void gl4es_glPushAttrib(GLbitfield mask) {
-    DBG(printf("glPushAttrib(0x%04X)\n", mask);)
+    DBG(SHUT_LOGD("glPushAttrib(0x%04X)\n", mask);)
     realize_textures(0);
     noerrorShim();
     if (glstate->list.active)
@@ -290,7 +291,7 @@ void gl4es_glPushAttrib(GLbitfield mask) {
 }
 
 void gl4es_glPushClientAttrib(GLbitfield mask) {
-    DBG(printf("glPushClientAttrib(0x%04X)\n", mask);)
+    DBG(SHUT_LOGD("glPushClientAttrib(0x%04X)\n", mask);)
     noerrorShim();
     if (glstate->clientStack == NULL) {
         glstate->clientStack = (glclientstack_t *)malloc(STACK_SIZE * sizeof(glclientstack_t));
@@ -335,7 +336,7 @@ void gl4es_glPushClientAttrib(GLbitfield mask) {
 #define v4(c) v3(c), c[3]
 
 void gl4es_glPopAttrib() {
-DBG(printf("glPopAttrib()\n");)
+DBG(SHUT_LOGD("glPopAttrib()\n");)
     noerrorShim();
     if (glstate->list.active)
         if (glstate->list.compiling) {
@@ -619,7 +620,7 @@ DBG(printf("glPopAttrib()\n");)
     else gl4es_glDisableClientState(pname)
 
 void gl4es_glPopClientAttrib() {
-    DBG(printf("glPopClientAttrib()\n");)
+    DBG(SHUT_LOGD("glPopClientAttrib()\n");)
     noerrorShim();
 	//LOAD_GLES(glVertexPointer);
 	//LOAD_GLES(glColorPointer);

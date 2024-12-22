@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 __attribute__((visibility("default"))) extern char *GLSLtoGLSLES(char *glsl_code, GLenum glsl_type);
+__attribute__((visibility("default"))) extern int getGLSLVersion(const char* glsl_code);
 #ifdef __cplusplus
 }
 #endif

@@ -72,7 +72,7 @@ static int send_to_hardware() {
 }
 
 void init_matrix(glstate_t* glstate) {
-DBG(printf("init_matrix(%p)\n", glstate);)
+DBG(SHUT_LOGD("init_matrix(%p)\n", glstate);)
     alloc_matrix(&glstate->projection_matrix, MAX_STACK_PROJECTION);
     set_identity(TOP(projection_matrix));
 	glstate->projection_matrix->identity = 1;
@@ -109,7 +109,7 @@ void set_fpe_textureidentity() {
 }
 
 void gl4es_glMatrixMode(GLenum mode) {
-DBG(printf("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.active);)
+DBG(SHUT_LOGD("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.active);)
 	noerrorShim();
 	if (glstate->list.active && glstate->list.pending && glstate->matrix_mode==GL_MODELVIEW && mode==GL_MODELVIEW) {
 		return;	// nothing to do...
@@ -128,7 +128,7 @@ DBG(printf("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.active)
 }
 
 void gl4es_glPushMatrix() {
-DBG(printf("glPushMatrix(), list=%p\n", glstate->list.active);)
+DBG(SHUT_LOGD("glPushMatrix(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active && !glstate->list.pending) {
 		PUSH_IF_COMPILING(glPushMatrix);
 	}
@@ -164,7 +164,7 @@ DBG(printf("glPushMatrix(), list=%p\n", glstate->list.active);)
 }
 
 void gl4es_glPopMatrix() {
-DBG(printf("glPopMatrix(), list=%p\n", glstate->list.active);)
+DBG(SHUT_LOGD("glPopMatrix(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active 
 	 && !(glstate->list.compiling)
 	 && (globals4es.beginend) 
@@ -217,7 +217,7 @@ DBG(printf("glPopMatrix(), list=%p\n", glstate->list.active);)
 }
 
 void gl4es_glLoadMatrixf(const GLfloat * m) {
-DBG(printf("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
+DBG(SHUT_LOGD("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
 		else {
@@ -244,7 +244,7 @@ DBG(printf("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1],
 }
 
 void gl4es_glMultMatrixf(const GLfloat * m) {
-DBG(printf("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
+DBG(SHUT_LOGD("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
 		else {
@@ -268,7 +268,7 @@ DBG(printf("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1],
 		glstate->mvp_matrix_dirty = 1;
 	else if((glstate->matrix_mode==GL_TEXTURE) && glstate->fpe_state)
 		set_fpe_textureidentity();
-	DBG(printf(" => (%f, %f, %f, %f, %f, %f, %f...)\n", current_mat[0], current_mat[1], current_mat[2], current_mat[3], current_mat[4], current_mat[5], current_mat[6]);)
+	DBG(SHUT_LOGD(" => (%f, %f, %f, %f, %f, %f, %f...)\n", current_mat[0], current_mat[1], current_mat[2], current_mat[3], current_mat[4], current_mat[5], current_mat[6]);)
 	if(send_to_hardware()) {
 		LOAD_GLES(glLoadMatrixf);
 		LOAD_GLES(glLoadIdentity);
@@ -278,7 +278,7 @@ DBG(printf("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1],
 }
 
 void gl4es_glLoadIdentity() {
-DBG(printf("glLoadIdentity(), list=%p\n", glstate->list.active);)
+DBG(SHUT_LOGD("glLoadIdentity(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
 		else {
@@ -303,7 +303,7 @@ DBG(printf("glLoadIdentity(), list=%p\n", glstate->list.active);)
 }
 
 void gl4es_glTranslatef(GLfloat x, GLfloat y, GLfloat z) {
-DBG(printf("glTranslatef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
+DBG(SHUT_LOGD("glTranslatef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
 	// create a translation matrix than multiply it...
 	GLfloat tmp[16];
 	set_identity(tmp);
@@ -314,7 +314,7 @@ DBG(printf("glTranslatef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active)
 }
 
 void gl4es_glScalef(GLfloat x, GLfloat y, GLfloat z) {
-DBG(printf("glScalef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
+DBG(SHUT_LOGD("glScalef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
 	// create a scale matrix than multiply it...
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
@@ -326,7 +326,7 @@ DBG(printf("glScalef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
 }
 
 void gl4es_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
-DBG(printf("glRotatef(%f, %f, %f, %f), list=%p\n", angle, x, y, z, glstate->list.active);)
+DBG(SHUT_LOGD("glRotatef(%f, %f, %f, %f), list=%p\n", angle, x, y, z, glstate->list.active);)
 	// create a rotation matrix than multiply it...
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
@@ -351,7 +351,7 @@ DBG(printf("glRotatef(%f, %f, %f, %f), list=%p\n", angle, x, y, z, glstate->list
 }
 
 void gl4es_glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal) {
-DBG(printf("glOrthof(%f, %f, %f, %f, %f, %f), list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
+DBG(SHUT_LOGD("glOrthof(%f, %f, %f, %f, %f, %f), list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
 
@@ -364,7 +364,7 @@ DBG(printf("glOrthof(%f, %f, %f, %f, %f, %f), list=%p\n", left, right, top, bott
 }
 
 void gl4es_glFrustumf(GLfloat left,	GLfloat right, GLfloat bottom, GLfloat top,	GLfloat nearVal, GLfloat farVal) {
-DBG(printf("glFrustumf(%f, %f, %f, %f, %f, %f) list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
+DBG(SHUT_LOGD("glFrustumf(%f, %f, %f, %f, %f, %f) list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
 

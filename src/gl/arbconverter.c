@@ -163,7 +163,7 @@ char* gl4es_convertARB(const char* const code, int vertex, char **error_msg, int
 		return NULL;
 	}
 	
-	ARBCONV_DBG(printf("Success!\n");)
+	ARBCONV_DBG(SHUT_LOGD("Success!\n");)
 	
 	// Variables are automatically created, only need to write main()
 	size_t varIdx = (size_t)0;
@@ -286,7 +286,7 @@ char* gl4es_convertARB(const char* const code, int vertex, char **error_msg, int
 #undef APPEND_OUTPUT2
 	
 	if (curStatus.status == ST_ERROR) {
-		ARBCONV_DBG(printf("Failure!\n");
+		ARBCONV_DBG(SHUT_LOGD("Failure!\n");
 		
 		printf("\nVariables:\n==========\n");
 		{
@@ -339,7 +339,7 @@ char* gl4es_convertARB(const char* const code, int vertex, char **error_msg, int
 		return NULL;
 	}
 	
-	ARBCONV_DBG(printf("Success!\n\nOutput:\n%s", curStatus.outputString);)
+	ARBCONV_DBG(SHUT_LOGD("Success!\n\nOutput:\n%s", curStatus.outputString);)
 	
 	freeStatus(&curStatus);
 	return curStatus.outputString;

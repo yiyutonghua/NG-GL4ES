@@ -54,7 +54,7 @@ typedef struct glstate_s {
     int                 shim_error;
     GLenum              last_error;
     GLint               vp[4];
-    khash_t(queries)    *queries;       // shared
+    queries_t           queries;
     glstack_t           *stack;
     glclientstack_t     *clientStack;
     raster_state_t      raster;

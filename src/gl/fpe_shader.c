@@ -804,7 +804,7 @@ const char* const* fpe_VertexShader(shaderconv_need_t* need, fpe_state_t *state)
 
     ShadAppend("}\n");
 
-    DBG(printf("FPE Shader: \n%s\n", shad);)
+    DBG(SHUT_LOGD("FPE Shader: \n%s\n", shad);)
 
     return (const char* const*)&shad;
 }
@@ -1378,7 +1378,7 @@ const char* const* fpe_FragmentShader(shaderconv_need_t* need, fpe_state_t *stat
     ShadAppend("gl_FragColor = fColor;\n");
     ShadAppend("}");
 
-    DBG(printf("FPE Shader: \n%s\n", shad);)
+    DBG(SHUT_LOGD("FPE Shader: \n%s\n", shad);)
 
     return (const char* const*)&shad;
 }

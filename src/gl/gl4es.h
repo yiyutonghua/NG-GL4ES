@@ -3,6 +3,7 @@ extern "C" {
 #endif
 #ifndef _GL4ES_GL4ES_H_
 #define _GL4ES_GL4ES_H_
+//#define DEBUG
 
 #include "khash.h"
 

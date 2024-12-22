@@ -123,7 +123,7 @@ void gl4es_glDisableVertexAttribArrayARB(GLuint index);
 */
 
 void gl4es_glProgramStringARB(GLenum target, GLenum format, GLsizei len, const GLvoid *string) {
-    DBG(printf("glProgramStringARB(%s, %s, %d, %p), source is\n%s\n=======\n", PrintEnum(target), PrintEnum(format), len, string, string);)
+    DBG(SHUT_LOGD("glProgramStringARB(%s, %s, %d, %p), source is\n%s\n=======\n", PrintEnum(target), PrintEnum(format), len, string, string);)
     oldprogram_t* old = NULL;
     int vertex;
     switch(target) {
@@ -152,14 +152,14 @@ void gl4es_glProgramStringARB(GLenum target, GLenum format, GLsizei len, const G
     const GLchar * p[1] = {0};
     p[0] = gl4es_convertARB(old->string, vertex, &glstate->glsl->error_msg, &glstate->glsl->error_ptr);
     if(!p[0]) {
-        DBG(printf("Error with ARB->GLSL conversion\nsource is:\n%s\n======\n", old->shader->source);)
+        DBG(SHUT_LOGD("Error with ARB->GLSL conversion\nsource is:\n%s\n======\n", old->shader->source);)
         errorShim(GL_INVALID_OPERATION);
         return;
     }
     gl4es_glShaderSource(old->shader->id, 1, p , NULL);
-    DBG(printf("converted source is:\n%s\n======\n", old->shader->source?old->shader->source:"**error**");)
+    DBG(SHUT_LOGD("converted source is:\n%s\n======\n", old->shader->source?old->shader->source:"**error**");)
     if (!old->shader->source) {
-        DBG(printf("Error with ARB->GLSL conversion\n");)
+        DBG(SHUT_LOGD("Error with ARB->GLSL conversion\n");)
         errorShim(GL_INVALID_OPERATION);
         if (glstate->glsl->error_msg) free(glstate->glsl->error_msg);
         glstate->glsl->error_msg = strdup("Error with ARB->GLSL conversion");
@@ -167,7 +167,7 @@ void gl4es_glProgramStringARB(GLenum target, GLenum format, GLsizei len, const G
         return;
     }
     if (!old->shader->converted) {
-        DBG(printf("Error with GLSL->GLSL:ES conversion\n");)
+        DBG(SHUT_LOGD("Error with GLSL->GLSL:ES conversion\n");)
         errorShim(GL_INVALID_OPERATION);
         if (glstate->glsl->error_msg) free(glstate->glsl->error_msg);
         glstate->glsl->error_msg = strdup("Error with GLSL->GLSL:ES conversion");
@@ -178,7 +178,7 @@ void gl4es_glProgramStringARB(GLenum target, GLenum format, GLsizei len, const G
     GLint res = 0;
     gl4es_glGetShaderiv(old->shader->id, GL_COMPILE_STATUS, &res);
     if(res!=GL_TRUE) {
-        DBG(printf("Error with Compile shader\n");)
+        DBG(SHUT_LOGD("Error with Compile shader\n");)
         errorShim(GL_INVALID_OPERATION);
         if (glstate->glsl->error_msg) free(glstate->glsl->error_msg);
         glstate->glsl->error_msg = strdup("Error with Compile shader");
@@ -188,7 +188,7 @@ void gl4es_glProgramStringARB(GLenum target, GLenum format, GLsizei len, const G
 }
 
 void gl4es_glBindProgramARB(GLenum target, GLuint program) {
-    DBG(printf("glBindProgramARB(%s, %d)\n", PrintEnum(target), program);)
+    DBG(SHUT_LOGD("glBindProgramARB(%s, %d)\n", PrintEnum(target), program);)
     khint_t k;
     oldprogram_t* old = NULL; 
     kh_oldprograms_t * oldprograms = glstate->glsl->oldprograms;
@@ -279,7 +279,7 @@ void gl4es_glBindProgramARB(GLenum target, GLuint program) {
 }
 
 void gl4es_glDeleteProgramsARB(GLsizei n, const GLuint *programs) {
-    DBG(printf("glDeleteProgramsARB(%d, %p)\n", n, programs);)
+    DBG(SHUT_LOGD("glDeleteProgramsARB(%d, %p)\n", n, programs);)
     //TODO, unbind if binded?
     khint_t k;
     kh_oldprograms_t * oldprograms = glstate->glsl->oldprograms;
@@ -294,7 +294,7 @@ void gl4es_glDeleteProgramsARB(GLsizei n, const GLuint *programs) {
 }
 
 void gl4es_glGenProgramsARB(GLsizei n, GLuint *programs) {
-    DBG(printf("glGenProgramsARB(%d, %p)\n", n, programs);)
+    DBG(SHUT_LOGD("glGenProgramsARB(%d, %p)\n", n, programs);)
     GLuint last = 0;
     khint_t k;
     kh_oldprograms_t * oldprograms = glstate->glsl->oldprograms;
@@ -309,7 +309,7 @@ void gl4es_glGenProgramsARB(GLsizei n, GLuint *programs) {
 }
 
 void gl4es_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
-    DBG(printf("glProgramEnvParameter4dARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
+    DBG(SHUT_LOGD("glProgramEnvParameter4dARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
     float *f = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -338,7 +338,7 @@ void gl4es_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x, G
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramEnvParameter4dvARB(GLenum target, GLuint index, const GLdouble *params) {
-    DBG(printf("glProgramEnvParameter4dvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
+    DBG(SHUT_LOGD("glProgramEnvParameter4dvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
     float *f = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -366,7 +366,7 @@ void gl4es_glProgramEnvParameter4dvARB(GLenum target, GLuint index, const GLdoub
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
-    DBG(printf("glProgramEnvParameter4fARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
+    DBG(SHUT_LOGD("glProgramEnvParameter4fARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
     float *f = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -393,7 +393,7 @@ void gl4es_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x, GL
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramEnvParameter4fvARB(GLenum target, GLuint index, const GLfloat *params)  {
-    DBG(printf("glProgramEnvParameter4fvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
+    DBG(SHUT_LOGD("glProgramEnvParameter4fvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
     float *f = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -417,7 +417,7 @@ void gl4es_glProgramEnvParameter4fvARB(GLenum target, GLuint index, const GLfloa
 }
 
 void gl4es_glProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
-    DBG(printf("glProgramLocalParameter4dARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
+    DBG(SHUT_LOGD("glProgramLocalParameter4dARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -445,7 +445,7 @@ void gl4es_glProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x,
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdouble *params) {
-    DBG(printf("glProgramLocalParameter4dvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
+    DBG(SHUT_LOGD("glProgramLocalParameter4dvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -473,7 +473,7 @@ void gl4es_glProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdo
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
-    DBG(printf("glProgramLocalParameter4fARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
+    DBG(SHUT_LOGD("glProgramLocalParameter4fARB(%s, %u, %f, %f, %f, %f)\n", PrintEnum(target), index, x, y, z, w);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -501,7 +501,7 @@ void gl4es_glProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat x, 
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glProgramLocalParameter4fvARB(GLenum target, GLuint index, const GLfloat *params) {
-    DBG(printf("glProgramLocalParameter4fvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
+    DBG(SHUT_LOGD("glProgramLocalParameter4fvARB(%s, %u, %p[%f/%f/%f/%f])\n", PrintEnum(target), index, params, params[0], params[1], params[2], params[3]);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -526,7 +526,7 @@ void gl4es_glProgramLocalParameter4fvARB(GLenum target, GLuint index, const GLfl
 }
 
 void gl4es_glGetProgramEnvParameterdvARB(GLenum target, GLuint index, GLdouble *params)  {
-    DBG(printf("glGetProgramEnvParameterdvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
+    DBG(SHUT_LOGD("glGetProgramEnvParameterdvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
     float * f = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -554,7 +554,7 @@ void gl4es_glGetProgramEnvParameterdvARB(GLenum target, GLuint index, GLdouble *
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glGetProgramEnvParameterfvARB(GLenum target, GLuint index, GLfloat *params) {
-    DBG(printf("glGetProgramEnvParameterfvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
+    DBG(SHUT_LOGD("glGetProgramEnvParameterfvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
             if(index<MAX_VTX_PROG_ENV_PARAMS) {
@@ -576,7 +576,7 @@ void gl4es_glGetProgramEnvParameterfvARB(GLenum target, GLuint index, GLfloat *p
 }
 
 void gl4es_glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params) {
-    DBG(printf("glGetProgramLocalParameterdvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
+    DBG(SHUT_LOGD("glGetProgramLocalParameterdvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -604,7 +604,7 @@ void gl4es_glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble
         errorShim(GL_INVALID_VALUE);
 }
 void gl4es_glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params) {
-    DBG(printf("glGetProgramLocalParameterfvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
+    DBG(SHUT_LOGD("glGetProgramLocalParameterfvARB(%s, %u, %p)\n", PrintEnum(target), index, params);)
     oldprogram_t *old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -629,7 +629,7 @@ void gl4es_glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat 
 }
 
 void gl4es_glGetProgramivARB(GLenum target, GLenum pname, GLint *params) {
-    DBG(printf("glGetProgramivARB(%s, %s, %p)\n", PrintEnum(target), PrintEnum(pname), params);)
+    DBG(SHUT_LOGD("glGetProgramivARB(%s, %s, %p)\n", PrintEnum(target), PrintEnum(pname), params);)
     oldprogram_t* old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -731,7 +731,7 @@ void gl4es_glGetProgramivARB(GLenum target, GLenum pname, GLint *params) {
 }
 
 void gl4es_glGetProgramStringARB(GLenum target, GLenum pname, GLvoid *string) {
-    DBG(printf("glGetProgramStringARB(%s, %u, %p)\n", PrintEnum(target), pname, string);)
+    DBG(SHUT_LOGD("glGetProgramStringARB(%s, %u, %p)\n", PrintEnum(target), pname, string);)
     oldprogram_t* old = NULL;
     switch(target) {
         case GL_VERTEX_PROGRAM_ARB:
@@ -767,7 +767,7 @@ void gl4es_glGetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **poi
 */
 
 GLboolean gl4es_glIsProgramARB(GLuint program) {
-    DBG(printf("glIsProgramARB(%u)\n", program);)
+    DBG(SHUT_LOGD("glIsProgramARB(%u)\n", program);)
     khint_t k = kh_get(oldprograms, glstate->glsl->oldprograms, program);
     return (k==kh_end(glstate->glsl->oldprograms))?GL_FALSE:GL_TRUE;
 }
@@ -775,7 +775,7 @@ GLboolean gl4es_glIsProgramARB(GLuint program) {
 
 void gl4es_glProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count, const GLfloat *params)
 {
-    DBG(printf("glProgramEnvParameters4fvEXT(%s, %u, %i, %p)\n", PrintEnum(target), index, count, params);)
+    DBG(SHUT_LOGD("glProgramEnvParameters4fvEXT(%s, %u, %i, %p)\n", PrintEnum(target), index, count, params);)
     float *f = NULL;
     int nmax = 0;
     switch(target) {
@@ -799,7 +799,7 @@ void gl4es_glProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei cou
 
 void gl4es_glProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count, const GLfloat *params)
 {
-    DBG(printf("glProgramLocalParameters4fvEXT(%s, %u, %i, %p)\n", PrintEnum(target), index, count, params);)
+    DBG(SHUT_LOGD("glProgramLocalParameters4fvEXT(%s, %u, %i, %p)\n", PrintEnum(target), index, count, params);)
     float *f = NULL;
     oldprogram_t *old = NULL;
     switch(target) {

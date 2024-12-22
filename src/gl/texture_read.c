@@ -33,7 +33,7 @@ static int inline nlevel(int size, int level) {
 
 void gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
                                 GLsizei width,  GLsizei height,  GLint border) {
-    DBG(printf("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%u\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);)
+    DBG(SHUT_LOGD("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%u\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);)
      //PUSH_IF_COMPILING(glCopyTexImage2D);
     FLUSH_BEGINEND;
     const GLuint itarget = what_target(target);
@@ -98,7 +98,7 @@ void gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint 
     const GLuint itarget = what_target(target);
     // WARNING: It seems glColorMask has an impact on what channel are actualy copied by this. The crude glReadPixel / glTexSubImage cannot emulate that, and proper emulation will take need 2 read pixels.
     //  And using the real glCopyTexSubImage2D needs that the FrameBuffer were data are read is compatible with the Texture it's copied to...
-    DBG(printf("glCopyTexSubImage2D(%s, %i, %i, %i, %i, %i, %i, %i), bounded texture=%u format/type=%s, %s\n", PrintEnum(target), level, xoffset, yoffset, x, y, width, height, (glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->texture:0, PrintEnum((glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->format:0), PrintEnum((glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->type:0));)
+    DBG(SHUT_LOGD("glCopyTexSubImage2D(%s, %i, %i, %i, %i, %i, %i, %i), bounded texture=%u format/type=%s, %s\n", PrintEnum(target), level, xoffset, yoffset, x, y, width, height, (glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->texture:0, PrintEnum((glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->format:0), PrintEnum((glstate->texture.bound[glstate->texture.active][itarget])?glstate->texture.bound[glstate->texture.active][itarget]->type:0));)
     // PUSH_IF_COMPILING(glCopyTexSubImage2D);
     FLUSH_BEGINEND;
  
@@ -163,7 +163,7 @@ void gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint 
 }
 
 void gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * data) {
-    DBG(printf("glReadPixels(%i, %i, %i, %i, %s, %s, 0x%p)\n", x, y, width, height, PrintEnum(format), PrintEnum(type), data);)
+    DBG(SHUT_LOGD("glReadPixels(%i, %i, %i, %i, %s, %s, 0x%p)\n", x, y, width, height, PrintEnum(format), PrintEnum(type), data);)
     FLUSH_BEGINEND;
     if (glstate->list.compiling && glstate->list.active) {
         errorShim(GL_INVALID_OPERATION);
@@ -203,7 +203,7 @@ void gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum 
 
 
 void gl4es_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid * img) {
-    DBG(printf("glGetTexImage(%s, %i, %s, %s, %p)\n", PrintEnum(target), level, PrintEnum(format), PrintEnum(type), img);)
+    DBG(SHUT_LOGD("glGetTexImage(%s, %i, %s, %s, %p)\n", PrintEnum(target), level, PrintEnum(format), PrintEnum(type), img);)
     FLUSH_BEGINEND;
     const GLuint itarget = what_target(target);    
 
@@ -236,7 +236,7 @@ void gl4es_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
         return;
     }
 
-    DBG(printf("glGetTexImage(%s, %i, %s, %s, 0x%p), texture=0x%x, size=%i,%i\n", PrintEnum(target), level, PrintEnum(format), PrintEnum(type), img, bound->glname, width, height);)
+    DBG(SHUT_LOGD("glGetTexImage(%s, %i, %s, %s, 0x%p), texture=0x%x, size=%i,%i\n", PrintEnum(target), level, PrintEnum(format), PrintEnum(type), img, bound->glname, width, height);)
     
     GLvoid *dst = img;
     if (glstate->vao->pack)

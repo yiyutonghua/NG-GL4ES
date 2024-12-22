@@ -475,7 +475,7 @@ void DeleteGLState(void* oldstate) {
     }
     free_hashmap(glvao_t, vaos, glvao, free);
     if(!state->shared_cnt) {
-        free_hashmap(glquery_t, queries, queries, free);
+        free_hashmap(glquery_t, queries.querylist, queries, free);
         free_hashmap(glbuffer_t, buffers, buff, free);
         free_hashmap(gltexture_t, texture.list, tex, free_texture);
         free_hashmap(renderlist_t, headlists, gllisthead, free_renderlist);

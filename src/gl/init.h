@@ -78,6 +78,7 @@ typedef struct _globals4es {
  char drmcard[50];
  #endif
  char version[50];
+ int use_mc_color;
 } globals4es_t;
 
 extern globals4es_t globals4es;

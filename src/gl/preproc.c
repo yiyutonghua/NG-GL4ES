@@ -350,7 +350,7 @@ KHASH_MAP_INIT_STR(define, int);
 KHASH_MAP_INIT_STR(alldefine, char*);
 
 char* preproc(const char* code, int keepcomments, int gl_es, extensions_t* exts, char** versionString) {
-    DBG(printf("Preproc on: =========\n%s\n=================\n", code);)
+    DBG(SHUT_LOGD("Preproc on: =========\n%s\n=================\n", code);)
 
     uToken tok;
     char* p = (char*)code;
@@ -811,7 +811,7 @@ char* preproc(const char* code, int keepcomments, int gl_es, extensions_t* exts,
         }
     }
 
-    DBG(printf("New code is: ------------\n%s\n------------------\n", ncode);)
+    DBG(SHUT_LOGD("New code is: ------------\n%s\n------------------\n", ncode);)
     kh_destroy(define, defines);
     kh_foreach_value(alldefines, defname,
             free(defname);

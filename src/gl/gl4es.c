@@ -31,6 +31,15 @@
 #define DBG(a)
 #endif
 
+void trim(char* str) {
+    char* end;
+    while (isspace((unsigned char)*str)) str++;
+    if (*str == 0) return;
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) end--;
+    *(end + 1) = 0;
+}
+
 void write_log(const char* format, ...) {
     const char* file_path = "/sdcard/ng_gl4es_log.txt";
     FILE* file = fopen(file_path, "a");
@@ -43,6 +52,16 @@ void write_log(const char* format, ...) {
     vfprintf(file, format, args);
     va_end(args);
     fprintf(file, "\n");
+    fclose(file);
+}
+
+void clear_log() {
+    const char* file_path = "/sdcard/ng_gl4es_log.txt";
+    FILE* file = fopen(file_path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file '%s' for clearing: %s\n", file_path, strerror(errno));
+        return;
+    }
     fclose(file);
 }
 
@@ -84,7 +103,7 @@ int adjust_vertices(GLenum mode, int nb) {
 
 void gl4es_glVertexPointer(GLint size, GLenum type,
                      GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("glVertexPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("glVertexPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
     if(size<1 || size>4) {
         errorShim(GL_INVALID_VALUE);
 		return;
@@ -105,14 +124,14 @@ void gl4es_glColorPointer(GLint size, GLenum type,
     clone_gl_pointer(glstate->vao->vertexattrib[ATT_COLOR], size, (type==GL_FLOAT)?GL_FALSE:GL_TRUE);
 }
 void gl4es_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("glNormalPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("glNormalPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
     noerrorShimNoPurge();
     break_lockarrays(ATT_NORMAL);
     clone_gl_pointer(glstate->vao->vertexattrib[ATT_NORMAL], 3, GL_FALSE);
 }
 void gl4es_glTexCoordPointer(GLint size, GLenum type,
                      GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("glTexCoordPointer(%d, %s, %d, %p), texture.client=%d\n", size, PrintEnum(type), stride, pointer, glstate->texture.client);)
+    DBG(SHUT_LOGD("glTexCoordPointer(%d, %s, %d, %p), texture.client=%d\n", size, PrintEnum(type), stride, pointer, glstate->texture.client);)
     if(size<1 || size>4) {
         errorShim(GL_INVALID_VALUE);
 		return;
@@ -133,7 +152,7 @@ void gl4es_glSecondaryColorPointer(GLint size, GLenum type,
     noerrorShimNoPurge();
 }
 void gl4es_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("glFogCoordPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("glFogCoordPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
     if(type==1 && stride==GL_FLOAT) {
         type = GL_FLOAT;
         stride = 0; // mistake found in some version of openglide...
@@ -156,7 +175,7 @@ void glFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *pointer) Al
 
 
 void gl4es_glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("glInterleavedArrays(%s, %d, %p)\n", PrintEnum(format), stride, pointer);)
+    DBG(SHUT_LOGD("glInterleavedArrays(%s, %d, %p)\n", PrintEnum(format), stride, pointer);)
     uintptr_t ptr = (uintptr_t)pointer;
     // element lengths
     GLsizei tex=0, color=0, normal=0, vert=0;

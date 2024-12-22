@@ -28,7 +28,7 @@ void gl4es_Stub(void *x, ...) {
 }
 
 void *gl4es_GetProcAddress(const char *name) {
-    DBG(printf("glGetProcAddress(\"%s\")", name);)/*
+    DBG(SHUT_LOGD("glGetProcAddress(\"%s\")", name);)/*
     // generated gles wrappers
     #include "glesfuncs.inc"
 
@@ -1018,7 +1018,7 @@ void *gl4es_GetProcAddress(const char *name) {
         _EX(glProgramEnvParameters4fvEXT)
         _EX(glProgramLocalParameters4fvEXT)
     }
-    DBG(printf("NULL\n");)*/
+    DBG(SHUT_LOGD("NULL\n");)*/
     void* proc = dlsym(RTLD_DEFAULT, (const char*)name);
 
     if (!proc) {

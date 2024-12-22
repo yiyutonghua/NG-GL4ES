@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include "logs.h"
 #include "wrap/gl4es.h"
 #include "gles.h"
 #include "stack.h"
@@ -355,7 +356,7 @@ void gl4es_glGetCompressedMultiTexImage(GLenum texunit, GLenum target, GLint lev
 }
 
 void gl4es_glEnableClientStateIndexed(GLenum array, GLuint index) {
-    DBG(printf("glEnableClientStateIndexed(%s, %d)\n", PrintEnum(array), index);)
+    DBG(SHUT_LOGD("glEnableClientStateIndexed(%s, %d)\n", PrintEnum(array), index);)
     if (array == GL_TEXTURE_COORD_ARRAY) {
         int old = glstate->texture.client;
         if(old!=index) gl4es_glClientActiveTexture(GL_TEXTURE0+index);
@@ -372,7 +373,7 @@ void gl4es_glEnableClientStatei(GLenum array, GLuint index) __attribute__((alias
 void gl4es_glEnableClientStatei(GLenum array, GLuint index) { gl4es_glEnableClientStateIndexed(array, index); }
 #endif
 void gl4es_glDisableClientStateIndexed(GLenum array, GLuint index) {
-    DBG(printf("glDisableClientStateIndexed(%s, %d)\n", PrintEnum(array), index);)
+    DBG(SHUT_LOGD("glDisableClientStateIndexed(%s, %d)\n", PrintEnum(array), index);)
     if (array == GL_TEXTURE_COORD_ARRAY) {
         int old = glstate->texture.client;
         if(old!=index) gl4es_glClientActiveTexture(GL_TEXTURE0+index);
@@ -390,28 +391,28 @@ void gl4es_glDisableClientStatei(GLenum array, GLuint index) { gl4es_glDisableCl
 #endif
 
 void gl4es_glEnableVertexArray(GLuint vaobj, GLenum array) {
-    DBG(printf("glEnableVertexArray(%d, %s)\n", vaobj, PrintEnum(array));)
+    DBG(SHUT_LOGD("glEnableVertexArray(%d, %s)\n", vaobj, PrintEnum(array));)
     GLuint old = glstate->vao->array;
     gl4es_glBindVertexArray(vaobj);
     gl4es_glEnableClientState(array);
     gl4es_glBindVertexArray(old);
 }
 void gl4es_glDisableVertexArray(GLuint vaobj, GLenum array) {
-    DBG(printf("glDisableVertexArray(%d, %s)\n", vaobj, PrintEnum(array));)
+    DBG(SHUT_LOGD("glDisableVertexArray(%d, %s)\n", vaobj, PrintEnum(array));)
     GLuint old = glstate->vao->array;
     gl4es_glBindVertexArray(vaobj);
     gl4es_glDisableClientState(array);
     gl4es_glBindVertexArray(old);
 }
 void gl4es_glEnableVertexArrayAttrib(GLuint vaobj, GLuint index) {
-    DBG(printf("glEnableVertexArrayAttrib(%d, %d)\n", vaobj, index);)
+    DBG(SHUT_LOGD("glEnableVertexArrayAttrib(%d, %d)\n", vaobj, index);)
     GLuint old = glstate->vao->array;
     gl4es_glBindVertexArray(vaobj);
     gl4es_glEnableVertexAttribArray(index);
     gl4es_glBindVertexArray(old);
 }
 void gl4es_glDisableVertexArrayAttrib(GLuint vaobj, GLuint index) {
-    DBG(printf("glDisableVertexArrayAttrib(%d, %d)\n", vaobj, index);)
+    DBG(SHUT_LOGD("glDisableVertexArrayAttrib(%d, %d)\n", vaobj, index);)
     GLuint old = glstate->vao->array;
     gl4es_glBindVertexArray(vaobj);
     gl4es_glDisableVertexAttribArray(index);
@@ -505,7 +506,7 @@ void gl4es_glGetPointerIndexedv(GLenum pname, GLuint index, GLvoid **params) {
 }
 
 void gl4es_glEnableIndexed(GLenum cap, GLuint index) {
-    DBG(printf("glEnableIndexed(%s, %d)\n", PrintEnum(cap), index);)
+    DBG(SHUT_LOGD("glEnableIndexed(%s, %d)\n", PrintEnum(cap), index);)
     int old = glstate->texture.active;
     if(old!=index) gl4es_glActiveTexture(index+GL_TEXTURE0);
     gl4es_glEnable(cap);
@@ -513,7 +514,7 @@ void gl4es_glEnableIndexed(GLenum cap, GLuint index) {
 }
 
 void gl4es_glDisableIndexed(GLenum cap, GLuint index) {
-    DBG(printf("glDisableIndexed(%s, %d)\n", PrintEnum(cap), index);)
+    DBG(SHUT_LOGD("glDisableIndexed(%s, %d)\n", PrintEnum(cap), index);)
     int old = glstate->texture.active;
     if(old!=index) gl4es_glActiveTexture(index+GL_TEXTURE0);
     gl4es_glDisable(cap);
@@ -521,7 +522,7 @@ void gl4es_glDisableIndexed(GLenum cap, GLuint index) {
 }
 
 GLboolean gl4es_glIsEnabledIndexed(GLenum cap, GLuint index) {
-    DBG(printf("glIsEnabledIndexed(%s, %d)\n", PrintEnum(cap), index);)
+    DBG(SHUT_LOGD("glIsEnabledIndexed(%s, %d)\n", PrintEnum(cap), index);)
     int old;
     GLboolean rv;
     switch(cap) {

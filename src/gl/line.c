@@ -7,6 +7,7 @@
 #include "list.h"
 #include "matrix.h"
 #include "matvec.h"
+#include "logs.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -16,7 +17,7 @@
 #endif
 
 void gl4es_glLineStipple(GLuint factor, GLushort pattern) {
-    DBG(printf("glLineStipple(%d, 0x%04X)\n", factor, pattern);)
+    DBG(SHUT_LOGD("glLineStipple(%d, 0x%04X)\n", factor, pattern);)
     if(glstate->list.active) {
         if (glstate->list.compiling) {
             NewStage(glstate->list.active, STAGE_LINESTIPPLE);
@@ -71,7 +72,7 @@ void bind_stipple_tex() {
 }
 
 GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *modes, int stride, int length, GLfloat* noalloctex) {
-    DBG(printf("Generate stripple tex (stride=%d, noalloctex=%p) length=%d:", stride, noalloctex, length);)
+    DBG(SHUT_LOGD("Generate stripple tex (stride=%d, noalloctex=%p) length=%d:", stride, noalloctex, length);)
     // generate our texture coords
     GLfloat *tex = noalloctex?noalloctex:(GLfloat *)malloc(modes[length-1].ilen * 4 * sizeof(GLfloat));
     GLfloat *texPos = tex;
@@ -91,7 +92,7 @@ GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *m
     int i=0;
     for (int k=0; k<length; k++) {
         GLenum mode = modes[k].mode_init;
-        DBG(printf("[%s->%d] ", PrintEnum(mode), modes[k].ilen);)
+        DBG(SHUT_LOGD("[%s->%d] ", PrintEnum(mode), modes[k].ilen);)
         oldlen = len = 0.f;
         if(modes[k].ilen<2)
             continue;
@@ -119,7 +120,7 @@ GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *m
                 }
                 oldlen = len;
                 len += sqrtf((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) / (glstate->linestipple.factor * 16.f);
-                DBG(printf("%f->%f (%f,%f -> %f,%f)\t", oldlen, len, x1, y1, x2, y2);)
+                DBG(SHUT_LOGD("%f->%f (%f,%f -> %f,%f)\t", oldlen, len, x1, y1, x2, y2);)
                 if(sindices)
                     texPos = tex+texstride*sindices[i+0];   // it get writen 2*, but that should be ok, it's the same value
                 memset(texPos, 0, 4*sizeof(GLfloat));
@@ -139,7 +140,7 @@ GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *m
             vector_matrix(vertPos, mvp, v);
             x2=(v[0]/v[3])*w; y2=(v[1]/v[3])*h;
             vertPos+=stride;
-            DBG(printf("%f\t", len);)
+            DBG(SHUT_LOGD("%f\t", len);)
             memset(texPos, 0, 4*sizeof(GLfloat));
             texPos[0] = len; texPos[3] = 1.0f;
             texPos+=texstride;
@@ -152,7 +153,7 @@ GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *m
                 vertPos+=stride;
                 x2=(v[0]/v[3])*w; y2=(v[1]/v[3])*h;
                 len += sqrtf((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) / (glstate->linestipple.factor * 16.f);
-                DBG(printf("->%f\t", len);)
+                DBG(SHUT_LOGD("->%f\t", len);)
                 if(sindices)
                     texPos = tex+texstride*sindices[i];
                 memset(texPos, 0, 4*sizeof(GLfloat));
@@ -161,6 +162,6 @@ GLfloat *gen_stipple_tex_coords(GLfloat *vert, GLushort *sindices, modeinit_t *m
             }
         }
     }
-    DBG(printf("\n");)
+    DBG(SHUT_LOGD("\n");)
     return tex;
 }

@@ -19,16 +19,18 @@ typedef struct shaderconv_need_s {
 } shaderconv_need_t;
 
 typedef struct shader_s {
-    GLuint          id;     // internal id of the shader
-    GLenum          type;   // type of the shader (GL_VERTEX or GL_FRAGMENT)
-    int             attached; // number of time the shader is attached
-    int             deleted;// flagged for deletion
-    int             compiled;// flag if compiled
-    oldprogram_t   *old;     // in case the shader is an old ARB ASM-like program
-    char*           source; // original source of the shader (or converted if comming from "old")
-    char*           converted;  // converted source (or null if nothing)
+    GLuint                id;     // internal id of the shader
+    GLenum                type;   // type of the shader (GL_VERTEX or GL_FRAGMENT)
+    int                   attached; // number of time the shader is attached
+    int                   deleted;// flagged for deletion
+    int                   compiled;// flag if compiled
+    oldprogram_t         *old;     // in case the shader is an old ARB ASM-like program
+    char*                 source; // original source of the shader (or converted if comming from "old")
+    char*                 converted;  // converted source (or null if nothing)
     // shaderconv
-    shaderconv_need_t  need;    // the varying need / provide of the shader
+    shaderconv_need_t     need;    // the varying need / provide of the shader
+    uniforms_declarations uniforms_declarations;
+    int                   uniforms_declarations_count;
 } shader_t;
 
 KHASH_MAP_DECLARE_INT(shaderlist, shader_t *);

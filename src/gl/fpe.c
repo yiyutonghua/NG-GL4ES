@@ -337,7 +337,7 @@ void fpe_oldprogram(fpe_state_t* state) {
         gles_glGetProgramInfoLog(glstate->fpe->prog, 1000, NULL, buff);
         printf("LIBGL: FPE ARB Program link failed: %s\n", buff);
     }
-    DBG(printf("Created program %d, with vertex=%d (old=%d) fragment=%d (old=%d), alpha=%d/%d\n", glstate->fpe->prog, glstate->fpe->vert, state->vertex_prg_id, glstate->fpe->frag, state->fragment_prg_id, state->alphatest, state->alphafunc);)
+    DBG(SHUT_LOGD("Created program %d, with vertex=%d (old=%d) fragment=%d (old=%d), alpha=%d/%d\n", glstate->fpe->prog, glstate->fpe->vert, state->vertex_prg_id, glstate->fpe->frag, state->fragment_prg_id, state->alphatest, state->alphafunc);)
 }
 
 // ********* Shader stuffs handling *********
@@ -411,7 +411,7 @@ void fpe_program(int ispoint) {
                 glstate->fpe->glprogram = kh_value(programs, k_program);
         }
         // all done
-        DBG(printf("%s FPE shader : %d(%p)\n", from_psa?"Using Precomp":"Creating", glstate->fpe->prog, glstate->fpe->glprogram);)
+        DBG(SHUT_LOGD("%s FPE shader : %d(%p)\n", from_psa?"Using Precomp":"Creating", glstate->fpe->prog, glstate->fpe->glprogram);)
     }
 }
 
@@ -487,7 +487,7 @@ program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
             )
         }
         // all done
-        DBG(printf("creating FPE Custom Program : %d(%p)\n", fpe->prog, fpe->glprogram);)
+        DBG(SHUT_LOGD("creating FPE Custom Program : %d(%p)\n", fpe->prog, fpe->glprogram);)
     }
 
     return fpe->glprogram;
@@ -565,7 +565,7 @@ program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* sta
             )
         }
         // all done
-        DBG(printf("creating FPE Custom Program : %d(%p)\n", fpe->prog, fpe->glprogram);)
+        DBG(SHUT_LOGD("creating FPE Custom Program : %d(%p)\n", fpe->prog, fpe->glprogram);)
     }
 
     return fpe->glprogram;
@@ -614,12 +614,12 @@ void fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram) {
             }
         }
     );
-    DBG(printf("Uniform sync'd with %d and father (%d uniforms)\n", glprogram->id, cnt);)
+    DBG(SHUT_LOGD("Uniform sync'd with %d and father (%d uniforms)\n", glprogram->id, cnt);)
 }
 // ********* Fixed Pipeling function wrapper *********
 
 void fpe_glClientActiveTexture(GLenum texture) {
-    DBG(printf("fpe_glClientActiveTexture(%s)\n", PrintEnum(texture));)
+    DBG(SHUT_LOGD("fpe_glClientActiveTexture(%s)\n", PrintEnum(texture));)
 }
 
 void fpe_EnableDisableClientState(GLenum cap, GLboolean val) {
@@ -658,18 +658,18 @@ void fpe_EnableDisableClientState(GLenum cap, GLboolean val) {
                 gles_glDisableClientState(cap);
         }
     } else {
-DBG(printf("glstate->vao->vertexattrib[%d].enabled (was %d) = %d (hardware=%d)\n", att, glstate->vao->vertexattrib[att].enabled, val, glstate->gleshard->vertexattrib[att].enabled);)
+DBG(SHUT_LOGD("glstate->vao->vertexattrib[%d].enabled (was %d) = %d (hardware=%d)\n", att, glstate->vao->vertexattrib[att].enabled, val, glstate->gleshard->vertexattrib[att].enabled);)
         glstate->vao->vertexattrib[att].enabled = val;
     }
 }
 
 void fpe_glEnableClientState(GLenum cap) {
-    DBG(printf("fpe_glEnableClientState(%s)\n", PrintEnum(cap));)
+    DBG(SHUT_LOGD("fpe_glEnableClientState(%s)\n", PrintEnum(cap));)
     fpe_EnableDisableClientState(cap, GL_TRUE);
 }
 
 void fpe_glDisableClientState(GLenum cap) {
-    DBG(printf("fpe_glDisableClientState(%s)\n", PrintEnum(cap));)
+    DBG(SHUT_LOGD("fpe_glDisableClientState(%s)\n", PrintEnum(cap));)
     fpe_EnableDisableClientState(cap, GL_FALSE);
 }
 
@@ -677,7 +677,7 @@ void fpe_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLflo
 }
 
 void fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("fpe_glSecondaryColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("fpe_glSecondaryColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
     if(pointer==glstate->vao->vertexattrib[ATT_SECONDARY].pointer)
         return;
     glstate->vao->vertexattrib[ATT_SECONDARY].size = size;
@@ -691,7 +691,7 @@ void fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const 
 }
 
 void fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("fpe_glVertexPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("fpe_glVertexPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
     if(pointer==glstate->vao->vertexattrib[ATT_VERTEX].pointer)
         return;
     glstate->vao->vertexattrib[ATT_VERTEX].size = size;
@@ -705,7 +705,7 @@ void fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
 }
 
 void fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("fpe_glColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("fpe_glColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
     if(pointer==glstate->vao->vertexattrib[ATT_COLOR].pointer)
         return;
     glstate->vao->vertexattrib[ATT_COLOR].size = size;
@@ -719,7 +719,7 @@ void fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *p
 }
 
 void fpe_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("fpe_glNormalPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("fpe_glNormalPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
     if(pointer==glstate->vao->vertexattrib[ATT_NORMAL].pointer)
         return;
     glstate->vao->vertexattrib[ATT_NORMAL].size = 3;
@@ -737,7 +737,7 @@ void fpe_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid
 }
 
 void fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer, int TMU) {
-    DBG(printf("fpe_glTexCoordPointer(%d, %s, %d, %p) on tmu=%d\n", size, PrintEnum(type), stride, pointer, TMU);)
+    DBG(SHUT_LOGD("fpe_glTexCoordPointer(%d, %s, %d, %p) on tmu=%d\n", size, PrintEnum(type), stride, pointer, TMU);)
     if(pointer==glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].pointer)
         return;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].size = size;
@@ -751,7 +751,7 @@ void fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLv
 }
 
 void fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(printf("fpe_glFogPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
+    DBG(SHUT_LOGD("fpe_glFogPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
     if(pointer==glstate->vao->vertexattrib[ATT_FOGCOORD].pointer)
         return;
     glstate->vao->vertexattrib[ATT_FOGCOORD].size = 1;
@@ -780,7 +780,7 @@ void fpe_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) {
 }
 
 void fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count) {
-    DBG(printf("fpe_glDrawArrays(%s, %d, %d), program=%d, instanceID=%u\n", PrintEnum(mode), first, count, glstate->glsl->program, glstate->instanceID);)
+    DBG(SHUT_LOGD("fpe_glDrawArrays(%s, %d, %d), program=%d, instanceID=%u\n", PrintEnum(mode), first, count, glstate->glsl->program, glstate->instanceID);)
     scratch_t scratch = {0};
     realize_glenv(mode==GL_POINTS, first, count, 0, NULL, &scratch);
     LOAD_GLES(glDrawArrays);
@@ -789,7 +789,7 @@ void fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count) {
 }
 
 void fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {
-    DBG(printf("fpe_glDrawElements(%s, %d, %s, %p), program=%d, instanceID=%u\n", PrintEnum(mode), count, PrintEnum(type), indices, glstate->glsl->program, glstate->instanceID);)
+    DBG(SHUT_LOGD("fpe_glDrawElements(%s, %d, %s, %p), program=%d, instanceID=%u\n", PrintEnum(mode), count, PrintEnum(type), indices, glstate->glsl->program, glstate->instanceID);)
     LOAD_GLES2(glBindBuffer);
     scratch_t scratch = {0};
     realize_glenv(mode==GL_POINTS, 0, count, type, indices, &scratch);
@@ -805,7 +805,7 @@ void fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *i
     if(use_vbo) gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount) {
-    DBG(printf("fpe_glDrawArraysInstanced(%s, %d, %d, %d), program=%d\n", PrintEnum(mode), first, count, primcount, glstate->glsl->program);)
+    DBG(SHUT_LOGD("fpe_glDrawArraysInstanced(%s, %d, %d, %d), program=%d\n", PrintEnum(mode), first, count, primcount, glstate->glsl->program);)
     LOAD_GLES(glDrawArrays);
     LOAD_GLES2(glVertexAttrib4fv);
     scratch_t scratch = {0};
@@ -855,7 +855,7 @@ void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei 
     free_scratch(&scratch);
 }
 void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount) {
-    DBG(printf("fpe_glDrawElementsInstanced(%s, %d, %s, %p, %d), program=%d\n", PrintEnum(mode), count, PrintEnum(type), indices, primcount, glstate->glsl->program);)
+    DBG(SHUT_LOGD("fpe_glDrawElementsInstanced(%s, %d, %s, %p, %d), program=%d\n", PrintEnum(mode), count, PrintEnum(type), indices, primcount, glstate->glsl->program);)
     LOAD_GLES2(glBindBuffer);
     LOAD_GLES(glDrawElements);
     LOAD_GLES2(glVertexAttrib4fv);
@@ -1069,19 +1069,19 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         } else if(!fpe_IsEmpty(&state))
         {
             // need to create a new program for that...
-            DBG(printf("GLSL program %d need customization => ", program);)
+            DBG(SHUT_LOGD("GLSL program %d need customization => ", program);)
             if(!glprogram->fpe_cache)
                 glprogram->fpe_cache = fpe_NewCache();
             glprogram = fpe_CustomShader(glprogram, &state);    // fetch from cache if exist or create it
             program = glprogram->id;
-            DBG(printf("%d\n", program);)
+            DBG(SHUT_LOGD("%d\n", program);)
         }
         if(glstate->gleshard->program != program)
         {
             glstate->gleshard->program = program;
             glstate->gleshard->glprogram = glprogram;
             gles_glUseProgram(glstate->gleshard->program);
-            DBG(printf("Use GLSL program %d\n", glstate->gleshard->program);)
+            DBG(SHUT_LOGD("Use GLSL program %d\n", glstate->gleshard->program);)
         }
         // synchronize uniforms with parent!
         if(glprogram != glstate->glsl->glprogram)
@@ -1093,7 +1093,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
             glstate->gleshard->program = glstate->fpe->prog;
             glstate->gleshard->glprogram = glstate->fpe->glprogram;
             gles_glUseProgram(glstate->gleshard->program);
-            DBG(printf("Use FPE program %d\n", glstate->gleshard->program);)
+            DBG(SHUT_LOGD("Use FPE program %d\n", glstate->gleshard->program);)
         }
     }
     program_t *glprogram = glstate->gleshard->glprogram;
@@ -1114,13 +1114,13 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         while(tu_idx<MAX_TEX && glprogram->texunits[tu_idx].type && !need) {
             tex = glstate->texture.bound[glprogram->texunits[tu_idx].req_tu][glprogram->texunits[tu_idx].type - 1];
             if(tex && tex->binded_fbo==glstate->fbo.current_fb->id) {
-                DBG(printf("Texture %d is used on Uniform %s (%d) and binded on FBO %d Attachement=%s\n", tex->glname, GetUniformName(glprogram, glprogram->texunits[tu_idx].id), glprogram->texunits[tu_idx].id, glstate->fbo.current_fb->id, PrintEnum(tex->binded_attachment));)
+                DBG(SHUT_LOGD("Texture %d is used on Uniform %s (%d) and binded on FBO %d Attachement=%s\n", tex->glname, GetUniformName(glprogram, glprogram->texunits[tu_idx].id), glprogram->texunits[tu_idx].id, glstate->fbo.current_fb->id, PrintEnum(tex->binded_attachment));)
                 need = 1;
             }
             ++tu_idx;
         }
         if(need && tex) {
-            DBG(printf("LIBGL: Need to Bind/Unbind FBO!");)
+            DBG(SHUT_LOGD("LIBGL: Need to Bind/Unbind FBO!");)
             LOAD_GLES2_OR_OES(glBindFramebuffer);
             LOAD_GLES2_OR_OES(glFramebufferTexture2D);
             //gles_glFramebufferTexture2D(GL_FRAMEBUFFER, tex->binded_attachment, GL_TEXTURE_2D, 0, 0);
@@ -1409,7 +1409,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         if(v->enabled != w->enabled || (v->enabled && w->divisor)) {
             dirty = 1;
             v->enabled = (w->divisor)?0:w->enabled;
-            DBG(printf("VertexAttribArray[%d]:%s, divisor=%d\n", i, (w->enabled)?"Enable":"Disable", w->divisor);)
+            DBG(SHUT_LOGD("VertexAttribArray[%d]:%s, divisor=%d\n", i, (w->enabled)?"Enable":"Disable", w->divisor);)
             if(v->enabled)
                 gles_glEnableVertexAttribArray(i);
             else
@@ -1462,12 +1462,12 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                     v->buffer = w->buffer; // buffer is unused here
                 }
                 if(old_buffer != v->real_buffer) {
-                    DBG(printf("Switching to Buffer %d\n", v->real_buffer);)
+                    DBG(SHUT_LOGD("Switching to Buffer %d\n", v->real_buffer);)
                     gles_glBindBuffer(GL_ARRAY_BUFFER, v->real_buffer);
                     old_buffer = v->real_buffer;
                 }
                 gles_glVertexAttribPointer(i, v->size, v->type, v->normalized, v->stride, v->pointer);
-                DBG(printf("glVertexAttribPointer(%d, %d, %s, %d, %d, %p)\n", i, v->size, PrintEnum(v->type), v->normalized, v->stride, (GLvoid*)((uintptr_t)v->pointer+((v->buffer)?(uintptr_t)v->buffer->data:0)));)
+                DBG(SHUT_LOGD("glVertexAttribPointer(%d, %d, %s, %d, %d, %p)\n", i, v->size, PrintEnum(v->type), v->normalized, v->stride, (GLvoid*)((uintptr_t)v->pointer+((v->buffer)?(uintptr_t)v->buffer->data:0)));)
             }
         } else {
             // single value case
@@ -1503,7 +1503,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
             if(dirty || memcmp(glstate->gleshard->vavalue[i], current, 4*sizeof(GLfloat))) {
                 memcpy(glstate->gleshard->vavalue[i], current, 4*sizeof(GLfloat));
                 gles_glVertexAttrib4fv(i, glstate->gleshard->vavalue[i]);
-                DBG(printf("glVertexAttrib4fv(%d, %p) => (%f, %f, %f, %f)\n", i, glstate->gleshard->vavalue[i], glstate->gleshard->vavalue[i][0], glstate->gleshard->vavalue[i][1], glstate->gleshard->vavalue[i][2], glstate->gleshard->vavalue[i][3]);)
+                DBG(SHUT_LOGD("glVertexAttrib4fv(%d, %p) => (%f, %f, %f, %f)\n", i, glstate->gleshard->vavalue[i], glstate->gleshard->vavalue[i][0], glstate->gleshard->vavalue[i][1], glstate->gleshard->vavalue[i][2], glstate->gleshard->vavalue[i][3]);)
             }
         }
     } else {
@@ -1511,7 +1511,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         vertexattrib_t *v = &glstate->gleshard->vertexattrib[i];
         if(v->enabled) {
             v->enabled = 0;
-            DBG(printf("VertexAttribArray[%d]:%s\n", i, "Disable");)
+            DBG(SHUT_LOGD("VertexAttribArray[%d]:%s\n", i, "Disable");)
             gles_glDisableVertexAttribArray(i);
         }
     }
@@ -1521,7 +1521,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
 }
 
 void realize_blitenv(int alpha) {
-    DBG(printf("realize_blitenv(%d)\n", alpha);)
+    DBG(SHUT_LOGD("realize_blitenv(%d)\n", alpha);)
     LOAD_GLES2(glUseProgram);
     if(glstate->gleshard->program != ((alpha)?glstate->blit->program_alpha:glstate->blit->program)) {
         glstate->gleshard->program = ((alpha)?glstate->blit->program_alpha:glstate->blit->program);

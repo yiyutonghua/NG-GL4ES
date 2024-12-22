@@ -71,7 +71,7 @@ void init_sampler(glsampler_t* sampler)
 
 void gl4es_glGenSamplers(GLsizei n, GLuint *ids)
 {
-    DBG(printf("glGenSamplers(%i, %p)\n", n, ids);)
+    DBG(SHUT_LOGD("glGenSamplers(%i, %p)\n", n, ids);)
     // no hardware support taken into account for now
     /*LOAD_GLES2_OR_OES(glGenFramebuffers);
     GLsizei m = 0;
@@ -103,7 +103,7 @@ void gl4es_glGenSamplers(GLsizei n, GLuint *ids)
 
 void gl4es_glBindSampler(GLuint unit, GLuint sampler)
 {
-    DBG(printf("gl4es_glBindSample(%u, %u)\n", unit, sampler);)
+    DBG(SHUT_LOGD("gl4es_glBindSample(%u, %u)\n", unit, sampler);)
 
     if(unit>hardext.maxtex) {
         errorShim(GL_INVALID_VALUE);
@@ -122,7 +122,7 @@ void gl4es_glBindSampler(GLuint unit, GLuint sampler)
 
 void gl4es_glDeleteSamplers(GLsizei n, const GLuint* samplers)
 {
-    DBG(printf("glDeleteSamplers(%i, %p)\n", n, samplers);)
+    DBG(SHUT_LOGD("glDeleteSamplers(%i, %p)\n", n, samplers);)
     if(n<0) {
         errorShim(GL_INVALID_VALUE);
         return;
@@ -136,7 +136,7 @@ void gl4es_glDeleteSamplers(GLsizei n, const GLuint* samplers)
 
 GLboolean gl4es_glIsSampler(GLuint id)
 {
-    DBG(printf("glIsSampler(%u)\n", id);)
+    DBG(SHUT_LOGD("glIsSampler(%u)\n", id);)
     glsampler_t *s = find_sampler(id);
     if(s)
         return GL_TRUE;
@@ -145,7 +145,7 @@ GLboolean gl4es_glIsSampler(GLuint id)
 
 int samplerParameterfv(glsampler_t* sampler, GLenum pname, const GLfloat *params)
 {
-    DBG(printf("samplerParameterfv(%p(%d), %s, [%f(%s)...])\n", sampler, sampler->glname, PrintEnum(pname), params[0], PrintEnum(params[0]));)
+    DBG(SHUT_LOGD("samplerParameterfv(%p(%d), %s, [%f(%s)...])\n", sampler, sampler->glname, PrintEnum(pname), params[0], PrintEnum(params[0]));)
     GLint param = *params;
     switch(pname) {
         case GL_TEXTURE_MIN_FILTER:
@@ -238,7 +238,7 @@ int samplerParameterfv(glsampler_t* sampler, GLenum pname, const GLfloat *params
 
 int getSamplerParameterfv(glsampler_t* sampler, GLenum pname, GLfloat *params)
 {
-    DBG(printf("samplerParameterfv(%p(%d), %s, %p)\n", sampler, sampler->glname, PrintEnum(pname), params);)
+    DBG(SHUT_LOGD("samplerParameterfv(%p(%d), %s, %p)\n", sampler, sampler->glname, PrintEnum(pname), params);)
     switch(pname) {
         case GL_TEXTURE_MIN_FILTER:
             *params = sampler->min_filter;

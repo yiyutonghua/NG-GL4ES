@@ -44,7 +44,7 @@ static void fast_math() {
 #if defined(PANDORA) || defined(ANDROID)
 #define DEFAULT_ES 1
 #else
-#define DEFAULT_ES 2
+#define DEFAULT_ES 3
 #endif
 #endif
 
@@ -74,6 +74,7 @@ void initialize_gl4es() {
     globals4es.mergelist = 1;
     globals4es.queries = 1;
     globals4es.beginend = 1;
+    clear_log();
     // overides by env. variables
 		#ifdef GL4ES_COMPILE_FOR_USE_IN_SHARED_LIB
 			GetEnvVarInt("LIBGL_NOBANNER",&globals4es.nobanner,1);
@@ -81,7 +82,7 @@ void initialize_gl4es() {
     	globals4es.nobanner = IsEnvVarTrue("LIBGL_NOBANNER");
 		#endif
 
-		SHUT_LOGD("Initialising ng-gl4es\n");
+		SHUT_LOGD("Initialising Krypton Wrapper\n");
 	
     if(!globals4es.nobanner) print_build_infos();
 
@@ -152,6 +153,8 @@ void initialize_gl4es() {
         break;
     }
 
+    //globals4es.use_mc_color=atoi("LIBGL_MC_COLOR");
+    globals4es.use_mc_color=1; //something wrong about it. force it to be enabled
     globals4es.gl=ReturnEnvVarInt("LIBGL_GL");
     switch(globals4es.gl) {
       case 10:
@@ -345,15 +348,16 @@ void initialize_gl4es() {
 
     env(LIBGL_VABGRA, globals4es.vabgra, "Export GL_ARB_vertex_array_bgra extension");
 
-    const char *env_version = GetEnvVar("LIBGL_VERSION");
+    //const char *env_version = GetEnvVar("LIBGL_VERSION");
+    bool env_version = false; //force it not to be modified
     if (env_version) {
         SHUT_LOGD("Overide version string with \"%s\" (should be in the form of \"1.x\")\n", env_version);
     }
     if(env_version) {
-        snprintf(globals4es.version, 49, "%s Next Generation GL4ES %d.%d.%d", env_version, MAJOR, MINOR, REVISION);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §l§bKrypton §8Wrapper §r§c%s%d.%d.%d":"%s Krypton Wrapper %s%d.%d.%d", env_version, VERSION_TYPE, MAJOR, MINOR, REVISION);
         SHUT_LOGD("Targeting OpenGL %s\n", env_version);
     } else {
-        snprintf(globals4es.version, 49, "%d.%d Next Generation GL4ES %d.%d.%d", globals4es.gl/10, globals4es.gl%10, MAJOR, MINOR, REVISION);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §l§bKrypton §8Wrapper §r§c%s%d.%d.%d":"%d.%d Krypton Wrapper %s%d.%d.%d", globals4es.gl/10, globals4es.gl%10, VERSION_TYPE, MAJOR, MINOR, REVISION);
         SHUT_LOGD("Targeting OpenGL %d.%d\n", globals4es.gl/10, globals4es.gl%10);
     }
 

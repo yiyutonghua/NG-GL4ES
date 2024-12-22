@@ -10,6 +10,7 @@
 #include "glstate.h"
 #include "loader.h"
 #include "shaderconv.h"
+#include "vgpu/shaderconv.h"
 #include "fpe_shader.h"
 
 //#define DEBUG
@@ -25,16 +26,15 @@ KHASH_MAP_IMPL_INT(uniformlist, uniform_t *);
 KHASH_MAP_IMPL_INT(programlist, program_t *);
 
 GLuint __attribute__((visibility("default"))) glGetUniformBlockIndex(GLuint program, const GLchar* name) {
-    CHECK_PROGRAM(GLuint, program);  // 检查程序是否有效
+    CHECK_PROGRAM(GLuint, program);
 
-    glprogram = glprogram;  // 获取程序对象
-    GLuint blockIndex = (GLuint)-1;  // 默认返回无效索引
+    glprogram = glprogram;
+    GLuint blockIndex = (GLuint)-1;
 
-    // 遍历程序的所有 uniform，找到匹配的 uniform block 名称
     for (int i = 0; i < glprogram->num_uniform; i++) {
         uniform_t* uniform = kh_value(glprogram->uniform, i);
         if (uniform && strcmp(uniform->name, name) == 0 && uniform->builtin == 0) {
-            blockIndex = i;  // 找到对应的 uniform block，返回其索引
+            blockIndex = i;
             break;
         }
     }
@@ -78,11 +78,11 @@ void __attribute__((visibility("default"))) glGetActiveUniformBlockiv(GLuint pro
         break;
 
     case GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
-        *params = (uniform->builtin & 1) ? GL_TRUE : GL_FALSE;  // Check if referenced by vertex shader
+        *params = (uniform->builtin & 1) ? GL_TRUE : GL_FALSE;
         break;
 
     case GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
-        *params = (uniform->builtin & 2) ? GL_TRUE : GL_FALSE;  // Check if referenced by fragment shader
+        *params = (uniform->builtin & 2) ? GL_TRUE : GL_FALSE;
         break;
 
     default:
@@ -97,7 +97,6 @@ void __attribute__((visibility("default"))) glGetActiveUniformName(GLuint progra
 
     glprogram = kh_value(glstate->glsl->programs, k_program);
 
-    // 获取程序对象
     khash_t(programlist)* programs = glstate->glsl->programs;
     k_program = kh_get(programlist, programs, program);
     if (k_program != kh_end(programs)) {
@@ -109,31 +108,26 @@ void __attribute__((visibility("default"))) glGetActiveUniformName(GLuint progra
         return;
     }
 
-    // 获取 uniform 信息
-    khash_t(uniformlist)* uniforms = glprogram->uniform;  // 获取 uniform 哈希表
+    khash_t(uniformlist)* uniforms = glprogram->uniform;
     if (uniformIndex >= glprogram->num_uniform) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
 
-    // 遍历哈希表找到对应的 uniform
     khint_t k_uniform = kh_get(uniformlist, uniforms, uniformIndex);
     if (k_uniform == kh_end(uniforms)) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
 
-    // 获取 uniform 数据
     uniform_t* uniform = kh_value(uniforms, k_uniform);
 
-    // 复制名称到提供的缓冲区
     if (length) {
-        *length = strlen(uniform->name);  // 返回实际长度
+        *length = strlen(uniform->name);
     }
 
     if (name) {
-        strncpy(name, uniform->name, bufSize);  // 将名称复制到缓冲区
-        // 确保字符串以 NULL 结尾
+        strncpy(name, uniform->name, bufSize);
         if (bufSize > 0) {
             name[bufSize - 1] = '\0';
         }
@@ -170,7 +164,7 @@ void __attribute__((visibility("default"))) glGetActiveUniformsiv(GLuint program
             break;
 
         case GL_UNIFORM_NAME_LENGTH:
-            params[i] = (GLint)strlen(uniform->name) + 1;  // Including null terminator
+            params[i] = (GLint)strlen(uniform->name) + 1;
             break;
 
         case GL_UNIFORM_OFFSET:
@@ -186,11 +180,11 @@ void __attribute__((visibility("default"))) glGetActiveUniformsiv(GLuint program
             break;
 
         case GL_UNIFORM_IS_ROW_MAJOR:
-            params[i] = GL_FALSE;  // OpenGL defaults to column-major, not row-major
+            params[i] = GL_FALSE;
             break;
 
         case GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX:
-            params[i] = -1;  // No atomic counter buffer by default
+            params[i] = -1;
             break;
 
         default:
@@ -202,23 +196,23 @@ void __attribute__((visibility("default"))) glGetActiveUniformsiv(GLuint program
 
 
 void __attribute__((visibility("default"))) glGetActiveUniformBlockName(GLuint program, GLuint blockIndex, GLsizei bufSize, GLsizei* length, GLchar* name) {
-    CHECK_PROGRAM(void, program);  // 检查程序是否有效
+    CHECK_PROGRAM(void, program);
 
-    glprogram = glprogram;  // 获取程序对象
+    glprogram = glprogram;
 
     if (blockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);  // 如果索引无效
+        errorShim(GL_INVALID_INDEX);
         return;
     }
 
     uniform_t* uniform = kh_value(glprogram->uniform, blockIndex);
     if (uniform && length) {
-        *length = strlen(uniform->name) + 1;  // 包含 null 终止符
+        *length = strlen(uniform->name) + 1;
     }
 
     if (name && bufSize > 0) {
-        strncpy(name, uniform->name, bufSize - 1);  // 拷贝名称到 buffer
-        name[bufSize - 1] = '\0';  // 确保字符串以 null 结尾
+        strncpy(name, uniform->name, bufSize - 1);
+        name[bufSize - 1] = '\0';
     }
 }
 
@@ -234,114 +228,101 @@ int IsActiveUniform(uniform_t* uniform) {
 
 
 void __attribute__((visibility("default"))) glGetActiveBlockiv(GLuint program, GLuint blockIndex, GLenum pname, GLint* params) {
-    CHECK_PROGRAM(void, program);  // 检查程序是否有效
+    CHECK_PROGRAM(void, program);
 
-    glprogram = glprogram;  // 获取程序对象
+    glprogram = glprogram;
 
 
     if (blockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);  // 如果索引无效
+        errorShim(GL_INVALID_INDEX);
         return;
     }
 
     uniform_t* uniform = kh_value(glprogram->uniform, blockIndex);
     if (!uniform) {
-        errorShim(GL_INVALID_OPERATION);  // 如果 uniform 不存在
+        errorShim(GL_INVALID_OPERATION);
         return;
     }
 
     switch (pname) {
     case GL_UNIFORM_BLOCK_DATA_SIZE:
-        // 返回 uniform block 的数据大小
         *params = uniform->cache_size;
         break;
 
     case GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
-        // 返回 uniform block 中的 active uniforms 数量
         *params = uniform->size;
         break;
 
     case GL_UNIFORM_BLOCK_BINDING:
-        // 返回最后选择的绑定点
-        *params = uniform->cache_offs;  // 缓存的绑定点偏移
+        *params = uniform->cache_offs;
         break;
 
     case GL_UNIFORM_BLOCK_NAME_LENGTH:
-        // 返回 uniform block 名称的长度（包括 null terminator）
         if (params) {
-            *params = strlen(uniform->name) + 1;  // +1 计算 null terminator
+            *params = strlen(uniform->name) + 1;
         }
         break;
 
         {
-            // 查找该 uniform block 中的所有 active uniform
             GLint activeUniformCount = 0;
-            // 假设 uniforms 结构体里有一个字段可以告诉我们这个 block 中活跃的 uniforms 数量
-            GLint* activeUniformIndices = malloc(sizeof(GLint) * uniform->size);  // 为索引数组分配空间
+            GLint* activeUniformIndices = malloc(sizeof(GLint) * uniform->size);
 
-            // 遍历 uniform block 中所有的 uniforms 并判断哪些是活跃的
             for (int i = 0; i < uniform->size; ++i) {
                 uniform_t* u = &glprogram->uniform[i];
-                if (u->builtin || IsActiveUniform(u)) {  // 这里的 `IsActiveUniform` 是一个用来判断 uniform 是否活跃的函数
+                if (u->builtin || IsActiveUniform(u)) {
                     activeUniformIndices[activeUniformCount++] = i;
                 }
             }
 
-            // 返回活跃的 uniform 索引数量
             if (activeUniformCount > 0) {
                 memcpy(params, activeUniformIndices, sizeof(GLint) * activeUniformCount);
             }
             else {
-                memset(params, 0, sizeof(GLint));  // 如果没有活跃的 uniform
+                memset(params, 0, sizeof(GLint));
             }
 
-            free(activeUniformIndices);  // 释放内存
+            free(activeUniformIndices);
             break;
         }
     case GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
-        // 判断 uniform block 是否被顶点着色器引用
         *params = (uniform->type == GL_VERTEX_SHADER) ? GL_TRUE : GL_FALSE;
         break;
 
     case GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
-        // 判断 uniform block 是否被片段着色器引用
         *params = (uniform->type == GL_FRAGMENT_SHADER) ? GL_TRUE : GL_FALSE;
         break;
 
     default:
-        // 如果 pname 无效
         errorShim(GL_INVALID_ENUM);
         break;
     }
 }
 void __attribute__((visibility("default"))) glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) {
-    CHECK_PROGRAM(void, program);  // 检查程序是否有效
+    CHECK_PROGRAM(void, program);
 
-    glprogram = glprogram;  // 获取程序对象
+    glprogram = glprogram;
 
     if (uniformBlockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);  // 如果索引无效
+        errorShim(GL_INVALID_INDEX);
         return;
     }
 
     uniform_t* uniform = kh_value(glprogram->uniform, uniformBlockIndex);
     if (!uniform) {
-        errorShim(GL_INVALID_OPERATION);  // 如果 uniform 不存在
+        errorShim(GL_INVALID_OPERATION);
         return;
     }
 
-    uniform->cache_offs = uniformBlockBinding;  // 设置绑定点
+    uniform->cache_offs = uniformBlockBinding;
 }
 
 
 void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint program, GLuint colorNumber, const GLchar* name) {
-    // 1. 检查 program 是否有效
     if (!program) {
         noerrorShim();
         return;
     }
 
-    // 获取程序对象
     program_t* glprogram = NULL;
     khint_t k_program;
     {
@@ -353,20 +334,17 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
         }
     }
 
-    // 如果找不到程序对象，报错并返回
     if (!glprogram) {
         errorShim(GL_INVALID_OPERATION);
         return;
     }
 
-    // 2. 获取该程序的片段着色器并查找指定的输出变量
     shader_t* frag_shader = glprogram->last_frag;
     if (!frag_shader) {
         errorShim(GL_INVALID_OPERATION);
         return;
     }
 
-    // 查找片段着色器中的输出变量
     GLint location = -1;
     for (int i = 0; i < glprogram->num_uniform; i++) {
         uniform_t* uniform = &glprogram->uniform[i];
@@ -376,19 +354,15 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
         }
     }
 
-    // 如果没有找到对应的变量，报错并返回
     if (location == -1) {
         errorShim(GL_INVALID_OPERATION);
         return;
     }
 
-    // 3. 获取程序的 attribloc 哈希表
     khash_t(attribloclist)* attribloc = glprogram->attribloc;
 
-    // 查找对应的绑定位置
     khint_t k = kh_get(attribloclist, attribloc, colorNumber);
     if (k == kh_end(attribloc)) {
-        // 如果没有找到对应的键，创建一个新的绑定
         attribloc_t* new_attribloc = (attribloc_t*)malloc(sizeof(attribloc_t));
         new_attribloc->index = colorNumber;
         new_attribloc->real_index = location;
@@ -397,20 +371,37 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
         kh_value(attribloc, k) = new_attribloc;
     }
     else {
-        // 如果已经存在，更新绑定的索引
         attribloc_t* existing_attribloc = kh_value(attribloc, k);
         existing_attribloc->real_index = location;
         existing_attribloc->name = strdup(name);
     }
 
-    // 更新程序状态
-    glprogram->linked = 1; // 假设绑定后程序状态需要更新为已链接
+    glprogram->linked = 1;
     noerrorShim();
 }
 
+void merge_uniforms(uniforms_declarations uniforms1, uniforms_declarations uniforms2) {
+    int i = 0, j = 0;
+
+    // 找到第一个空的位置（即 initial_value == NULL）
+    while (i < MAX_UNIFORM_VARIABLE_NUMBER && uniforms1[i].initial_value[0] != '\0') {
+        i++;  // 跳过已初始化的元素
+    }
+
+    // 从第一个空的位置开始，将 uniforms_declarations2 中的数据复制过去
+    while (i < MAX_UNIFORM_VARIABLE_NUMBER && j < MAX_UNIFORM_VARIABLE_NUMBER) {
+        // 复制 uniforms_declarations2 中的元素到 uniforms_declarations1 中
+        if (uniforms2[j].initial_value[0] != '\0') {  // 只复制非空的元素
+            strncpy(uniforms1[i].variable, uniforms2[j].variable, MAX_VARIABLE_LENGTH);
+            strncpy(uniforms1[i].initial_value, uniforms2[j].initial_value, MAX_INITIAL_VALUE_LENGTH);
+            i++;
+        }
+        j++;
+    }
+}
 
 void gl4es_glAttachShader(GLuint program, GLuint shader) {
-    DBG(printf("glAttachShader(%d, %d)\n", program, shader);)
+    DBG(SHUT_LOGD("glAttachShader(%d, %d)\n", program, shader);)
     FLUSH_BEGINEND;
     // sanity tests
     CHECK_PROGRAM(void, program)
@@ -428,6 +419,8 @@ void gl4es_glAttachShader(GLuint program, GLuint shader) {
         glprogram->last_vert = glshader;
     else if(glshader->type==GL_FRAGMENT_SHADER && !glprogram->last_frag)
         glprogram->last_frag = glshader;
+    // merge uniforms_declarations
+    merge_uniforms(glprogram->declarations, glshader->uniforms_declarations);
     // send to hadware
     LOAD_GLES2(glAttachShader);
     if(gles_glAttachShader) {
@@ -438,7 +431,7 @@ void gl4es_glAttachShader(GLuint program, GLuint shader) {
 }
 
 void gl4es_glBindAttribLocation(GLuint program, GLuint index, const GLchar *name) {
-    DBG(printf("glBindAttribLocation(%d, %d, \"%s\")\n", program, index, name);)
+    DBG(SHUT_LOGD("glBindAttribLocation(%d, %d, \"%s\")\n", program, index, name);)
     FLUSH_BEGINEND;
     // sanity tests
     CHECK_PROGRAM(void, program)
@@ -473,7 +466,7 @@ void gl4es_glBindAttribLocation(GLuint program, GLuint index, const GLchar *name
 }
 
 GLuint gl4es_glCreateProgram(void) {
-    DBG(printf("glCreateProgram()\n");)
+    DBG(SHUT_LOGD("glCreateProgram()\n");)
     FLUSH_BEGINEND;
     static GLuint lastprogram = 0;
     GLuint program;
@@ -554,7 +547,7 @@ void deleteProgram(program_t *glprogram, khint_t k_program) {
 }
 
 void gl4es_glDeleteProgram(GLuint program) {
-    DBG(printf("glDeleteProgram(%d)\n", program);)
+    DBG(SHUT_LOGD("glDeleteProgram(%d)\n", program);)
     if(!glstate) return;    // in case a program delete shaders after deleteing all context
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
@@ -574,7 +567,7 @@ void gl4es_glDeleteProgram(GLuint program) {
 }
 
 void gl4es_glDetachShader(GLuint program, GLuint shader) {
-    DBG(printf("glDetachShader(%d, %d)\n", program, shader);)
+    DBG(SHUT_LOGD("glDetachShader(%d, %d)\n", program, shader);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
     CHECK_SHADER(void, shader)
@@ -599,7 +592,7 @@ void gl4es_glDetachShader(GLuint program, GLuint shader) {
 }
 
 void gl4es_glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {
-    DBG(printf("glGetActiveAttrib(%d, %d, %d, %p, %p, %p, %p)\n", program, index, bufSize, length, size, type, name);)
+    DBG(SHUT_LOGD("glGetActiveAttrib(%d, %d, %d, %p, %p, %p, %p)\n", program, index, bufSize, length, size, type, name);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
 
@@ -615,18 +608,18 @@ void gl4es_glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsi
                     strncpy(name, attribloc->glname, bufSize-1);
                     name[bufSize-1] = '\0';
                 }
-                DBG(printf("found, type=%s, size=%d, name=%s/%s\n", PrintEnum(attribloc->type), attribloc->size, attribloc->name, attribloc->glname);)
+                DBG(SHUT_LOGD("found, type=%s, size=%d, name=%s/%s\n", PrintEnum(attribloc->type), attribloc->size, attribloc->name, attribloc->glname);)
                 noerrorShim();
                 return;
             }
         );
     }
-    DBG(printf("not found\n");)
+    DBG(SHUT_LOGD("not found\n");)
     errorShim(GL_INVALID_VALUE);    
 }
 
 void gl4es_glGetAttachedShaders(GLuint program, GLsizei maxCount, GLsizei *count, GLuint *shaders) {
-    DBG(printf("glGetAttachedShaders(%d, %d, %p, %p)\n", program, maxCount, count, shaders);)
+    DBG(SHUT_LOGD("glGetAttachedShaders(%d, %d, %p, %p)\n", program, maxCount, count, shaders);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
 
@@ -642,18 +635,18 @@ void gl4es_glGetAttachedShaders(GLuint program, GLsizei maxCount, GLsizei *count
 }
 
 GLint gl4es_glGetAttribLocation(GLuint program, const GLchar *name) {
-    DBG(printf("glGetAttribLocation(%d, %s)\n", program, name));
+    DBG(SHUT_LOGD("glGetAttribLocation(%d, %s)\n", program, name));
     FLUSH_BEGINEND;
     CHECK_PROGRAM(GLint, program);
 
     if(!glprogram->linked) {
         errorShim(GL_INVALID_OPERATION);
-        DBG(printf(" program unlinked: -1\n"));
+        DBG(SHUT_LOGD(" program unlinked: -1\n"));
         return -1;
     }
     noerrorShim();
     if(strncmp(name, "gl_", 3)==0) {
-        DBG(printf(" internal attrib: -1\n"));
+        DBG(SHUT_LOGD(" internal attrib: -1\n"));
         return -1;
     }
 
@@ -671,27 +664,27 @@ GLint gl4es_glGetAttribLocation(GLuint program, const GLchar *name) {
     }
     // if found, just return the value, it's done...
     if(loc!=-1) {
-        DBG(printf(" found in cache: %d\n", loc);)
+        DBG(SHUT_LOGD(" found in cache: %d\n", loc);)
         return loc;
     }
     // end
-    DBG(printf(" asked hardware: %d\n", loc);)
+    DBG(SHUT_LOGD(" asked hardware: %d\n", loc);)
     return loc;
 }
 
 void gl4es_glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {
-    DBG(printf("glGetActiveUniform(%d, %d, %d, %p, %p, %p, %p)\n", program, index, bufSize, length, size, type, name);)
+    DBG(SHUT_LOGD("glGetActiveUniform(%d, %d, %d, %p, %p, %p, %p)\n", program, index, bufSize, length, size, type, name);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(GLvoid, program);
 
     if(!glprogram->linked) {
         errorShim(GL_INVALID_OPERATION);
-        DBG(printf(" not linked\n");)
+        DBG(SHUT_LOGD(" not linked\n");)
         return;
     }
     noerrorShim();
     if(strncmp(name, "gl_", 3)==0) {
-        DBG(printf(" internal uniform\n");)
+        DBG(SHUT_LOGD(" internal uniform\n");)
         return;
     }
 
@@ -708,13 +701,13 @@ void gl4es_glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLs
                     strncpy(name, m->name, bufSize-1);
                     name[bufSize-1] = '\0';
                 }
-                DBG(printf(" found %s (%d), type=%s, size=%d\n", m->name, strlen(m->name), PrintEnum(m->type), m->size);)
+                DBG(SHUT_LOGD(" found %s (%d), type=%s, size=%d\n", m->name, strlen(m->name), PrintEnum(m->type), m->size);)
                 return;
             }
         );
     }
     // end
-    DBG(printf(" not found\n");)
+    DBG(SHUT_LOGD(" not found\n");)
     errorShim(GL_INVALID_VALUE);
 }
 
@@ -726,7 +719,7 @@ const char* getFakeProgramInfo(program_t* glprogram) {
 }
 
 void gl4es_glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog) {
-    DBG(printf("glGetProgramInfoLog(%d, %d, %p, %p)\n", program, maxLength, length, infoLog);)
+    DBG(SHUT_LOGD("glGetProgramInfoLog(%d, %d, %p, %p)\n", program, maxLength, length, infoLog);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
 
@@ -754,7 +747,7 @@ void gl4es_glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei *lengt
 }
 
 void gl4es_glGetProgramiv(GLuint program, GLenum pname, GLint *params) {
-    DBG(printf("glGetProgramiv(%d, %s, %p)\n", program, PrintEnum(pname), params);)
+    DBG(SHUT_LOGD("glGetProgramiv(%d, %s, %p)\n", program, PrintEnum(pname), params);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
 
@@ -826,14 +819,14 @@ void gl4es_glGetProgramiv(GLuint program, GLenum pname, GLint *params) {
 }
 
 GLint gl4es_glGetUniformLocation(GLuint program, const GLchar *name) {
-    DBG(printf("glGetUniformLocation(%d, %s)\n", program, name);)
+    DBG(SHUT_LOGD("glGetUniformLocation(%d, %s)\n", program, name);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(GLint, program)
 
     noerrorShim();
     int res = -1;
     if(strncmp(name, "gl_", 3)==0) {
-        DBG(printf(" internal uniform: -1\n");)
+        DBG(SHUT_LOGD(" internal uniform: -1\n");)
         return res;
     }
 
@@ -862,12 +855,12 @@ GLint gl4es_glGetUniformLocation(GLuint program, const GLchar *name) {
             }
         )
     }
-    DBG(printf(" location: %d\n", res);)
+    DBG(SHUT_LOGD(" location: %d\n", res);)
     return res;
 }
 
 GLboolean gl4es_glIsProgram(GLuint program) {
-    DBG(printf("glIsProgram(%d)\n", program);)
+    DBG(SHUT_LOGD("glIsProgram(%d)\n", program);)
     FLUSH_BEGINEND;
     noerrorShim();
     if(!program) {
@@ -976,7 +969,7 @@ static void fill_program(program_t *glprogram)
                         glprogram->texunits[tu_idx].req_tu = glprogram->texunits[tu_idx].act_tu = 0;
                         ++tu_idx;
                     }
-                    DBG(printf(" uniform #%d : \"%s\"%s type=%s size=%d\n", id, gluniform->name, gluniform->builtin?" (builtin) ":"", PrintEnum(gluniform->type), gluniform->size);)
+                    DBG(SHUT_LOGD(" uniform #%d : \"%s\"%s type=%s size=%d\n", id, gluniform->name, gluniform->builtin?" (builtin) ":"", PrintEnum(gluniform->type), gluniform->size);)
                     if(gluniform->size==1) ++glprogram->num_uniform;
                     id++;
                 }
@@ -1032,7 +1025,7 @@ static void fill_program(program_t *glprogram)
                 glattribloc->real_index = i;
                 int builtin = builtin_CheckVertexAttrib(glprogram, name, id);
                 glprogram->va_size[id] = n_uniform(type); // same as uniform
-                DBG(printf(" attrib #%d : \"%s\"%s type=%s size=%d\n", id, glattribloc->name, builtin?" (builtin) ":"", PrintEnum(glattribloc->type), glattribloc->size);)
+                DBG(SHUT_LOGD(" attrib #%d : \"%s\"%s type=%s size=%d\n", id, glattribloc->name, builtin?" (builtin) ":"", PrintEnum(glattribloc->type), glattribloc->size);)
             }
         }
         DBG(else printf("LIBGL: Warning, getting Attrib #%d info failed with %s\n", i, PrintEnum(e2));)
@@ -1044,7 +1037,7 @@ int gl4es_useProgramBinary(GLuint program, int length, GLenum format, const void
 {
     if(hardext.prgbin_n==0)
         return 0;
-    DBG(printf("useProgramBinary(%d, %d, %d, %p)\n", program, length, format, binary);)
+    DBG(SHUT_LOGD("useProgramBinary(%d, %d, %d, %p)\n", program, length, format, binary);)
     CHECK_PROGRAM(int, program)
     noerrorShim();
 
@@ -1056,12 +1049,12 @@ int gl4es_useProgramBinary(GLuint program, int length, GLenum format, const void
     gles_glProgramBinary(glprogram->id, format, binary, length);
 
     gles_glGetProgramiv(glprogram->id, GL_LINK_STATUS, &glprogram->linked);
-    DBG(printf(" link status = %d\n", glprogram->linked);)
+    DBG(SHUT_LOGD(" link status = %d\n", glprogram->linked);)
     if(glprogram->linked) {
         fill_program(glprogram);
     } else {
         // should DBG the linker error?
-        DBG(printf(" Load failed!\n");)
+        DBG(SHUT_LOGD(" Load failed!\n");)
         glprogram->linked = 0;
         errorGL();
     }
@@ -1072,7 +1065,7 @@ int gl4es_getProgramBinary(GLuint program, int *length, GLenum *format, void** b
 {
     if(hardext.prgbin_n==0)
         return 0;
-    DBG(printf("getProgramBinary(%d, %p, %p, %p)\n", program, length, format, binary);)
+    DBG(SHUT_LOGD("getProgramBinary(%d, %p, %p, %p)\n", program, length, format, binary);)
     CHECK_PROGRAM(int, program)
     noerrorShim();
 
@@ -1096,7 +1089,7 @@ void gl4es_glGetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length, 
         errorShim(GL_INVALID_OPERATION);
         return;
     }
-    DBG(printf("glGetProgramBinary(%d, %d, %p, %p, %p)\n", program, bufSize, length, binaryFormat, binary);)
+    DBG(SHUT_LOGD("glGetProgramBinary(%d, %d, %p, %p, %p)\n", program, bufSize, length, binaryFormat, binary);)
     CHECK_PROGRAM(void, program)
     LOAD_GLES_OES(glGetProgramBinary);
     gles_glGetProgramBinary(glprogram->id, bufSize, length, binaryFormat, binary);
@@ -1109,7 +1102,7 @@ void gl4es_glProgramBinary(GLuint program, GLenum binaryFormat, const void *bina
         errorShim(GL_INVALID_OPERATION);
         return;
     }
-    DBG(printf("glProgramBinary(%d, %d, %p, %d)\n", program, binaryFormat, binary, length);)
+    DBG(SHUT_LOGD("glProgramBinary(%d, %d, %p, %d)\n", program, binaryFormat, binary, length);)
     if(gl4es_useProgramBinary(program, length, binaryFormat, binary))
         noerrorShim();
     else
@@ -1117,7 +1110,7 @@ void gl4es_glProgramBinary(GLuint program, GLenum binaryFormat, const void *bina
 }
 
 void gl4es_glLinkProgram(GLuint program) {
-    DBG(printf("glLinkProgram(%d)\n", program);)
+    DBG(SHUT_LOGD("glLinkProgram(%d)\n", program);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
     noerrorShim();
@@ -1150,7 +1143,7 @@ void gl4es_glLinkProgram(GLuint program) {
     }
     // someone is not compatible, redoing shaders...
     if(!compatible) {
-        DBG(printf("Need to redo some shaders...\n");)
+        DBG(SHUT_LOGD("Need to redo some shaders...\n");)
         for (int i=0; i<glprogram->attach_size; i++) {
             redoShader(glprogram->attach[i], &needs);
         }
@@ -1171,13 +1164,14 @@ void gl4es_glLinkProgram(GLuint program) {
         GLenum err = gles_glGetError();
         // Get Link Status
         gles_glGetProgramiv(glprogram->id, GL_LINK_STATUS, &glprogram->linked);
-        DBG(printf(" link status = %d\n", glprogram->linked);)
+        DBG(SHUT_LOGD(" link status = %d\n", glprogram->linked);)
         if(glprogram->linked) {
             fill_program(glprogram);
+            set_uniforms_default_value(program, glprogram->declarations, MAX_UNIFORM_VARIABLE_NUMBER);
         } else {
             GLsizei log_length;
             gles_glGetProgramiv(glprogram->id, GL_INFO_LOG_LENGTH, &log_length);
-            DBG(printf("Linker error length: %i\n", log_length));
+            DBG(SHUT_LOGD("Linker error length: %i\n", log_length));
             if(log_length != 0) {
                LOAD_GLES2(glGetProgramInfoLog);
                GLchar log_chars[log_length];
@@ -1185,7 +1179,7 @@ void gl4es_glLinkProgram(GLuint program) {
                printf("%s\n", log_chars);
             }
             // should DBG the linker error?
-            DBG(printf(" Link failled!\n");)
+            DBG(SHUT_LOGD(" Link failled!\n");)
             glprogram->linked = 0;
             errorGL();
             return;
@@ -1199,7 +1193,7 @@ void gl4es_glLinkProgram(GLuint program) {
 }
 
 void gl4es_glUseProgram(GLuint program) {
-    DBG(printf("glUseProgram(%d) old=%d\n", program, glstate->glsl->program);)
+    DBG(SHUT_LOGD("glUseProgram(%d) old=%d\n", program, glstate->glsl->program);)
     PUSH_IF_COMPILING(glUseProgram);
     if(program==0) {
         glstate->glsl->program=0;
@@ -1208,7 +1202,7 @@ void gl4es_glUseProgram(GLuint program) {
     }
     CHECK_PROGRAM(void, program)
     noerrorShim();
-    DBG(printf("program id=%d\n", glprogram->id);)
+    DBG(SHUT_LOGD("program id=%d\n", glprogram->id);)
 
     glstate->glsl->program=glprogram->id;
     glstate->glsl->glprogram=glprogram;

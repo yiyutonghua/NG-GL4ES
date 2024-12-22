@@ -12,7 +12,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <android/log.h>
-#include <sstream> // 提供 std::istringstream 定义
+#include <sstream>
 
 GLuint computeTexture;
 std::vector<float> computeResults;
@@ -23,18 +23,6 @@ std::unordered_set<FramebufferAttachment> invalidatedAttachments;
 unsigned int currentBarrierState;
 std::mutex barrierMutex;
 void* handle;
-
-struct UniformInfo {
-    GLenum type;                 // Uniform 类型
-    std::vector<GLfloat> values; // 存储 float 类型的值
-    std::vector<GLint> ivec;     // 存储 int 类型的值
-    std::vector<GLuint> uvec;    // 存储 uint 类型的值
-    std::vector<GLdouble> dvalues;    // 新增：存储双精度浮点数数据
-    bool isMatrix = false;       // 是否是矩阵
-    std::string name;
-    GLint size;
-    GLint location;
-};
 
 extern "C" {
     void __attribute__((visibility("default"))) threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
