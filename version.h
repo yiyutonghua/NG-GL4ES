@@ -1,9 +1,10 @@
 #ifndef _GL4ES_VERSION_H
 #define _GL4ES_VERSION_H
 
-#define MAJOR 2024
-#define MINOR 12
-#define REVISION 22
-#define VERSION_TYPE "D"
+#define MAJOR 0
+#define MINOR 1
+#define REVISION 0
+#define VERSION_TYPE "R"
+#define VERSION_SUFFIX "Preview 1"
 
 #endif //_GL4ES_VERSION_H

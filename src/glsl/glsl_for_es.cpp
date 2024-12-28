@@ -3,9 +3,7 @@
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/Include/Types.h>
 #include <glslang/Public/ShaderLang.h>
-#include <spirv_cross/spirv_cross.hpp>
-#include <spirv_cross/spirv_glsl.hpp>
-#include <spirv_cross/spirv_cpp.hpp>
+#include <spirv_cross/spirv_cross_c.h>
 #include <iostream>
 #include "../gl/gl4es.h"
 #include <fstream>
@@ -138,6 +136,29 @@ int getGLSLVersion(const char* glsl_code) {
     return -1;
 }
 
+// 从指定文件路径加载 SPIR-V 文件
+std::vector<uint32_t> load_spirv_file(const std::string& filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open SPIR-V file: " + filepath);
+    }
+
+    // 获取文件大小
+    file.seekg(0, std::ios::end);
+    size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // 读取文件内容
+    std::vector<uint32_t> spirv_binary(file_size / sizeof(uint32_t));
+    file.read(reinterpret_cast<char*>(spirv_binary.data()), file_size);
+
+    if (!file) {
+        throw std::runtime_error("Failed to read SPIR-V file: " + filepath);
+    }
+
+    return spirv_binary;
+}
+
 char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     glslang::InitializeProcess();
     EShLanguage shader_language;
@@ -167,19 +188,19 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
         std::strcpy(shader_source, shader_str.c_str());
 
     }
-    SHUT_LOGD("GLSL version: %d",glsl_version);
+    DBG(SHUT_LOGD("GLSL version: %d",glsl_version);)
 
     shader.setStrings(&shader_source, 1);
 
     using namespace glslang;
     shader.setEnvInput(EShSourceGlsl, shader_language, EShClientVulkan, glsl_version);
-    shader.setEnvClient(EShClientVulkan, EShTargetVulkan_1_2);
-    shader.setEnvTarget(EShTargetSpv, EShTargetSpv_1_4);  // SPIR-V 1.3
+    shader.setEnvClient(EShClientOpenGL, EShTargetOpenGL_450);
+    shader.setEnvTarget(EShTargetSpv, EShTargetSpv_1_4);
     shader.setAutoMapLocations(true);
+    shader.setAutoMapBindings(true);
+    TBuiltInResource TBuiltInResource_resources = InitResources();
 
-    TBuiltInResource resources = InitResources();
-
-    if (!shader.parse(&resources, glsl_version, true, EShMsgDefault)) {
+    if (!shader.parse(&TBuiltInResource_resources, glsl_version, true, EShMsgDefault)) {
         DBG(SHUT_LOGE("GLSL编译错误: \n%s",shader.getInfoLog());)
         return NULL;
     }
@@ -196,40 +217,47 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     std::vector<unsigned int> spirv_code;
     glslang::SpvOptions spvOptions;
     spvOptions.disableOptimizer = true;
-/*
     glslang::GlslangToSpv(*program.getIntermediate(shader_language), spirv_code, &spvOptions);
-    std::ofstream ofs("/sdcard/shader.spv", std::ios::binary);
 
-    if (ofs.is_open()) {
-        ofs.write(reinterpret_cast<const char*>(spirv_code.data()), spirv_code.size() * sizeof(uint32_t));
-        ofs.close();
-        std::cout << "Successfully wrote SPIR-V code to " << "/sdcard/shader.spv" << std::endl;
-    } else {
-        std::cerr << "Failed to open file " << "/sdcard/shader.spv" << std::endl;
-    }
-*/
-    spirv_cross::CompilerGLSL glsl(spirv_code);
-    spirv_cross::CompilerGLSL::Options options;
-    options.version = 320;
-    options.es = true;
-    glsl.set_common_options(options);
-    std::string glsles_code;
-    try {
-        glsles_code = glsl.compile();
-    } catch (const std::exception& e) {
-        SHUT_LOGE("Error: %s" , e.what());
-        return nullptr;
-    }
-    if (glsles_code.empty()) {
-        DBG(std::cerr << "GLSL 编译失败，生成的代码为空!" << std::endl;)
-        return nullptr;
-    }
+    std::string essl;
 
-    char* result = new char[glsles_code.length() + 1];
-    std::strcpy(result, glsles_code.c_str());
+    const SpvId *spirv = spirv_code.data();
+    size_t word_count = spirv_code.size();
 
+    spvc_context context = NULL;
+    spvc_parsed_ir ir = NULL;
+    spvc_compiler compiler_glsl = NULL;
+    spvc_compiler_options options = NULL;
+    spvc_resources resources = NULL;
+    const spvc_reflected_resource *list = NULL;
+    const char *result = NULL;
+    size_t count;
+    size_t i;
+
+    spvc_context_create(&context);
+    spvc_context_parse_spirv(context, spirv, word_count, &ir);
+    spvc_context_create_compiler(context, SPVC_BACKEND_GLSL, ir, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &compiler_glsl);
+    spvc_compiler_create_shader_resources(compiler_glsl, &resources);
+    spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_UNIFORM_BUFFER, &list, &count);
+    for (i = 0; i < count; i++)
+    {
+        printf("ID: %u, BaseTypeID: %u, TypeID: %u, Name: %s\n", list[i].id, list[i].base_type_id, list[i].type_id,
+               list[i].name);
+        printf("  Set: %u, Binding: %u\n",
+               spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationDescriptorSet),
+               spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationBinding));
+    }
+    spvc_compiler_create_compiler_options(compiler_glsl, &options);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 320);
+    spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
+    spvc_compiler_install_compiler_options(compiler_glsl, options);
+    spvc_compiler_compile(compiler_glsl, &result);
+    printf("Cross-compiled source: %s\n", result);
+    essl=result;
+    spvc_context_destroy(context);
+    char* result_essl = new char[essl.length() + 1];
+    std::strcpy(result_essl, essl.c_str());
     glslang::FinalizeProcess();
-
-    return result;
+    return result_essl;
 }
 

@@ -182,7 +182,7 @@ void gl4es_glShaderSource(GLuint shader, GLsizei count, const GLchar * const *st
             int glsl_version = getGLSLVersion(glshader->source);
             DBG(SHUT_LOGD("[INFO] [Shader] Shader source: ");)
             DBG(SHUT_LOGD("%s", glshader->source);)
-            if(glsl_version < 330)
+            if(glsl_version < 140)
                 glshader->converted = strdup(ConvertShaderConditionally(glshader));
             else {
                 char* result = GLSLtoGLSLES(glshader->source, glshader->type);
