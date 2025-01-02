@@ -1,3 +1,9 @@
+Definitions:
+1. original code: code that does exist in gl4es-114-extra
+(https://github.com/PojavLauncherTeam/gl4es-114-extra)
+2. modified code: code that does not exist in gl4es-114-extra
+(https://github.com/PojavLauncherTeam/gl4es-114-extra)
+
 MIT License (for original code)
 
 Copyright (c) 2016-2018 Sebastien Chevalier
@@ -24,7 +30,7 @@ THE SOFTWARE.
 
 GPL-3.0 License (for modified code)
 
-Copyright (c) 2024 BZLZHH
+Copyright (c) 2024-2025 BZLZHH
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
