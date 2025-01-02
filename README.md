@@ -8,4 +8,13 @@ This project is making it support more OpenGL functions.
 Build
 ====
 
-Please build with CMakeLists.txt, Android.mk is now useless file.
+Please build with CMakeLists.txt.
+
+Sponsor
+====
+
+**ptitSeb (gl4es)**: [paypal](https://paypal.me/0ptitSeb)
+
+**PojavLauncherTeam (gl4es-114-extra)**: [patreon](https://patreon.com/pojavlauncher)
+
+**BZLZHH (NG-GL4ES)**: Not Available Now
