@@ -254,6 +254,27 @@ void BuildExtensionsList() {
     }
 }
 
+char* getBeforeThirdSpace(const char* str) {
+    int spaceCount = 0;
+    const char* start = str;
+    while (*str) {
+        if (*str == ' ') {
+            spaceCount++;
+            if (spaceCount == 3) {
+                break;
+            }
+        }
+        str++;
+    }
+    int len = str - start;
+    char* result = (char*)malloc(len + 1);
+    if (result) {
+        strncpy(result, start, len);
+        result[len] = '\0';
+    }
+    return result;
+}
+
 const char* getGpuName() {
     LOAD_GLES2(glGetString);
     const char* gpuName = (const char*)gles_glGetString(GL_RENDERER);
@@ -263,7 +284,7 @@ const char* getGpuName() {
 const char* getGLESName() {
     LOAD_GLES2(glGetString);
     const char* ESVersion = (const char*)gles_glGetString(GL_VERSION);
-    return ESVersion;
+    return getBeforeThirdSpace(ESVersion);
 }
 
 const GLubyte *gl4es_glGetString(GLenum name) {

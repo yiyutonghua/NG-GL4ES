@@ -5,6 +5,6 @@
 #define MINOR 1
 #define REVISION 0
 #define VERSION_TYPE "R"
-#define VERSION_SUFFIX "Preview 1"
+#define VERSION_SUFFIX "P1"
 
 #endif //_GL4ES_VERSION_H

@@ -819,14 +819,14 @@ void gl4es_glGetProgramiv(GLuint program, GLenum pname, GLint *params) {
 }
 
 GLint gl4es_glGetUniformLocation(GLuint program, const GLchar *name) {
-    DBG(SHUT_LOGD("glGetUniformLocation(%d, %s)\n", program, name);)
+    //DBG(SHUT_LOGD("glGetUniformLocation(%d, %s)\n", program, name);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(GLint, program)
 
     noerrorShim();
     int res = -1;
     if(strncmp(name, "gl_", 3)==0) {
-        DBG(SHUT_LOGD(" internal uniform: -1\n");)
+        //DBG(SHUT_LOGD(" internal uniform: -1\n");)
         return res;
     }
 
@@ -855,7 +855,7 @@ GLint gl4es_glGetUniformLocation(GLuint program, const GLchar *name) {
             }
         )
     }
-    DBG(SHUT_LOGD(" location: %d\n", res);)
+    //DBG(SHUT_LOGD(" location: %d\n", res);)
     return res;
 }
 
@@ -1149,7 +1149,7 @@ void gl4es_glLinkProgram(GLuint program) {
         }
     }
     // check if Built-in VA are used, and if so, bind them to their proper location
-    if(glprogram->last_vert)
+    if(glprogram->last_vert && !glprogram->last_vert->is_converted_essl_320)
         for (int i=0; i<ATT_MAX; ++i) {
             const char* attribute = hasBuiltinAttrib(glprogram->last_vert->converted, i);
             if(attribute)
@@ -1176,7 +1176,7 @@ void gl4es_glLinkProgram(GLuint program) {
                LOAD_GLES2(glGetProgramInfoLog);
                GLchar log_chars[log_length];
                gles_glGetProgramInfoLog(glprogram->id, log_length, &log_length, log_chars);
-               printf("%s\n", log_chars);
+               SHUT_LOGD("%s", log_chars);
             }
             // should DBG the linker error?
             DBG(SHUT_LOGD(" Link failled!\n");)
@@ -1193,7 +1193,7 @@ void gl4es_glLinkProgram(GLuint program) {
 }
 
 void gl4es_glUseProgram(GLuint program) {
-    DBG(SHUT_LOGD("glUseProgram(%d) old=%d\n", program, glstate->glsl->program);)
+    //DBG(SHUT_LOGD("glUseProgram(%d) old=%d\n", program, glstate->glsl->program);)
     PUSH_IF_COMPILING(glUseProgram);
     if(program==0) {
         glstate->glsl->program=0;
@@ -1202,7 +1202,7 @@ void gl4es_glUseProgram(GLuint program) {
     }
     CHECK_PROGRAM(void, program)
     noerrorShim();
-    DBG(SHUT_LOGD("program id=%d\n", glprogram->id);)
+    //DBG(SHUT_LOGD("program id=%d\n", glprogram->id);)
 
     glstate->glsl->program=glprogram->id;
     glstate->glsl->glprogram=glprogram;

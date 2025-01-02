@@ -354,10 +354,10 @@ void initialize_gl4es() {
         SHUT_LOGD("Overide version string with \"%s\" (should be in the form of \"1.x\")\n", env_version);
     }
     if(env_version) {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §l§bKrypton §8Wrapper §r§c%s%d.%d.%d %s":"%s Krypton Wrapper %s%d.%d.%d %s", env_version, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §l§bKrypton §8Wrapper §r§c%s%d.%d.%d %s§r":"%s Krypton Wrapper %s%d.%d.%d %s", env_version, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %s\n", env_version);
     } else {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §l§bKrypton §8Wrapper §r§c%s%d.%d.%d %s":"%d.%d Krypton Wrapper %s%d.%d.%d %s", globals4es.gl/10, globals4es.gl%10, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §l§bKrypton §8Wrapper §r§c%s%d.%d.%d %s§r":"%d.%d Krypton Wrapper %s%d.%d.%d %s", globals4es.gl/10, globals4es.gl%10, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %d.%d\n", globals4es.gl/10, globals4es.gl%10);
     }
 
@@ -434,7 +434,7 @@ void initialize_gl4es() {
 
     if(GetEnvVarBool("LIBGL_AVOID16BITS", &globals4es.avoid16bits, (hardext.vendor&VEND_IMGTEC)?0:1)) {
       if(globals4es.avoid16bits) {
-        SHUT_LOGD("Avoid 16bits textures\n");
+            SHUT_LOGD("Avoid 16bits textures\n");
       } else {
         SHUT_LOGD("Don't avoid 16bits textures\n");
       }
@@ -678,7 +678,7 @@ void close_gl4es() {
 	    SHUT_LOGD("Shuting down request\n");
     	if(--inited) return;
     #endif
-    SHUT_LOGD("Shuting down\n");
+    SHUT_LOGD("Krypton Wrapper shutting down\n");
     #ifndef NOX11
     FreeFBVisual();
     #endif

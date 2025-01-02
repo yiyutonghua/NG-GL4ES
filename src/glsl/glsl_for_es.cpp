@@ -136,28 +136,85 @@ int getGLSLVersion(const char* glsl_code) {
     return -1;
 }
 
-// 从指定文件路径加载 SPIR-V 文件
-std::vector<uint32_t> load_spirv_file(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open SPIR-V file: " + filepath);
-    }
-
-    // 获取文件大小
-    file.seekg(0, std::ios::end);
-    size_t file_size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    // 读取文件内容
-    std::vector<uint32_t> spirv_binary(file_size / sizeof(uint32_t));
-    file.read(reinterpret_cast<char*>(spirv_binary.data()), file_size);
-
-    if (!file) {
-        throw std::runtime_error("Failed to read SPIR-V file: " + filepath);
-    }
-
-    return spirv_binary;
+std::string forceSupporter(const std::string& glslCode) {
+    std::regex bindingRegex(R"(layout\s*\(\s*binding\s*=\s*\d+\s*\)\s*)");
+    std::string result = std::regex_replace(glslCode, bindingRegex, "");
+    return result;
 }
+
+std::string removeLayoutBinding(const std::string& glslCode) {
+    std::regex bindingRegex(R"(layout\s*\(\s*binding\s*=\s*\d+\s*\)\s*)");
+    std::string result = std::regex_replace(glslCode, bindingRegex, "");
+    return result;
+}
+
+char* removeLineDirective(char* glslCode) {
+    char* cursor = glslCode;
+    int modifiedCodeIndex = 0;
+    size_t maxLength = 1024 * 10;
+    char* modifiedGlslCode = (char*)malloc(maxLength * sizeof(char));
+    if (!modifiedGlslCode) return NULL;
+
+    while (*cursor) {
+        if (strncmp(cursor, "\n#", 2) == 0) {
+            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+            char* last_cursor = cursor;
+            while (cursor[0] != '\n') cursor++;
+            char* line_feed_cursor = cursor;
+            while (isspace(cursor[0])) cursor--;
+            if (cursor[0] == '\\')
+            {
+                // find line directive, now remove it
+                char* slash_cursor = cursor;
+                cursor = last_cursor;
+                while (cursor < slash_cursor - 1)
+                    modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+                modifiedGlslCode[modifiedCodeIndex++] = ' ';
+                cursor = line_feed_cursor + 1;
+                while (isspace(cursor[0])) cursor++;
+
+                while (true) {
+                    char* last_cursor2 = cursor;
+                    while (cursor[0] != '\n') cursor++;
+                    cursor -= 1;
+                    while (isspace(cursor[0])) cursor--;
+                    if (cursor[0] == '\\') {
+                        char* slash_cursor2 = cursor;
+                        cursor = last_cursor2;
+                        while (cursor < slash_cursor2)
+                            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+                        while (cursor[0] != '\n') cursor++;
+                        cursor++;
+                        while (isspace(cursor[0])) cursor++;
+                    } else {
+                        cursor = last_cursor2;
+                        while (cursor[0] != '\n')
+                            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+                        break;
+                    }
+                }
+                cursor++;
+            }
+            else {
+                cursor = last_cursor;
+            }
+        }
+        else {
+            modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
+        }
+
+        if (modifiedCodeIndex >= maxLength - 1) {
+            maxLength *= 2;
+            modifiedGlslCode = (char*)realloc(modifiedGlslCode, maxLength);
+            if (!modifiedGlslCode) return NULL;
+        }
+    }
+
+    modifiedGlslCode[modifiedCodeIndex] = '\0';
+    return modifiedGlslCode;
+}
+
 
 char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     glslang::InitializeProcess();
@@ -178,8 +235,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     }
 
     glslang::TShader shader(shader_language);
-    char* shader_source = strdup(glsl_code);
-
+    char *shader_source = strdup(removeLineDirective(glsl_code));
     int glsl_version = getGLSLVersion(shader_source);
     if (glsl_version == -1) {
         glsl_version = 140;
@@ -195,7 +251,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     using namespace glslang;
     shader.setEnvInput(EShSourceGlsl, shader_language, EShClientVulkan, glsl_version);
     shader.setEnvClient(EShClientOpenGL, EShTargetOpenGL_450);
-    shader.setEnvTarget(EShTargetSpv, EShTargetSpv_1_4);
+    shader.setEnvTarget(EShTargetSpv, EShTargetSpv_1_6);
     shader.setAutoMapLocations(true);
     shader.setAutoMapBindings(true);
     TBuiltInResource TBuiltInResource_resources = InitResources();
@@ -250,13 +306,19 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 320);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
+
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);
     printf("Cross-compiled source: %s\n", result);
     essl=result;
     spvc_context_destroy(context);
+
+    essl = removeLayoutBinding(essl);
+    essl = forceSupporter(essl);
     char* result_essl = new char[essl.length() + 1];
     std::strcpy(result_essl, essl.c_str());
+
+    free(shader_source);
     glslang::FinalizeProcess();
     return result_essl;
 }

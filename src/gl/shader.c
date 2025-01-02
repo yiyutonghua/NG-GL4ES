@@ -182,11 +182,14 @@ void gl4es_glShaderSource(GLuint shader, GLsizei count, const GLchar * const *st
             int glsl_version = getGLSLVersion(glshader->source);
             DBG(SHUT_LOGD("[INFO] [Shader] Shader source: ");)
             DBG(SHUT_LOGD("%s", glshader->source);)
-            if(glsl_version < 140)
+            if(glsl_version < 140) {
                 glshader->converted = strdup(ConvertShaderConditionally(glshader));
+                glshader->is_converted_essl_320 = 0;
+            }
             else {
                 char* result = GLSLtoGLSLES(glshader->source, glshader->type);
-                glshader->converted = strdup(result!=NULL?result:ConvertShaderConditionally(glshader));
+                glshader->converted = strdup(result!=NULL?process_uniform_declarations(result, glshader->uniforms_declarations, &glshader->uniforms_declarations_count):ConvertShaderConditionally(glshader));
+                glshader->is_converted_essl_320 = 1;
             }
             DBG(SHUT_LOGD("\n[INFO] [Shader] Converted Shader source: \n%s", glshader->converted);)
         }
