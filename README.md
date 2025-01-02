@@ -10,6 +10,13 @@ Build
 
 Please build with CMakeLists.txt.
 
+Third party components
+====
+
+**SPIRV-Cross** by **KhronosGroup**: [github](https://github.com/KhronosGroup/SPIRV-Cross)
+
+**glslang** by **KhronosGroup**: [github](https://github.com/KhronosGroup/glslang)
+
 Sponsor
 ====
 
