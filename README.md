@@ -1,7 +1,7 @@
 Krypton Wrapper
 ====
 
-Krypton Wrapper (NG-GL4ES before) is a fork from [gl4es-114-extra](https://github.com/PojavLauncherTeam/gl4es-114-extra) . 
+Krypton Wrapper *(also called Next Generation GL4ES/NG-GL4ES)* is a fork from [gl4es-114-extra](https://github.com/PojavLauncherTeam/gl4es-114-extra) . 
 
 This project is making it support more OpenGL functions.
 
@@ -18,6 +18,16 @@ Build
 ====
 
 Please build with CMakeLists.txt.
+
+License
+====
+
+[gl4es-114-extra](https://github.com/PojavLauncherTeam/gl4es-114-extra): MIT License
+
+This Project (for modified code): GPL-v3 License.
+
+Please see [LICENSE](https://github.com/BZLZHH/NG-GL4ES/blob/main/LICENSE).
+
 
 Third party components
 ====
