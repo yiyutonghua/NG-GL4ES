@@ -5,6 +5,15 @@ Krypton Wrapper (NG-GL4ES before) is a fork from [gl4es-114-extra](https://githu
 
 This project is making it support more OpenGL functions.
 
+Features
+====
+
+1. Almost Be able to run Minecraft [Sodium](https://github.com/CaffeineMC/sodium) mod;
+
+2. Be able to render a few minecraft shaders;
+
+3. Be able to run Minecraft in high version(like Minecraft 1.21.4).
+
 Build
 ====
 
