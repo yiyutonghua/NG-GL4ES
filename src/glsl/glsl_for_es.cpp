@@ -320,20 +320,19 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     spvc_context_create_compiler(context, SPVC_BACKEND_GLSL, ir, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &compiler_glsl);
     spvc_compiler_create_shader_resources(compiler_glsl, &resources);
     spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_UNIFORM_BUFFER, &list, &count);
-    for (i = 0; i < count; i++)
+    DBG(for (i = 0; i < count; i++)
     {
         printf("ID: %u, BaseTypeID: %u, TypeID: %u, Name: %s\n", list[i].id, list[i].base_type_id, list[i].type_id,
                list[i].name);
         printf("  Set: %u, Binding: %u\n",
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationDescriptorSet),
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationBinding));
-    }
+    })
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 320);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);
-    printf("Cross-compiled source: %s\n", result);
     essl=result;
     spvc_context_destroy(context);
 
