@@ -7,6 +7,7 @@ extern "C" {
 #include "buffers.h"
 #include "const.h"
 #include "gles.h"
+#include "samplers.h"
 
 void gl4es_glTexImage2D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLint border,
@@ -104,6 +105,21 @@ typedef enum {
 } texture_enabled_t;
 
 typedef struct {
+    GLuint glname;
+    GLenum target;
+    GLenum min_filter;
+    GLenum mag_filter;
+    GLenum wrap_s;
+    GLenum wrap_t;
+    GLenum wrap_r;
+    GLenum compare;
+    GLenum func;
+    GLfloat min_lod;
+    GLfloat max_lod;
+    GLfloat border_color[4];
+} glsampler_t;
+
+typedef struct {
     GLuint texture;
     GLuint glname;
     GLenum target;
@@ -147,6 +163,9 @@ typedef struct {
     GLuint renderdepth; // incase renderbuffer where used instead...
     GLuint renderstencil;
     GLvoid *data;	// in case we want to keep a copy of it (it that case, always RGBA/GL_UNSIGNED_BYTE
+    float fbtex_ratio;
+    glsampler_t sampler;
+    glsampler_t actual;
 } gltexture_t;
 
 KHASH_MAP_DECLARE_INT(tex, gltexture_t *);

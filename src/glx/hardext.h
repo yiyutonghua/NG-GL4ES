@@ -68,6 +68,8 @@ typedef struct _hardext {
     int glsl300es;      // does version 300es glsl shader are supported ?
     int glsl310es;      // does version 300es glsl shader are supported ?
     int glsl320es;      // VGPU specific ; does version 320es glsl shader are supported ?
+    int rgba8888;
+    int rgba1555rev;
 } hardext_t;
 
 extern hardext_t hardext;

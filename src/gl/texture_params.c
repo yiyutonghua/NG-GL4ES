@@ -911,6 +911,148 @@ void realize_textures(int drawing) {
     glstate->bound_changed = 0;
 }
 
+
+GLenum get_texture_min_filter(gltexture_t* texture, glsampler_t* sampler)
+{
+    GLenum ret = sampler->min_filter;
+    if ((globals4es.automipmap==3)
+        || ((globals4es.automipmap==1) && (texture->mipmap_auto==0))
+        || (texture->compressed && (texture->mipmap_auto==0))) {
+        switch (ret) {
+            case GL_NEAREST_MIPMAP_NEAREST:
+            case GL_NEAREST_MIPMAP_LINEAR:
+                ret = GL_NEAREST;
+                break;
+            case GL_LINEAR_MIPMAP_NEAREST:
+            case GL_LINEAR_MIPMAP_LINEAR:
+                ret = GL_LINEAR;
+                break;
+        }
+    }
+    if(texture->valid && (texture->type==GL_FLOAT || texture->type==GL_HALF_FLOAT_OES)) {
+        // FLOAT textures have limited mipmap support in GLES2
+        ret = minmag_float(ret);
+    }
+    if(texture->valid && (texture->npot && globals4es.forcenpot)) {
+        // need to remove MIPMAP for npot if not supported in hardware
+        ret = minmag_forcenpot(ret);
+    }
+    return ret;
+}
+GLenum get_texture_wrap(GLenum wrap, gltexture_t* texture) {
+    switch (wrap) {
+        case GL_CLAMP:
+        case GL_CLAMP_TO_BORDER:
+            wrap = GL_CLAMP_TO_EDGE;
+            break;
+        case GL_REPEAT:
+        case GL_MIRRORED_REPEAT_OES:
+            if(globals4es.defaultwrap==2 && hardext.npot<3 && !texture->valid)
+                wrap = GL_CLAMP_TO_EDGE;
+            else if(hardext.esversion>1 && hardext.npot<3 && texture->valid
+                    && texture->npot) {
+                // should "upgrade" the texture to POT size...
+                //printf("Warning, REPEAT / MIRRORED_REPEAT on NPOT texture\n");
+                wrap = GL_CLAMP_TO_EDGE;   // repeat is not support on NPOT with limited_npot
+            }
+            break;
+    }
+    return wrap;
+}
+
+GLenum get_texture_wrap_s(gltexture_t* texture, glsampler_t *sampler) {
+    return get_texture_wrap(sampler->wrap_s, texture);
+}
+
+GLenum get_texture_wrap_t(gltexture_t* texture, glsampler_t *sampler) {
+    return get_texture_wrap(sampler->wrap_t, texture);
+}
+
+void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler_t* sampler)
+{
+    DBG(printf("realize_1texture(%s, %d, %p[%u], %p)\n", PrintEnum(target), wantedTMU, tex, tex->glname, sampler);)
+    LOAD_GLES(glActiveTexture);
+    LOAD_GLES(glTexParameteri);
+    LOAD_GLES(glBindTexture);
+    // check sampler stuff
+    if(!sampler) sampler = &tex->sampler;
+    GLuint oldtex = 0;
+    int TMU = (wantedTMU==-1)?glstate->gleshard->active:wantedTMU;
+    GLenum param;
+    param = get_texture_min_filter(tex, sampler);
+    if(tex->actual.min_filter!=param) {
+        if(wantedTMU==-1) {
+            realize_textures(0);
+            gltexture_t *bound = glstate->texture.bound[TMU][ENABLED_TEX2D];
+            oldtex = bound->glname;
+            if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
+            wantedTMU=-2;
+        }
+        DBG(printf("Adjusting %s[%d]:Texture[%u].min_filter = %s (binded=%u)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), glstate->actual_tex2d[TMU]);)
+        if(glstate->gleshard->active!=TMU) {
+            glstate->gleshard->active = TMU;
+            gles_glActiveTexture(GL_TEXTURE0+TMU);
+        }
+        gles_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, param);
+        tex->actual.min_filter=param;
+    }
+    param = sampler->mag_filter;
+    if(tex->actual.mag_filter!=param) {
+        if(wantedTMU==-1) {
+            realize_textures(0);
+            gltexture_t *bound = glstate->texture.bound[TMU][ENABLED_TEX2D];
+            oldtex = bound->glname;
+            if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
+            wantedTMU=-2;
+        }
+        DBG(printf("Adjusting %s[%d]:Texture[%u].mag_filter = %s (min=%s/%s)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), PrintEnum(sampler->min_filter), PrintEnum(tex->actual.min_filter));)
+        if(glstate->gleshard->active!=TMU) {
+            glstate->gleshard->active = TMU;
+            gles_glActiveTexture(GL_TEXTURE0+TMU);
+        }
+        gles_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, param);
+        tex->actual.mag_filter=param;
+    }
+    param = get_texture_wrap_s(tex, sampler);
+    if(tex->actual.wrap_s!=param) {
+        if(wantedTMU==-1) {
+            realize_textures(0);
+            gltexture_t *bound = glstate->texture.bound[TMU][ENABLED_TEX2D];
+            oldtex = bound->glname;
+            if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
+            wantedTMU=-2;
+        }
+        DBG(printf("Adjusting %s[%d]:Texture[%u].wrap_s = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
+        if(glstate->gleshard->active!=TMU) {
+            glstate->gleshard->active = TMU;
+            gles_glActiveTexture(GL_TEXTURE0+TMU);
+        }
+        gles_glTexParameteri(target, GL_TEXTURE_WRAP_S, param);
+        tex->actual.wrap_s=param;
+    }
+    param = get_texture_wrap_t(tex, sampler);
+    if(tex->actual.wrap_t!=param) {
+        if(wantedTMU==-1) {
+            realize_textures(0);
+            gltexture_t *bound = glstate->texture.bound[TMU][ENABLED_TEX2D];
+            oldtex = bound->glname;
+            if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
+            wantedTMU=-2;
+        }
+        DBG(printf("Adjusting %s[%d]:Texture[%u].wrap_t = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
+        if(glstate->gleshard->active!=TMU) {
+            glstate->gleshard->active = TMU;
+            gles_glActiveTexture(GL_TEXTURE0+TMU);
+        }
+        gles_glTexParameteri(target, GL_TEXTURE_WRAP_T, param);
+        tex->actual.wrap_t=param;
+    }
+    if(wantedTMU==-2) {
+        if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, oldtex);
+    }
+}
+
+
 //Direct wrapper
 void glBindTexture(GLenum target, GLuint texture) AliasExport("gl4es_glBindTexture");
 void glGenTextures(GLsizei n, GLuint * textures) AliasExport("gl4es_glGenTextures");

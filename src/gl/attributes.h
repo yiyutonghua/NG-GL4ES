@@ -17,6 +17,7 @@
 //   EXPORT { __asm__("add sp, sp, #0x10 \n b _" name " \n ret"); }
  #else
   #define AliasExport(name)   __attribute__((alias(name))) EXPORT
+  #define AliasExportN(RET,NAME,X,DEF) __attribute__((alias("gl4es_" #NAME))) EXPORT RET NAME##X DEF
  #endif
 #endif // AliasExport
 

@@ -11,7 +11,8 @@
 #include <unordered_set>
 #include <map>
 #include <dlfcn.h>
-#include <android/log.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <sstream>
 
 GLuint computeTexture;
@@ -25,14 +26,20 @@ std::mutex barrierMutex;
 void* handle;
 
 extern "C" {
-    void __attribute__((visibility("default"))) threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
-    void __attribute__((visibility("default"))) glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader);
-    void __attribute__((visibility("default"))) reportUnsupportedFunction(const char* funcName);
-    void __attribute__((visibility("default"))) glMemoryBarrier(GLbitfield barriers);
-    void __attribute__((visibility("default"))) glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-    void __attribute__((visibility("default"))) glBindProgramPipeline(GLuint pipeline);
-    void __attribute__((visibility("default"))) APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
-    void __attribute__((visibility("default"))) glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
+    VISITABLE void threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
+    VISITABLE void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader);
+    VISITABLE void reportUnsupportedFunction(const char* funcName);
+    VISITABLE void glMemoryBarrier(GLbitfield barriers);
+    VISITABLE void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+    VISITABLE void glBindProgramPipeline(GLuint pipeline);
+    VISITABLE void APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
+    VISITABLE void glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
+    VISITABLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    VISITABLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
+    VISITABLE void glDeleteSync(GLsync sync);
+    VISITABLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    VISITABLE GLboolean glIsSync(GLsync sync);
+    VISITABLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
     //NEEDTOBEDONE
     //void glUseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
     //void glCreateTextures(GLenum target, GLsizei n, GLuint* textures);
@@ -413,5 +420,119 @@ extern "C" {
                 break;
             }
         }
+    }
+
+    long getCurrentTimeMicroseconds() {
+        struct timeval time;
+        gettimeofday(&time, nullptr);
+        return time.tv_sec * 1000000 + time.tv_usec;
+    }
+
+    GLsync glFenceSync(GLenum condition, GLbitfield flags) {
+        GLuint fbo, renderbuffer;
+        gl4es_glGenFramebuffers(1, &fbo);
+        gl4es_glGenRenderbuffers(1, &renderbuffer);
+
+        gl4es_glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        gl4es_glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+
+        gl4es_glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 1, 1);
+        gl4es_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer);
+
+        return reinterpret_cast<GLsync>(fbo);
+
+    }
+
+    void glDeleteSync(GLsync sync) {
+        if (sync == nullptr) return;
+
+        GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
+        gl4es_glDeleteFramebuffers(1, &fbo);
+    }
+
+    void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) {
+        if (sync == nullptr) return;
+
+        GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
+        long startTime = getCurrentTimeMicroseconds();
+        long elapsedTime = 0;
+
+        GLint status = 0;
+
+        while (status != GL_TRUE) {
+            gl4es_glClear(GL_COLOR_BUFFER_BIT);
+
+            gl4es_glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &status);
+
+            if (status != 0) {
+                status = GL_TRUE;
+            }
+
+            gl4es_glFlush();
+
+            elapsedTime = getCurrentTimeMicroseconds() - startTime;
+            if (elapsedTime >= timeout) {
+                std::cout << "Timeout occurred while waiting for sync object." << std::endl;
+                break;
+            }
+
+            usleep(1000);
+        }
+    }
+
+    void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values) {
+        if (sync == nullptr) return;
+
+        GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
+
+        if (pname == GL_SYNC_STATUS) {
+            GLint status = 0;
+            gl4es_glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &status);
+            if (values) {
+                values[0] = (status != 0) ? GL_TRUE : GL_FALSE;
+            }
+            if (length) *length = 1;
+        }
+    }
+
+    GLboolean glIsSync(GLsync sync) {
+        if (sync == nullptr) return GL_FALSE;
+
+        GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
+
+        GLint status = 0;
+        gl4es_glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &status);
+
+        return (status != 0) ? GL_TRUE : GL_FALSE;
+    }
+
+    GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) {
+        if (sync == nullptr) return GL_TIMEOUT_EXPIRED;
+
+        GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
+        long startTime = getCurrentTimeMicroseconds();
+        long elapsedTime = 0;
+
+        GLint status = 0;
+
+        while (status != GL_TRUE) {
+            gl4es_glClear(GL_COLOR_BUFFER_BIT);
+
+            gl4es_glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &status);
+
+            if (status != 0) {
+                status = GL_TRUE;
+            }
+
+            gl4es_glFlush();
+
+            elapsedTime = getCurrentTimeMicroseconds() - startTime;
+            if (elapsedTime >= timeout) {
+                return GL_TIMEOUT_EXPIRED;
+            }
+
+            usleep(1000);
+        }
+        return GL_CONDITION_SATISFIED;
     }
 }

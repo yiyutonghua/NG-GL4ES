@@ -29,6 +29,7 @@ int uniformsize(GLenum type) {
     // GLES2 types
         GOV(GL_FLOAT, GLfloat);
         GOV(GL_INT, GLint);
+        GOV(GL_UNSIGNED_INT, GLuint);
         GOV(GL_BOOL, /*GLboolean*/GLint); //GLboolean is an unsigned char and is not suitable here
         GOM(GL_FLOAT, GLfloat);
         GO(GL_SAMPLER_2D, GLint, 1);
@@ -57,9 +58,13 @@ int is_uniform_float(GLenum type) {
 int is_uniform_int(GLenum type) {
     switch (type) {
         case GL_INT:
+        case GL_UNSIGNED_INT:
         case GL_INT_VEC2:
+        case GL_UNSIGNED_INT_VEC2:
         case GL_INT_VEC3:
+        case GL_UNSIGNED_INT_VEC3:
         case GL_INT_VEC4:
+        case GL_UNSIGNED_INT_VEC4:
         case GL_BOOL:
         case GL_BOOL_VEC2:
         case GL_BOOL_VEC3:
@@ -85,20 +90,24 @@ int n_uniform(GLenum type) {
     switch(type) {
         case GL_FLOAT:
         case GL_INT:
+        case GL_UNSIGNED_INT:
         case GL_BOOL:
         case GL_SAMPLER_2D:
         case GL_SAMPLER_CUBE:
             return 1;
         case GL_FLOAT_VEC2:
         case GL_INT_VEC2:
+        case GL_UNSIGNED_INT_VEC2:
         case GL_BOOL_VEC2:
             return 2;
         case GL_FLOAT_VEC3:
         case GL_INT_VEC3:
+        case GL_UNSIGNED_INT_VEC3:
         case GL_BOOL_VEC3:
             return 3;
         case GL_FLOAT_VEC4:
         case GL_INT_VEC4:
+        case GL_UNSIGNED_INT_VEC4:
         case GL_BOOL_VEC4:
             return 4;
     }

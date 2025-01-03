@@ -360,6 +360,8 @@ typedef struct {
     GLuint  index;
     GLuint  want_index;
     int     used;
+    GLuint copy_write;
+	GLuint copy_read;
 } bind_buffers_t;
 
 #endif // _GL4ES_STATE_H_

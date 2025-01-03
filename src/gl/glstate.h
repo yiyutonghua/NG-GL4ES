@@ -125,6 +125,8 @@ typedef struct glstate_s {
     int                 helper_texlen[MAX_TEX];
     GLfloat*            texgened[MAX_TEX];
     int                 texgenedsz[MAX_TEX];
+
+    bind_buffers_t      bind_buffer;
 } glstate_t;
 
 

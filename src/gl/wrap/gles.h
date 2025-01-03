@@ -2021,6 +2021,7 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 #define glBindFramebuffer_INDEX 7
 #define glBindFramebuffer_RETURN void
 #define glBindFramebuffer_ARG_NAMES target, framebuffer
+#define glBlitFramebuffer_ARG_EXPAND GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter
 #define glBindFramebuffer_ARG_EXPAND GLenum target, GLuint framebuffer
 #define glBindFramebuffer_PACKED PACKED_void_GLenum_GLuint
 #define glBindFramebuffer_INDEXED INDEXED_void_GLenum_GLuint
@@ -3023,6 +3024,7 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 #define glMultiDrawArrays_RETURN void
 #define glMultiDrawArrays_ARG_NAMES mode, first, count, primcount
 #define glMultiDrawArrays_ARG_EXPAND GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount
+#define glDrawElementsBaseVertex_ARG_EXPAND GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex
 #define glMultiDrawArrays_PACKED PACKED_void_GLenum_const_GLint___GENPT___const_GLsizei___GENPT___GLsizei
 #define glMultiDrawArrays_INDEXED INDEXED_void_GLenum_const_GLint___GENPT___const_GLsizei___GENPT___GLsizei
 #define glMultiDrawArrays_FORMAT FORMAT_void_GLenum_const_GLint___GENPT___const_GLsizei___GENPT___GLsizei
@@ -3680,6 +3682,8 @@ void gl4es_glBindBuffer(glBindBuffer_ARG_EXPAND);
 typedef void (*glBindBuffer_PTR)(glBindBuffer_ARG_EXPAND);
 void gl4es_glBindFramebuffer(glBindFramebuffer_ARG_EXPAND);
 typedef void (*glBindFramebuffer_PTR)(glBindFramebuffer_ARG_EXPAND);
+void gl4es_glBlitFramebuffer(glBlitFramebuffer_ARG_EXPAND);
+typedef void (*glBlitFramebuffer_PTR)(glBlitFramebuffer_ARG_EXPAND);
 void gl4es_glBindRenderbuffer(glBindRenderbuffer_ARG_EXPAND);
 typedef void (*glBindRenderbuffer_PTR)(glBindRenderbuffer_ARG_EXPAND);
 void gl4es_glBindTexture(glBindTexture_ARG_EXPAND);
@@ -3966,6 +3970,8 @@ void gl4es_glMultMatrixx(glMultMatrixx_ARG_EXPAND);
 typedef void (*glMultMatrixx_PTR)(glMultMatrixx_ARG_EXPAND);
 void gl4es_glMultiDrawArrays(glMultiDrawArrays_ARG_EXPAND);
 typedef void (*glMultiDrawArrays_PTR)(glMultiDrawArrays_ARG_EXPAND);
+void gl4es_glDrawElementsBaseVertex(glDrawElementsBaseVertex_ARG_EXPAND);
+typedef void (*glDrawElementsBaseVertex_PTR)(glDrawElementsBaseVertex_ARG_EXPAND);
 void gl4es_glMultiDrawElements(glMultiDrawElements_ARG_EXPAND);
 typedef void (*glMultiDrawElements_PTR)(glMultiDrawElements_ARG_EXPAND);
 void gl4es_glMultiTexCoord4f(glMultiTexCoord4f_ARG_EXPAND);

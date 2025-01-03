@@ -63,7 +63,7 @@ void fpe_ReleventState_DefaultVertex(fpe_state_t *dest, fpe_state_t *src, shader
             if(((dest->light>>i)&1)==0) {
                 dest->light_cutoff180 &= ~(1<<i);
                 dest->light_direction &= ~(1<<i);
-            }            
+            }
         }
     }
     // texturing
@@ -160,7 +160,7 @@ void fpe_ReleventState(fpe_state_t *dest, fpe_state_t *src, int fixed)
             if(((dest->light>>i)&1)==0) {
                 dest->light_cutoff180 &= ~(1<<i);
                 dest->light_direction &= ~(1<<i);
-            }            
+            }
         }
     }
     // texturing
@@ -348,7 +348,7 @@ void fpe_program(int ispoint) {
     if(glstate->fpe==NULL || memcmp(&glstate->fpe->state, &state, sizeof(fpe_state_t))) {
         // get cached fpe (or new one)
         glstate->fpe = fpe_GetCache(glstate->fpe_cache, &state, 1);
-    }   
+    }
     if(glstate->fpe->glprogram==NULL) {
         glstate->fpe->prog = gl4es_glCreateProgram();
         DBG(int from_psa = 1;)
@@ -814,7 +814,7 @@ void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei 
     program_t *glprogram = glstate->gleshard->glprogram;
     for (GLint id=0; id<primcount; ++id) {
         GoUniformiv(glprogram, glprogram->builtin_instanceID, 1, 1, &id);
-        for(int i=0; i<hardext.maxvattrib; i++) 
+        for(int i=0; i<hardext.maxvattrib; i++)
         if(glprogram->va_size[i])   // only check used VA...
         {
             vertexattrib_t *w = &glstate->vao->vertexattrib[i];
@@ -869,11 +869,11 @@ void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const 
         use_vbo = 1;
         gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
         inds = (void*)((uintptr_t)indices - (uintptr_t)(glstate->vao->elements->data));
-    } else 
+    } else
         inds = (void*)indices;
     for (GLint id=0; id<primcount; ++id) {
         GoUniformiv(glprogram, glprogram->builtin_instanceID, 1, 1, &id);
-        for(int i=0; i<hardext.maxvattrib; i++) 
+        for(int i=0; i<hardext.maxvattrib; i++)
         if(glprogram->va_size[i])   // only check used VA...
         {
             vertexattrib_t *w = &glstate->vao->vertexattrib[i];
@@ -1047,7 +1047,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                 glstate->fpe_state->texture[i].texadjust = tex->adjust;
                 if(texunit==ENABLED_TEXTURE_RECTANGLE) glstate->fpe_state->texture[i].texadjust |= 1<<i;
                 glstate->fpe_state->texture[i].textype = fmt;
-                
+
             }
         }
         glstate->fpe_bound_changed = 0;
@@ -1399,7 +1399,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
     }
     // set VertexAttrib if needed
     GLuint old_buffer = 0;
-    for(int i=0; i<hardext.maxvattrib; i++) 
+    for(int i=0; i<hardext.maxvattrib; i++)
     if(glprogram->va_size[i])   // only check used VA...
     {
         vertexattrib_t *v = &glstate->gleshard->vertexattrib[i];
@@ -1419,10 +1419,10 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         if(v->enabled) {
             // array case
             void * ptr = (void*)((uintptr_t)w->pointer + ((w->buffer)?(uintptr_t)w->buffer->data:0));
-            if(dirty || v->size!=w->size || v->type!=w->type || v->normalized!=w->normalized 
+            if(dirty || v->size!=w->size || v->type!=w->type || v->normalized!=w->normalized
                 || v->stride!=w->stride || v->buffer!=w->buffer || (w->real_buffer==0 && v->pointer!=ptr)
                 || v->real_buffer!=w->real_buffer || (w->real_buffer!=0 && v->real_pointer != w->real_pointer)) {
-                if((w->size==GL_BGRA || w->type==GL_DOUBLE) && scratch->size<8) { 
+                if((w->size==GL_BGRA || w->type==GL_DOUBLE) && scratch->size<8) {
                     // need to adjust, so first need the min/max (a shame as I already must have that somewhere)
                     int imin, imax;
                     if(type==0) {
@@ -1543,8 +1543,8 @@ void realize_blitenv(int alpha) {
         // check if new value has to be sent to hardware
         if(i<2) {
             // array case
-            if(v->size!=2 || v->type!=GL_FLOAT || v->normalized!=0 
-                || v->stride!=0 || v->pointer!=((i==0)?glstate->blit->vert:glstate->blit->tex) 
+            if(v->size!=2 || v->type!=GL_FLOAT || v->normalized!=0
+                || v->stride!=0 || v->pointer!=((i==0)?glstate->blit->vert:glstate->blit->tex)
                 || v->buffer!=0) {
                 v->size = 2;
                 v->type = GL_FLOAT;
@@ -1588,7 +1588,7 @@ void builtin_Init(program_t *glprogram) {
         glprogram->builtin_material[i].specular = -1;
         glprogram->builtin_material[i].shininess = -1;
         glprogram->builtin_material[i].alpha = -1;
-        
+
         glprogram->builtin_lightmodelprod[i].sceneColor = -1;
 
         for (int j=0; j<MAX_LIGHT; j++) {
@@ -1730,7 +1730,7 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->has_builtin_light = 1;
         return 1;
     }
-    if(strncmp(name, frontmaterial_code, strlen(frontmaterial_code))==0 
+    if(strncmp(name, frontmaterial_code, strlen(frontmaterial_code))==0
         || strncmp(name, backmaterial_code, strlen(backmaterial_code))==0)
     {
         // it's a material
@@ -1746,7 +1746,7 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->builtin_material[n].has = 1;
         return 1;
     }
-    if(strncmp(name, frontlightmodelprod_code, strlen(frontlightmodelprod_code))==0 
+    if(strncmp(name, frontlightmodelprod_code, strlen(frontlightmodelprod_code))==0
     || strncmp(name, backlightmodelprod_code, strlen(backlightmodelprod_code))==0)
     {
         // it's a front light model product
@@ -1755,9 +1755,9 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->has_builtin_light = 1;
         return 1;
     }
-    if(strncmp(name, frontlightprod_code, strlen(frontlightprod_code))==0 
+    if(strncmp(name, frontlightprod_code, strlen(frontlightprod_code))==0
     || strncmp(name, backlightprod_code, strlen(backlightprod_code))==0
-    || strncmp(name, frontlightprod_fpe_code, strlen(frontlightprod_fpe_code))==0 
+    || strncmp(name, frontlightprod_fpe_code, strlen(frontlightprod_fpe_code))==0
     || strncmp(name, backlightprod_fpe_code, strlen(backlightprod_fpe_code))==0
     )
     {

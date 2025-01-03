@@ -80,7 +80,7 @@ void gl4es_glStencilMaskSeparate(GLenum face, GLuint mask);
 
 void gl4es_glMultiDrawArrays(GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount);
 void gl4es_glMultiDrawElements( GLenum mode, GLsizei *count, GLenum type, const void * const *indices, GLsizei primcount);
-void gl4es_glMultiDrawElementsBaseVertex( GLenum mode, GLsizei *count, GLenum type, const void * const *indices, GLsizei primcount, const GLint * basevertex);
+void gl4es_glMultiDrawElementsBaseVertex(GLenum mode, const GLsizei *counts, GLenum type, const void **indices, GLsizei primcount, const GLint * basevertex);
 
 void gl4es_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
 void gl4es_glDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices, GLint basevertex);

@@ -4,6 +4,7 @@
 #include <execinfo.h>
 #endif
 #include "../glx/hardext.h"
+#include <string.h>
 #include "blit.h"
 #include "debug.h"
 #include "fpe.h"
@@ -455,6 +456,7 @@ void gl4es_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum texta
             LOGE("texture for FBO not found, name=%u\n", texture);
         } else {
             texture = tex->glname;
+            tex->fbtex_ratio = (globals4es.fbtexscale > 0.0f)?globals4es.fbtexscale:0.0f;
             // check if texture is shrinked...
             if (tex->shrink || tex->useratio || (tex->adjust && (hardext.npot==1 || hardext.npot==2) && !globals4es.potframebuffer)) {
                 LOGD("%s texture for FBO\n",(tex->useratio)?"going back to npot size pot'ed":"unshrinking shrinked");
@@ -465,6 +467,11 @@ void gl4es_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum texta
                     } else {
                         tex->width *= 1<<tex->shrink;
                         tex->height *= 1<<tex->shrink;
+                    }
+
+                    if (tex->fbtex_ratio > 0.0f) {
+                        tex->width *= tex->fbtex_ratio;
+                        tex->height *= tex->fbtex_ratio;
                     }
                 }
                 tex->nwidth = (hardext.npot>0 || hardext.esversion>1)?tex->width:npot(tex->width);
@@ -560,10 +567,28 @@ void gl4es_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum texta
     }
 
     SetAttachment(fb, attachment, textarget, tex?tex->texture:texture, level);
+    if(attachment>=GL_COLOR_ATTACHMENT0 && attachment<(GL_COLOR_ATTACHMENT0+hardext.maxcolorattach) && tex) {
+        gltexture_t *bound = glstate->texture.bound[0][ENABLED_TEX2D];
+        if((hardext.npot==1 || hardext.npot==2) && (!tex->wrap_s || !tex->wrap_t || !wrap_npot(tex->wrap_s) || !wrap_npot(tex->wrap_t))) {
+            tex->sampler.wrap_s = tex->sampler.wrap_t = GL_CLAMP_TO_EDGE;
+            tex->adjust = 0;
+        }
 
+        if(!tex->actual.min_filter || !minmag_npot(tex->actual.min_filter) || tex->actual.min_filter != tex->sampler.min_filter) {
+            if(hardext.npot < 2) {
+                tex->sampler.min_filter = minmag_forcenpot(tex->actual.min_filter);
+                tex->adjust = 0;
+                tex->mipmap_need = 0;
+                tex->mipmap_auto = 0;
+            }
+        }
+
+        realize_texture_2(map_tex_target(textarget), -1, tex, NULL);
+    }
+    /*
     if(attachment>=GL_COLOR_ATTACHMENT0 && attachment<(GL_COLOR_ATTACHMENT0+hardext.maxcolorattach) && tex) {
         int oldactive = glstate->texture.active;
-        gltexture_t *bound = glstate->texture.bound[0/*glstate->texture.active*/][ENABLED_TEX2D];
+        gltexture_t *bound = glstate->texture.bound[0][ENABLED_TEX2D];
         GLuint oldtex = bound->glname;
         int changed = 0;
         if((hardext.npot==1 || hardext.npot==2) && (!tex->wrap_s || !tex->wrap_t || !wrap_npot(tex->wrap_s) || !wrap_npot(tex->wrap_t))) {
@@ -593,6 +618,7 @@ void gl4es_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum texta
             if(oldactive) gles_glActiveTexture(GL_TEXTURE0+oldactive);
         }
     }
+    */
 
     if(attachment==GL_DEPTH_ATTACHMENT /*&& hardext.depthtex==0*/) {
         noerrorShim();
@@ -1390,13 +1416,17 @@ void gl4es_glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
     // filter will be taken only for ReadFBO has no Texture attached (so readpixel is used)
     DBG(SHUT_LOGD("glBlitFramebuffer(%d, %d, %d, %d,  %d, %d, %d, %d,  0x%04X, %s) fbo_read=%d, fbo_draw=%d\n",
         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, PrintEnum(filter), glstate->fbo.fbo_read->id, glstate->fbo.fbo_draw->id);)
+    GLint viewport[4];
+    gl4es_glGetIntegerv(GL_VIEWPORT, viewport);
+    GLint width = viewport[2];
+    GLint height = viewport[3];
 
     if((mask&GL_COLOR_BUFFER_BIT)==0)
         return; // cannot copy DEPTH or STENCIL data on GLES, only COLOR_BUFFER...
 
     if(glstate->fbo.fbo_read == glstate->fbo.fbo_draw && srcX0==dstX0 && srcX1==dstX1 && srcY0==dstY0 && srcY1==dstY1)
         return; // no need to try copying on itself
-    
+
     if(dstX1==dstX0 || dstY1==dstY0)
         return; // nothing to draw
     if(srcX1==srcX0 || srcY1==srcY0)
@@ -1455,6 +1485,9 @@ void gl4es_glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
         fbowidth  = glstate->fbo.fbo_draw->width;
         fboheight = glstate->fbo.fbo_draw->height;
     }
+    //forced width and height
+    fbowidth=width;
+    fboheight=height;
     GLint vp[4];
     memcpy(vp, &glstate->raster.viewport, sizeof(vp));
     gl4es_glViewport(0, 0, fbowidth, fboheight);

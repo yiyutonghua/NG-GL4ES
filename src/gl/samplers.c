@@ -34,7 +34,7 @@ glsampler_t* find_sampler(GLuint sampler) {
     khint_t k;
     khash_t(samplerlist_t) *list = glstate->samplers.samplerlist;
     k = kh_get(samplerlist_t, list, sampler);
-    
+
     if (k != kh_end(list)){
         return kh_value(list, k);
     }

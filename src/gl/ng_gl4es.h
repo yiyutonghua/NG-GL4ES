@@ -15,6 +15,8 @@
 #define GL_NAME_LENGTH 0x92f9
 #define GL_PROGRAM_BINARY_FORMAT_MESA     0x875F
 
+#define VISITABLE __attribute__((visibility("default")))
+
 #include <GL/gl.h>
 #include <vector>
 #include <functional>
@@ -22,7 +24,6 @@
 #include <unordered_map>
 #include <mutex>
 #include <unordered_set>
-#include <android/log.h>
 #include "framebuffers.h"
 #include "texture.h"
 #include "wrap/gles.h"
@@ -31,9 +32,6 @@
 #include "const.h"
 #include "gl4es.h"
 #include "wrap/gl4es.h"
-
-#define LOG_TAG "NG-GL4ES"
-
 
 enum DebugMessageSeverity {
     DEBUG_SEVERITY_NOTIFICATION,
@@ -67,5 +65,10 @@ extern std::vector<float> computeResults;
 
 extern GLDEBUGPROCARB debugCallback;
 
+struct SyncObject {
+    GLuint fbo;
+    GLuint texture;
+    GLint status;
+};
 
 #endif

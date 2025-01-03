@@ -157,9 +157,11 @@ extern "C" {
 #define GL_UNSIGNED_INT_8_8_8_8_REV    0x8367
 #define GL_UNSIGNED_INT_10_10_10_2     0x8036
 #define GL_UNSIGNED_INT_2_10_10_10_REV 0x8368
+#define GL_UNSIGNED_INT_10F_11F_11F_REV 0x8C3B
 #define GL_R8                          0x8229
 #define GL_RGB8                        0x8051
 #define GL_RGB5                        0x8050
+#define GL_RGB4                        0x804F
 #define GL_RGBA8                       0x8058
 #define GL_RGBA16                      0x805B
 #define GL_ALPHA4				       0x803B
@@ -189,7 +191,9 @@ extern "C" {
 #define GL_INTENSITY16				   0x804D
 #define GL_INTENSITY16F                0x881D
 #define GL_INTENSITY32F                0x8817
+#define GL_R16F                        0x822D
 #define GL_RGB10_A2                    0x8059
+#define GL_RGB10_A2UI                  0x906F
 #define GL_RGBA16F                     0x881A
 #define GL_RGB16F                      0x881B
 #define GL_RGBA32F                     0x8814
@@ -207,6 +211,8 @@ extern "C" {
 #define GL_COMPRESSED_TEXTURE_FORMATS  0x86A3
 #define GL_HALF_FLOAT_OES              0x8D61
 #define GL_RGB565                      0x8D62
+#define GL_R11F_G11F_B10F              0x8C3A
+#define GL_R32F                        0x822E
 
 // types
 #define GL_BYTE                 0x1400
@@ -227,21 +233,21 @@ extern "C" {
 #define GL_COMPILE_AND_EXECUTE  0x1301
 
 // fog
-#define GL_FOG                  0x0B60
-#define GL_FOG_MODE             0x0B65
-#define GL_FOG_DENSITY          0x0B62
-#define GL_FOG_COLOR            0x0B66
-#define GL_FOG_INDEX            0x0B61
-#define GL_FOG_START            0x0B63
-#define GL_FOG_END              0x0B64
-#define GL_LINEAR               0x2601
-#define GL_EXP                  0x0800
-#define GL_EXP2                 0x0801
-#define GL_FOG_COORDINATE_SOURCE 0x8450
-#define GL_FOG_COORD_SRC        GL_FOG_COORDINATE_SOURCE
-#define GL_FRAGMENT_DEPTH       0x8452
-#define GL_FOG_COORDINATE       0x8451
-#define GL_FOG_COORD            GL_FOG_COORDINATE
+#define GL_FOG                            0x0B60
+#define GL_FOG_MODE                       0x0B65
+#define GL_FOG_DENSITY                    0x0B62
+#define GL_FOG_COLOR                      0x0B66
+#define GL_FOG_INDEX                      0x0B61
+#define GL_FOG_START                      0x0B63
+#define GL_FOG_END                        0x0B64
+#define GL_LINEAR                         0x2601
+#define GL_EXP                            0x0800
+#define GL_EXP2                           0x0801
+#define GL_FOG_COORDINATE_SOURCE          0x8450
+#define GL_FOG_COORD_SRC                  GL_FOG_COORDINATE_SOURCE
+#define GL_FRAGMENT_DEPTH                 0x8452
+#define GL_FOG_COORDINATE                 0x8451
+#define GL_FOG_COORD                      GL_FOG_COORDINATE
 #define GL_CURRENT_FOG_COORD              0x8453
 #define GL_FOG_COORD_ARRAY_TYPE           0x8454
 #define GL_FOG_COORD_ARRAY_STRIDE         0x8455
@@ -285,9 +291,9 @@ extern "C" {
 #define GL_COLOR_MATERIAL_PARAMETER 0x0B56
 #define GL_NORMALIZE            0x0BA1
 #define GL_DRAW_BUFFER          0x0C01
-#define GL_LIGHT_MODEL_COLOR_CONTROL	0x81F8
+#define GL_LIGHT_MODEL_COLOR_CONTROL 0x81F8
 #define GL_SINGLE_COLOR		    0x81F9
-#define GL_SEPARATE_SPECULAR_COLOR		0x81FA
+#define GL_SEPARATE_SPECULAR_COLOR 0x81FA
 
 // stencil
 #define GL_STENCIL_BACK_FUNC              0x8800
@@ -366,9 +372,9 @@ extern "C" {
 #define GL_ONE_MINUS_DST_COLOR   0x0307
 #define GL_SRC_ALPHA_SATURATE    0x0308
 #define GL_CONSTANT_COLOR        0x8001
-#define GL_ONE_MINUS_CONSTANT_COLOR       0x8002
+#define GL_ONE_MINUS_CONSTANT_COLOR 0x8002
 #define GL_CONSTANT_ALPHA        0x8003
-#define GL_ONE_MINUS_CONSTANT_ALPHA       0x8004
+#define GL_ONE_MINUS_CONSTANT_ALPHA 0x8004
 #define GL_DOT3_RGB_EXT         0x8740
 #define GL_DOT3_RGBA_EXT        0x8741
 #define GL_BLEND_DST_RGB        0x80C8
@@ -377,14 +383,14 @@ extern "C" {
 #define GL_BLEND_SRC_ALPHA      0x80CB
 
 // glGet
-#define GL_AUX_BUFFERS           0x0C00
-#define GL_MAX_ELEMENTS_VERTICES 0x80E8
-#define GL_MAX_ELEMENTS_INDICES  0x80E9
-#define GL_POINT_SIZE_RANGE		 0x0B12
-#define GL_RENDER_MODE           0x0C40
-#define GL_NAME_STACK_DEPTH      0x0D70
-#define GL_MAX_NAME_STACK_DEPTH  0x0D37
-#define GL_MAX_TEXTURE_IMAGE_UNITS 0x8872
+#define GL_AUX_BUFFERS                          0x0C00
+#define GL_MAX_ELEMENTS_VERTICES                0x80E8
+#define GL_MAX_ELEMENTS_INDICES                 0x80E9
+#define GL_POINT_SIZE_RANGE		                0x0B12
+#define GL_RENDER_MODE                          0x0C40
+#define GL_NAME_STACK_DEPTH                     0x0D70
+#define GL_MAX_NAME_STACK_DEPTH                 0x0D37
+#define GL_MAX_TEXTURE_IMAGE_UNITS              0x8872
 #define GL_TRANSPOSE_MODELVIEW_MATRIX           0x84E3
 #define GL_TRANSPOSE_PROJECTION_MATRIX          0x84E4
 #define GL_TRANSPOSE_TEXTURE_MATRIX             0x84E5
@@ -506,14 +512,14 @@ extern "C" {
 #define GL_C4UB_V3F				0x2A23
 #define GL_C3F_V3F				0x2A24
 #define GL_N3F_V3F				0x2A25
-#define GL_C4F_N3F_V3F				0x2A26
+#define GL_C4F_N3F_V3F			0x2A26
 #define GL_T2F_V3F				0x2A27
 #define GL_T4F_V4F				0x2A28
-#define GL_T2F_C4UB_V3F				0x2A29
-#define GL_T2F_C3F_V3F				0x2A2A
-#define GL_T2F_N3F_V3F				0x2A2B
-#define GL_T2F_C4F_N3F_V3F			0x2A2C
-#define GL_T4F_C4F_N3F_V4F			0x2A2D
+#define GL_T2F_C4UB_V3F			0x2A29
+#define GL_T2F_C3F_V3F			0x2A2A
+#define GL_T2F_N3F_V3F			0x2A2B
+#define GL_T2F_C4F_N3F_V3F		0x2A2C
+#define GL_T4F_C4F_N3F_V4F		0x2A2D
 
 /* Buffers Array */
 #define GL_BUFFER_SIZE                    0x8764
@@ -522,14 +528,6 @@ extern "C" {
 #define GL_CURRENT_QUERY                  0x8865
 #define GL_QUERY_RESULT                   0x8866
 #define GL_QUERY_RESULT_AVAILABLE         0x8867
-#define GL_TIME_ELAPSED                                 0x88BF
-#define GL_TIMESTAMP                                    0x8E28
-#define GL_SAMPLES_PASSED                               0x8914
-#define GL_ANY_SAMPLES_PASSED                           0x8C2F
-#define GL_ANY_SAMPLES_PASSED_CONSERVATIVE              0x8D6A
-#define GL_PRIMITIVES_GENERATED                         0x8C87
-#define GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN        0x8C88
-#define GL_QUERY_RESULT_NO_WAIT                         0x9194
 #define GL_ARRAY_BUFFER                   0x8892
 #define GL_ELEMENT_ARRAY_BUFFER           0x8893
 #define GL_ARRAY_BUFFER_BINDING           0x8894
@@ -550,7 +548,6 @@ extern "C" {
 #define GL_DYNAMIC_DRAW                   0x88E8
 #define GL_DYNAMIC_READ                   0x88E9
 #define GL_DYNAMIC_COPY                   0x88EA
-#define GL_SAMPLES_PASSED                 0x8914
 #define GL_SRC1_ALPHA                     0x8589
 #define GL_VERTEX_ARRAY_BUFFER_BINDING    0x8896
 #define GL_NORMAL_ARRAY_BUFFER_BINDING    0x8897
@@ -574,6 +571,13 @@ extern "C" {
 #define GL_PIXEL_UNPACK_BUFFER_BINDING	  0x88EF
 #define GL_PIXEL_PACK_BUFFER_BINDING      0x88ED
 #define GL_CURRENT_VERTEX_ATTRIB          0x8626
+#define GL_MAP_PERSISTENT_BIT             0x00000040
+#define GL_QUERY_BUFFER_BINDING_AMD       0x9193
+#define GL_COPY_READ_BUFFER_BINDING       0x8F36
+#define GL_COPY_READ_BUFFER               GL_COPY_READ_BUFFER_BINDING
+#define GL_COPY_WRITE_BUFFER_BINDING      0x8F37
+#define GL_COPY_WRITE_BUFFER              GL_COPY_WRITE_BUFFER_BINDING
+
 
 /* Framebuffers */
 #define GL_INVALID_FRAMEBUFFER_OPERATION  0x0506
@@ -592,6 +596,8 @@ extern "C" {
 #define GL_DEPTH_STENCIL                  0x84F9
 #define GL_UNSIGNED_INT_24_8              0x84FA
 #define GL_DEPTH24_STENCIL8               0x88F0
+#define GL_FLOAT_32_UNSIGNED_INT_24_8_REV 0x8DAD
+#define GL_DEPTH32F_STENCIL8              0x8CAD
 #define GL_TEXTURE_STENCIL_SIZE           0x88F1
 #define GL_TEXTURE_RED_TYPE               0x8C10
 #define GL_TEXTURE_GREEN_TYPE             0x8C11
@@ -656,6 +662,7 @@ extern "C" {
 #define GL_INDEX                          0x8222
 #define GL_TEXTURE_LUMINANCE_TYPE         0x8C14
 #define GL_TEXTURE_INTENSITY_TYPE         0x8C15
+#define GL_DEPTH_COMPONENT32F             0x8CAC
 #define GL_DEPTH_COMPONENT32              0x81A7
 #define GL_DEPTH_COMPONENT24              0x81A6
 #define GL_DEPTH_COMPONENT16              0x81A5
@@ -749,6 +756,9 @@ extern "C" {
 #define GL_INT_VEC2                       0x8B53
 #define GL_INT_VEC3                       0x8B54
 #define GL_INT_VEC4                       0x8B55
+#define GL_UNSIGNED_INT_VEC2              0x8DC6
+#define GL_UNSIGNED_INT_VEC3              0x8DC7
+#define GL_UNSIGNED_INT_VEC4              0x8DC8
 #define GL_BOOL                           0x8B56
 #define GL_BOOL_VEC2                      0x8B57
 #define GL_BOOL_VEC3                      0x8B58
@@ -889,7 +899,7 @@ extern "C" {
 
 #define GL_VERTEX_PROGRAM_ARB                           0x8620
 
-// ARB_fragment_program 
+// ARB_fragment_program
 
 #define GL_MAX_TEXTURE_COORDS_ARB                       0x8871
 #define GL_MAX_TEXTURE_IMAGE_UNITS_ARB                  0x8872
@@ -912,6 +922,29 @@ extern "C" {
 // EXT_draw_buffers
 
 #define GL_MAX_COLOR_ATTACHMENTS_EXT                    0x8CDF
+
+// Sampler
+#define GL_SAMPLER_BINDING                              0x8919
+#define GL_TEXTURE_COMPARE_FUNC                         0x884D
+#define GL_COMPARE_REF_TO_TEXTURE                       0x884E
+#define GL_NONE                                         0x0
+
+// Queries
+#define GL_TIME_ELAPSED                                 0x88BF
+#define GL_TIMESTAMP                                    0x8E28
+#define GL_SAMPLES_PASSED                               0x8914
+#define GL_ANY_SAMPLES_PASSED                           0x8C2F
+#define GL_ANY_SAMPLES_PASSED_CONSERVATIVE              0x8D6A
+#define GL_PRIMITIVES_GENERATED                         0x8C87
+#define GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN        0x8C88
+#define GL_QUERY_RESULT_NO_WAIT                         0x9194
+
+// Blend
+#define GL_FUNC_ADD                                     0x8006
+#define GL_FUNC_SUBTRACT                                0x800A
+#define GL_FUNC_REVERSE_SUBTRACT                        0x800B
+#define GL_MIN                                          0x8007
+#define GL_MAX                                          0x8008
 
 #endif // _GL4ES_CONST_H_
 #ifdef __cplusplus

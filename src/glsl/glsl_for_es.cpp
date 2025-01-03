@@ -137,8 +137,33 @@ int getGLSLVersion(const char* glsl_code) {
 }
 
 std::string forceSupporter(const std::string& glslCode) {
-    std::regex bindingRegex(R"(layout\s*\(\s*binding\s*=\s*\d+\s*\)\s*)");
-    std::string result = std::regex_replace(glslCode, bindingRegex, "");
+
+    std::regex precisionFloatRegex(R"(\n\s*precision\s*\w+\s*float\s*;\s*)");
+    std::regex precisionIntRegex(R"(\n\s*precision\s*\w+\s*int\s*;\s*)");
+
+    bool hasPrecisionFloat = std::regex_search(glslCode, precisionFloatRegex);
+    bool hasPrecisionInt = std::regex_search(glslCode, precisionIntRegex);
+
+    std::string result = glslCode;
+
+    if (!hasPrecisionFloat) {
+        size_t firstNewline = result.find('\n');
+        if (firstNewline != std::string::npos) {
+            result.insert(firstNewline + 1, "precision mediump float;\n");
+        } else {
+            result = "precision mediump float;\n" + result;
+        }
+    }
+
+    if (!hasPrecisionInt) {
+        size_t firstNewline = result.find('\n');
+        if (firstNewline != std::string::npos) {
+            result.insert(firstNewline + 1, "precision highp int;\n");
+        } else {
+            result = "precision highp int;\n" + result;
+        }
+    }
+
     return result;
 }
 
@@ -306,7 +331,6 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 320);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
-
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);
     printf("Cross-compiled source: %s\n", result);
