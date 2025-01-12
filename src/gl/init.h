@@ -81,6 +81,7 @@ typedef struct _globals4es {
     int use_mc_color;
     int skiptexcopies;
     float fbtexscale;
+    uint esversion;
 } globals4es_t;
 
 extern globals4es_t globals4es;

@@ -241,7 +241,7 @@ char* removeLineDirective(char* glslCode) {
 }
 
 
-char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
+char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     glslang::InitializeProcess();
     EShLanguage shader_language;
     switch (glsl_type) {
@@ -255,7 +255,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
             shader_language = EShLanguage::EShLangCompute;
             break;
         default:
-            SHUT_LOGE("不支持的GLSL类型!");
+            SHUT_LOGE("GLSL type not supported!");
             return nullptr;
     }
 
@@ -282,19 +282,19 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     TBuiltInResource TBuiltInResource_resources = InitResources();
 
     if (!shader.parse(&TBuiltInResource_resources, glsl_version, true, EShMsgDefault)) {
-        DBG(SHUT_LOGE("GLSL编译错误: \n%s",shader.getInfoLog());)
+        DBG(SHUT_LOGE("GLSL Compiling ERROR: \n%s",shader.getInfoLog());)
         return NULL;
     }
-    DBG(SHUT_LOGD("GLSL编译完成");)
+    DBG(SHUT_LOGD("GLSL Compiled.");)
 
     glslang::TProgram program;
     program.addShader(&shader);
 
     if (!program.link(EShMsgDefault)) {
-        DBG(SHUT_LOGE("着色器链接错误: %s",program.getInfoLog());)
+        DBG(SHUT_LOGE("Shader Linking ERROR: %s",program.getInfoLog());)
         return nullptr;
     }
-    DBG(SHUT_LOGD("着色器链接完成" );)
+    DBG(SHUT_LOGD("Shader Linked." );)
     std::vector<unsigned int> spirv_code;
     glslang::SpvOptions spvOptions;
     spvOptions.disableOptimizer = true;
@@ -322,14 +322,14 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type) {
     spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_UNIFORM_BUFFER, &list, &count);
     DBG(for (i = 0; i < count; i++)
     {
-        printf("ID: %u, BaseTypeID: %u, TypeID: %u, Name: %s\n", list[i].id, list[i].base_type_id, list[i].type_id,
+        SHUT_LOGD("ID: %u, BaseTypeID: %u, TypeID: %u, Name: %s\n", list[i].id, list[i].base_type_id, list[i].type_id,
                list[i].name);
-        printf("  Set: %u, Binding: %u\n",
+        SHUT_LOGD("  Set: %u, Binding: %u\n",
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationDescriptorSet),
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationBinding));
     })
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
-    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 320);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, essl_version);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);

@@ -281,15 +281,33 @@ const char* getGpuName() {
     return gpuName;
 }
 
+void set_es_version() {
+    LOAD_GLES(glGetString);
+    const char* ESVersion = getBeforeThirdSpace((const char*)gles_glGetString(GL_VERSION));
+    int major, minor;
+
+    if (sscanf(ESVersion, "OpenGL ES %d.%d", &major, &minor) == 2) {
+        globals4es.esversion = major * 100 + minor * 10;
+    } else {
+        globals4es.esversion = globals4es.es * 100;
+    }
+    LOGD("OpenGL ES Version: %s (%d)", ESVersion, globals4es.esversion);
+}
+
 const char* getGLESName() {
     LOAD_GLES2(glGetString);
     const char* ESVersion = (const char*)gles_glGetString(GL_VERSION);
+
     return getBeforeThirdSpace(ESVersion);
 }
 
 const GLubyte *gl4es_glGetString(GLenum name) {
     DBG(SHUT_LOGD("glGetString(%s)\n", PrintEnum(name));)
     errorShim(GL_NO_ERROR);
+    if (globals4es.esversion == -1) {
+        set_es_version();
+    }
+
     switch (name) {
         case GL_VERSION:
             return (GLubyte *)globals4es.version;

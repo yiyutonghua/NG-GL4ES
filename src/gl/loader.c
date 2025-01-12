@@ -76,6 +76,15 @@ static const char *gles3_lib[] = {
     NULL
 };
 
+static const char *gles2_lib[] = {
+#if defined(BCMHOST)
+        "libbrcmGLESv2",
+#endif
+        "libGLESv2_CM",
+        "libGLESv2",
+        NULL
+};
+
 static const char *gles_lib[] = {
     #if defined(BCMHOST)
     "libbrcmGLESv1_CM",
@@ -139,7 +148,7 @@ void load_libs() {
         vcos = open_lib(vcos_name, NULL);
     }
 #endif
-    gles = open_lib((globals4es.es==1)?gles_lib:gles3_lib, gles_override);
+    gles = open_lib((globals4es.es==1)?gles_lib:(globals4es.es==2)?gles2_lib:gles3_lib, gles_override);
     WARN_NULL(gles);
 
 #ifdef NOEGL
