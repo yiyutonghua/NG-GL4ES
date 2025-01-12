@@ -276,6 +276,7 @@ typedef struct {
     // that will be an fpe_cache_t*
     void*                           fpe_cache;
     uniforms_declarations           declarations;
+    int                             frag_data_changed;
 } program_t;
 
 KHASH_MAP_DECLARE_INT(programlist, program_t *);

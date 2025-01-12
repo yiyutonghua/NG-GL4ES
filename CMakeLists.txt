@@ -19,6 +19,7 @@ set(CMAKE_BUILD_TYPE Release)
 include_directories(${CMAKE_SOURCE_DIR}/include )
 
 set(C_SRC_FILES
+        src/gl/string_utils.c
         src/gl/arbconverter.c
         src/gl/arbgenerator.c
         src/gl/arbhelper.c
@@ -71,7 +72,6 @@ set(C_SRC_FILES
         src/gl/shader_hacks.c
         src/gl/stack.c
         src/gl/stencil.c
-        src/gl/string_utils.c
         src/gl/stubs.c
         src/gl/texenv.c
         src/gl/texgen.c

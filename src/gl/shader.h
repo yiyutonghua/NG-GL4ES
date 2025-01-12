@@ -32,6 +32,7 @@ typedef struct shader_s {
     uniforms_declarations uniforms_declarations;
     int                   uniforms_declarations_count;
     int                   is_converted_essl_320;
+    char*                 before_patch;
 } shader_t;
 
 KHASH_MAP_DECLARE_INT(shaderlist, shader_t *);
