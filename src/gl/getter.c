@@ -8,6 +8,7 @@
 #include "light.h"
 #include "matvec.h"
 #include "texgen.h"
+#include "string_utils.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -277,7 +278,7 @@ char* getBeforeThirdSpace(const char* str) {
 
 const char* getGpuName() {
     LOAD_GLES2(glGetString);
-    const char* gpuName = (const char*)gles_glGetString(GL_RENDERER);
+    const char *gpuName = (const char *) gles_glGetString(GL_RENDERER);
     return gpuName;
 }
 
@@ -544,6 +545,12 @@ int gl4es_commonGet(GLenum pname, GLfloat *params) {
             break;
         case  GL_ELEMENT_ARRAY_BUFFER_BINDING:
             *params=(glstate->vao->elements)?glstate->vao->elements->buffer:0;
+            break;
+        case  GL_COPY_READ_BUFFER_BINDING:
+            *params=(glstate->vao->read)?glstate->vao->read->buffer:0;
+            break;
+        case  GL_COPY_WRITE_BUFFER_BINDING:
+            *params=(glstate->vao->write)?glstate->vao->write->buffer:0;
             break;
         case  GL_PIXEL_PACK_BUFFER_BINDING:
             *params=(glstate->vao->pack)?glstate->vao->pack->buffer:0;

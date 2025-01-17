@@ -320,6 +320,7 @@ void __attribute__((visibility("default"))) glUniformBlockBinding(GLuint program
 
 
 void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint program, GLuint colorNumber, const GLchar* name) {
+    DBG(printf("glBindFragDataLocation(%d, %d, \"%s\")\n", program, colorNumber, name);)
     FLUSH_BEGINEND;
     CHECK_PROGRAM(void, program)
 
@@ -328,13 +329,13 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
             glprogram->last_frag->before_patch = glprogram->last_frag->converted;
         }
 
-        //printf("Target shader:\n%s\n", glprogram->last_frag->converted);
+        DBG(SHUT_LOGD("Target shader:\n%s\n", glprogram->last_frag->converted);)
 
         int len = strlen(name);
         int tlen = len + 32;
         char * targetPattern = malloc(sizeof(char*) * tlen);
         sprintf(targetPattern, "out[ ]+[A-Za-z0-9 ]+[ ]+%s", name);
-        DBG(printf("%s\n", targetPattern);)
+        DBG(SHUT_LOGD("%s\n", targetPattern);)
 
         char* target;
         regex_t regex;
@@ -342,13 +343,13 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
         int status;
         status = regcomp(&regex, targetPattern, REG_EXTENDED);
         if (status) {
-            DBG(printf("Could not compile regex\n");)
+            DBG(SHUT_LOGD("Could not compile regex\n");)
             regfree(&regex);
             return;
         }
         status = regexec(&regex, glprogram->last_frag->converted, 1, regmatch, 0);
         if (status == 0) {
-            DBG(printf("Match found\n");)
+            DBG(SHUT_LOGD("Match found\n");)
             int start = regmatch[0].rm_so;
             int end = regmatch[0].rm_eo;
             int rlen = end - start;
@@ -356,7 +357,7 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
             memcpy(target, &glprogram->last_frag->converted[start], rlen);
             regfree(&regex);
         } else if (status == REG_NOMATCH) {
-            DBG(printf("No match found\n");)
+            DBG(SHUT_LOGD("No match found\n");)
             regfree(&regex);
             return;
         } else {
@@ -366,15 +367,22 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
             regfree(&regex);
             return;
         }
-        DBG(printf("%s\n", target);)
+
+        //delete wrong '='
+        size_t target_len = strlen(target);
+        if (target_len > 0 && target[target_len - 1] == '=') {
+            target[target_len - 1] = '\0';
+        }
+
+        DBG(SHUT_LOGD("%s\n", target);)
 
         char * replacement = malloc(sizeof(char*) * (tlen + 22));
         sprintf(replacement, "layout (location = %i) %s", colorNumber, target);
-        DBG(printf("%s\n", replacement);)
+        DBG(SHUT_LOGD("%s\n", replacement);)
 
         int size = strlen(glprogram->last_frag->converted) + 100;
         glprogram->last_frag->converted = InplaceReplace(glprogram->last_frag->converted, &size, target, replacement);
-        DBG(printf("Resulting shader:\n%s\n", glprogram->last_frag->converted);)
+        DBG(SHUT_LOGD("Resulting shader:\n%s\n", glprogram->last_frag->converted);)
 
         glprogram->frag_data_changed = 1;
         //LOAD_GLES2(glShaderSource);
@@ -1038,7 +1046,7 @@ static void fill_program(program_t *glprogram)
                 uniform_cache += uniformsize(type)*size;
             }
         }
-        DBG(else printf("LIBGL: Warning, getting Uniform #%d info failed with %s\n", i, PrintEnum(e2));)
+        DBG(else SHUT_LOGD("LIBGL: Warning, getting Uniform #%d info failed with %s\n", i, PrintEnum(e2));)
     }
     free(name);
     // reset uniform cache
@@ -1090,7 +1098,7 @@ static void fill_program(program_t *glprogram)
                 DBG(SHUT_LOGD(" attrib #%d : \"%s\"%s type=%s size=%d\n", id, glattribloc->name, builtin?" (builtin) ":"", PrintEnum(glattribloc->type), glattribloc->size);)
             }
         }
-        DBG(else printf("LIBGL: Warning, getting Attrib #%d info failed with %s\n", i, PrintEnum(e2));)
+        DBG(else SHUT_LOGD("LIBGL: Warning, getting Attrib #%d info failed with %s\n", i, PrintEnum(e2));)
     }
     free(name);
 }
@@ -1183,14 +1191,12 @@ void gl4es_glLinkProgram(GLuint program) {
     shaderconv_need_t needs = {0};
     needs.need_texcoord = -1;
     // first get the compatible need
-    for (int i = 0; i < glprogram->attach_size; i++) {
+    for (int i=0; i<glprogram->attach_size; i++) {
         accumShaderNeeds(glprogram->attach[i], &needs);
     }
-    // now check if vertex shader is missing
-    int has_vertex = glprogram->last_vert ? 1 : 0;
-    // and create one if needed!
-    if (!has_vertex) {
-        glprogram->default_need = (shaderconv_need_t *) malloc(sizeof(shaderconv_need_t));
+    // create one vertex shader if needed!
+    if(!glprogram->last_vert) {
+        glprogram->default_need = (shaderconv_need_t*)malloc(sizeof(shaderconv_need_t));
         memcpy(glprogram->default_need, &needs, sizeof(shaderconv_need_t));
         glprogram->default_vertex = 1;
         GLenum vtx = gl4es_glCreateShader(GL_VERTEX_SHADER);
@@ -1198,15 +1204,25 @@ void gl4es_glLinkProgram(GLuint program) {
         gl4es_glCompileShader(vtx);
         gl4es_glAttachShader(glprogram->id, vtx);
     }
+    // create one fragment shader if needed!
+    if(!glprogram->last_frag) {
+        glprogram->default_need = (shaderconv_need_t*)malloc(sizeof(shaderconv_need_t));
+        memcpy(glprogram->default_need, &needs, sizeof(shaderconv_need_t));
+        glprogram->default_fragment = 1;
+        GLenum vtx = gl4es_glCreateShader(GL_FRAGMENT_SHADER);
+        gl4es_glShaderSource(vtx, 1, fpe_FragmentShader(&needs, NULL), NULL);
+        gl4es_glCompileShader(vtx);
+        gl4es_glAttachShader(glprogram->id, vtx);
+    }
     int compatible = 1;
     // now is everyone ok?
-    for (int i = 0; i < glprogram->attach_size && compatible; i++) {
+    for (int i=0; i<glprogram->attach_size && compatible; i++) {
         compatible = isShaderCompatible(glprogram->attach[i], &needs);
     }
     // someone is not compatible, redoing shaders...
-    if (!compatible) {
+    if(!compatible) {
         DBG(SHUT_LOGD("Need to redo some shaders...\n");)
-        for (int i = 0; i < glprogram->attach_size; i++) {
+        for (int i=0; i<glprogram->attach_size; i++) {
             redoShader(glprogram->attach[i], &needs);
         }
     }
@@ -1218,31 +1234,31 @@ void gl4es_glLinkProgram(GLuint program) {
             if (attribute)
                 gl4es_glBindAttribLocation(glprogram->id, i, attribute);
         }
-        if (glprogram->frag_data_changed == 1) {
-            LOAD_GLES2(glShaderSource);
-            LOAD_GLES2(glCompileShader);
-            LOAD_GLES2(glAttachShader);
-            if (gles_glShaderSource && gles_glCompileShader && gles_glAttachShader) {
-                gles_glShaderSource(glprogram->last_frag->id, 1, (const GLchar * const*) &glprogram->last_frag->converted, NULL);
+    }
+    if (glprogram->last_vert && glprogram->frag_data_changed == 1) {
+        LOAD_GLES2(glShaderSource);
+        LOAD_GLES2(glCompileShader);
+        LOAD_GLES2(glAttachShader);
+        if (gles_glShaderSource && gles_glCompileShader && gles_glAttachShader) {
+            gles_glShaderSource(glprogram->last_frag->id, 1, (const GLchar * const*) &glprogram->last_frag->converted, NULL);
+            gles_glCompileShader(glprogram->last_frag->id);
+            LOAD_GLES2(glGetShaderiv);
+            GLint status = 0;
+            gles_glGetShaderiv(glprogram->last_frag->id, GL_COMPILE_STATUS, &status);
+            if(status!=GL_TRUE) {
+                DBG(
+                        char tmp[500];
+                        GLint length;
+                        LOAD_GLES2(glGetShaderInfoLog);
+                        gles_glGetShaderInfoLog(glprogram->last_frag->id, 500, &length, tmp);
+                        SHUT_LOGD("Failed to compile patched shader, using default shader, log:\n%s\n", tmp);
+                )
+                gles_glShaderSource(glprogram->last_frag->id, 1, (const GLchar * const*) &glprogram->last_frag->before_patch, NULL);
                 gles_glCompileShader(glprogram->last_frag->id);
-                LOAD_GLES2(glGetShaderiv);
-                GLint status = 0;
-                gles_glGetShaderiv(glprogram->last_frag->id, GL_COMPILE_STATUS, &status);
-                if(status!=GL_TRUE) {
-                    DBG(
-                            char tmp[500];
-                            GLint length;
-                            LOAD_GLES2(glGetShaderInfoLog);
-                            gles_glGetShaderInfoLog(glprogram->last_frag->id, 500, &length, tmp);
-                            printf("Failed to compile patched shader, using default shader, log:\n%s\n", tmp);
-                    )
-                    gles_glShaderSource(glprogram->last_frag->id, 1, (const GLchar * const*) &glprogram->last_frag->before_patch, NULL);
-                    gles_glCompileShader(glprogram->last_frag->id);
-                }
-                gles_glAttachShader(glprogram->id, glprogram->last_frag->id);
-            } else {
-                noerrorShim();
             }
+            gles_glAttachShader(glprogram->id, glprogram->last_frag->id);
+        } else {
+            noerrorShim();
         }
     }
     // ok, continue with linking

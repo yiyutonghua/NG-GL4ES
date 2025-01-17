@@ -6,6 +6,8 @@ extern const char* AllSeparators;
 int isDigit(char value);
 int isValidFunctionName(char value);
 
+void AppendToEnd(char **str, const char *suffix);
+void InsertAtBeginning(char **str, const char *prefix);
 const char* FindString(const char* pBuffer, const char* S);
 char* FindStringNC(char* pBuffer, const char* S);
 int CountString(const char* pBuffer, const char* S);

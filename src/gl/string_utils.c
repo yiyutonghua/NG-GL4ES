@@ -8,6 +8,29 @@ const char* AllSeparators = " \t\n\r.,;()[]{}-<>+*/%&\\\"'^$=!:?";
 
 char* ResizeIfNeeded(char* pBuffer, int *size, int addsize);
 
+void AppendToEnd(char **str, const char *suffix) {
+    size_t len = strlen(*str);
+    size_t suffixLen = strlen(suffix);
+    char *newStr = (char *)malloc(len + suffixLen + 1);
+    if (newStr == NULL) {
+        return;
+    }
+    strcpy(newStr, *str);
+    strcpy(newStr + len, suffix);
+    free(*str);
+    *str = newStr;
+}
+
+void InsertAtBeginning(char **str, const char *prefix) {
+    size_t len = strlen(*str);
+    size_t prefixLen = strlen(prefix);
+    char *newStr = (char *)malloc(len + prefixLen + 1);
+    strcpy(newStr, prefix);
+    strcpy(newStr + prefixLen, *str);
+    free(*str);
+    *str = newStr;
+}
+
 char* InplaceReplace(char* pBuffer, int* size, const char* S, const char* D)
 {
     int lS = strlen(S), lD = strlen(D);

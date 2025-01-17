@@ -138,6 +138,8 @@ const char* PrintEnum(GLenum what) {
         p(GL_STATIC_DRAW);
         p(GL_STREAM_DRAW);
         p(GL_READ_WRITE);
+        p(GL_COPY_WRITE_BUFFER);
+        p(GL_COPY_READ_BUFFER);
         p(GL_ARRAY_BUFFER);
         p(GL_ELEMENT_ARRAY_BUFFER);
         p(GL_PIXEL_PACK_BUFFER);

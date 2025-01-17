@@ -2015,6 +2015,7 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 #define glBindBuffer_RETURN void
 #define glBindBuffer_ARG_NAMES target, buffer
 #define glBindBuffer_ARG_EXPAND GLenum target, GLuint buffer
+#define glFlushMappedBufferRange_ARG_EXPAND GLenum target, GLintptr offset, GLsizeiptr length
 #define glBindBuffer_PACKED PACKED_void_GLenum_GLuint
 #define glBindBuffer_INDEXED INDEXED_void_GLenum_GLuint
 #define glBindBuffer_FORMAT FORMAT_void_GLenum_GLuint
@@ -3680,6 +3681,8 @@ void gl4es_glBindAttribLocation(glBindAttribLocation_ARG_EXPAND);
 typedef void (*glBindAttribLocation_PTR)(glBindAttribLocation_ARG_EXPAND);
 void gl4es_glBindBuffer(glBindBuffer_ARG_EXPAND);
 typedef void (*glBindBuffer_PTR)(glBindBuffer_ARG_EXPAND);
+void gl4es_glFlushMappedBufferRange(glFlushMappedBufferRange_ARG_EXPAND);
+typedef void (*glFlushMappedBufferRange_PTR)(glFlushMappedBufferRange_ARG_EXPAND);
 void gl4es_glBindFramebuffer(glBindFramebuffer_ARG_EXPAND);
 typedef void (*glBindFramebuffer_PTR)(glBindFramebuffer_ARG_EXPAND);
 void gl4es_glBlitFramebuffer(glBlitFramebuffer_ARG_EXPAND);
