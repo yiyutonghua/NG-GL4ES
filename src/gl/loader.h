@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 #ifndef _GL4ES_LOADER_H_
 #define _GL4ES_LOADER_H_
 
@@ -229,3 +232,7 @@ extern void *gles, *egl, *bcm_host, *vcos, *gbm, *drm;
 #endif // defined(AMIGAOS4) || defined(NOEGL)
 
 #endif // _GL4ES_LOADER_H_
+
+#ifdef __cplusplus
+}
+#endif

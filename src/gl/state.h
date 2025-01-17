@@ -339,6 +339,16 @@ typedef struct {
     GLenum      front;
 } face_state_t;
 
+//glsampler_t define in texture.h
+
+KHASH_MAP_DECLARE_INT(samplerlist_t, glsampler_t *);
+
+typedef struct {
+	khash_t(samplerlist_t) *samplerlist;
+	glsampler_t*    sampler[MAX_TEX];
+	GLuint          last_sampler;
+} samplers_t;
+
 typedef struct {
     GLuint id;
     GLenum target;

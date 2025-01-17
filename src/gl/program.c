@@ -220,12 +220,12 @@ void __attribute__((visibility("default"))) glGetActiveUniformBlockName(GLuint p
 
 int IsActiveUniform(uniform_t* uniform) {
     if (uniform == NULL) {
-        return 0;  
+        return 0;
     }
     if (uniform->size > 0) {
-        return 1; 
+        return 1;
     }
-    return 0; 
+    return 0;
 }
 
 
@@ -333,27 +333,49 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
 
         int len = strlen(name);
         int tlen = len + 32;
-        char * targetPattern = malloc(sizeof(char*) * tlen);
+        char *targetPattern = malloc(sizeof(char) * tlen);
+        if (!targetPattern) {
+            DBG(fprintf(stderr, "Memory allocation failed for targetPattern\n"));
+            return;
+        }
+
         sprintf(targetPattern, "out[ ]+[A-Za-z0-9 ]+[ ]+%s", name);
         DBG(SHUT_LOGD("%s\n", targetPattern);)
 
-        char* target;
+        char* target = NULL;
         regex_t regex;
         regmatch_t regmatch[1];
         int status;
+
         status = regcomp(&regex, targetPattern, REG_EXTENDED);
+        free(targetPattern);
+
         if (status) {
             DBG(SHUT_LOGD("Could not compile regex\n");)
             regfree(&regex);
             return;
         }
+
         status = regexec(&regex, glprogram->last_frag->converted, 1, regmatch, 0);
         if (status == 0) {
             DBG(SHUT_LOGD("Match found\n");)
             int start = regmatch[0].rm_so;
             int end = regmatch[0].rm_eo;
             int rlen = end - start;
-            target = malloc(sizeof(char*) * rlen);
+
+            if (rlen <= 0) {
+                DBG(fprintf(stderr, "Invalid regex match length\n"));
+                regfree(&regex);
+                return;
+            }
+
+            target = malloc(sizeof(char) * rlen);
+            if (!target) {
+                DBG(fprintf(stderr, "Memory allocation failed for target\n"));
+                regfree(&regex);
+                return;
+            }
+
             memcpy(target, &glprogram->last_frag->converted[start], rlen);
             regfree(&regex);
         } else if (status == REG_NOMATCH) {
@@ -368,7 +390,6 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
             return;
         }
 
-        //delete wrong '='
         size_t target_len = strlen(target);
         if (target_len > 0 && target[target_len - 1] == '=') {
             target[target_len - 1] = '\0';
@@ -376,7 +397,13 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
 
         DBG(SHUT_LOGD("%s\n", target);)
 
-        char * replacement = malloc(sizeof(char*) * (tlen + 22));
+        char *replacement = malloc(sizeof(char) * (tlen + 22));
+        if (!replacement) {
+            DBG(fprintf(stderr, "Memory allocation failed for replacement\n"));
+            free(target);
+            return;
+        }
+
         sprintf(replacement, "layout (location = %i) %s", colorNumber, target);
         DBG(SHUT_LOGD("%s\n", replacement);)
 
@@ -384,10 +411,12 @@ void __attribute__((visibility("default"))) glBindFragDataLocation(GLuint progra
         glprogram->last_frag->converted = InplaceReplace(glprogram->last_frag->converted, &size, target, replacement);
         DBG(SHUT_LOGD("Resulting shader:\n%s\n", glprogram->last_frag->converted);)
 
+        free(target);
+        free(replacement);
+
         glprogram->frag_data_changed = 1;
-        //LOAD_GLES2(glShaderSource);
-        //gles_glShaderSource(glprogram->last_frag->id, 1, (const GLchar * const*) &glprogram->last_frag->converted, NULL);
     }
+
     /*if (!program) {
         noerrorShim();
         return;
@@ -685,7 +714,7 @@ void gl4es_glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsi
         );
     }
     DBG(SHUT_LOGD("not found\n");)
-    errorShim(GL_INVALID_VALUE);    
+    errorShim(GL_INVALID_VALUE);
 }
 
 void gl4es_glGetAttachedShaders(GLuint program, GLsizei maxCount, GLsizei *count, GLuint *shaders) {
@@ -877,7 +906,7 @@ void gl4es_glGetProgramiv(GLuint program, GLenum pname, GLint *params) {
             } else
                 errorShim(GL_INVALID_ENUM);
             break;
-            
+
         default:
             if(gles_glGetProgramiv) {
                 gles_glGetProgramiv(glprogram->id, pname, params);
@@ -1272,8 +1301,8 @@ void gl4es_glLinkProgram(GLuint program) {
         gles_glGetProgramiv(glprogram->id, GL_LINK_STATUS, &glprogram->linked);
         DBG(SHUT_LOGD(" link status = %d\n", glprogram->linked);)
         if(glprogram->linked) {
-            fill_program(glprogram);
             set_uniforms_default_value(program, glprogram->declarations, MAX_UNIFORM_VARIABLE_NUMBER);
+            fill_program(glprogram);
         } else {
             GLsizei log_length;
             gles_glGetProgramiv(glprogram->id, GL_INFO_LOG_LENGTH, &log_length);

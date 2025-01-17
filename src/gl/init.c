@@ -126,6 +126,7 @@ void initialize_gl4es() {
     	  break;
     }
 
+
     env(LIBGL_FPS, globals4es.showfps, "fps counter enabled");
 #ifdef USE_FBIO
     env(LIBGL_VSYNC, globals4es.vsync, "vsync enabled");
@@ -349,14 +350,22 @@ void initialize_gl4es() {
 
     //const char *env_version = GetEnvVar("LIBGL_VERSION");
     bool env_version = false; //force it not to be modified
+
+    char* version_color =
+#if RELEASE == 1
+        "§b"
+#else
+        "§d"
+#endif
+        ;
     if (env_version) {
         SHUT_LOGD("Overide version string with \"%s\" (should be in the form of \"1.x\")\n", env_version);
     }
     if(env_version) {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §aKrypton Wrapper §d%s%d.%d.%d %s":"%s Krypton Wrapper %s%d.%d.%d %s", env_version, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §aKrypton Wrapper §d%s%d.%d.%d %s§r":"%s Krypton Wrapper %s%d.%d.%d %s", env_version, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %s\n", env_version);
     } else {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §aKrypton Wrapper §d%s%d.%d.%d %s":"%d.%d Krypton Wrapper %s%d.%d.%d %s", globals4es.gl/10, globals4es.gl%10, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §aKrypton Wrapper §d%s%d.%d.%d %s§r":"%d.%d Krypton Wrapper %s%d.%d.%d %s", globals4es.gl/10, globals4es.gl%10, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %d.%d\n", globals4es.gl/10, globals4es.gl%10);
     }
 

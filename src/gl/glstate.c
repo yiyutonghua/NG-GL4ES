@@ -422,6 +422,7 @@ void* NewGLState(void* shared_glstate, int es2only) {
     glstate->fbo.current_rb = glstate->fbo.default_rb;
     glstate->fbo.fbo_read = glstate->fbo.fbo_0;
     glstate->fbo.fbo_draw = glstate->fbo.fbo_0;
+    glstate->samplers.samplerlist = kh_init(samplerlist_t);
     // Get the per/context hardware values
     glstate->readf = GL_RGBA;
     glstate->readt = GL_UNSIGNED_BYTE;
@@ -481,6 +482,7 @@ void DeleteGLState(void* oldstate) {
         free_hashmap(renderlist_t, headlists, gllisthead, free_renderlist);
         free_hashmap(glrenderbuffer_t, fbo.renderbufferlist, renderbufferlist_t, free_renderbuffer);
         free_hashmap(glframebuffer_t, fbo.framebufferlist, framebufferlist_t, free_framebuffer);
+        free_hashmap(glsampler_t, samplers.samplerlist, samplerlist_t, free);
     }
     #undef free_hashmap
     // free texture zero as it's not in the list anymore

@@ -3264,6 +3264,9 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 #define glShaderSource_RETURN void
 #define glShaderSource_ARG_NAMES shader, count, string, length
 #define glShaderSource_ARG_EXPAND GLuint shader, GLsizei count, const GLchar * const * string, const GLint * length
+#define glDispatchCompute_ARG_EXPAND GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z
+#define glReadBuffer_ARG_EXPAND GLenum src
+#define glDispatchComputeIndirect_ARG_EXPAND GLintptr indirect
 #define glShaderSource_PACKED PACKED_void_GLuint_GLsizei_const_GLchar___GENPT___const___GENPT___const_GLint___GENPT__
 #define glShaderSource_INDEXED INDEXED_void_GLuint_GLsizei_const_GLchar___GENPT___const___GENPT___const_GLint___GENPT__
 #define glShaderSource_FORMAT FORMAT_void_GLuint_GLsizei_const_GLchar___GENPT___const___GENPT___const_GLint___GENPT__
@@ -4043,6 +4046,12 @@ void gl4es_glShaderBinary(glShaderBinary_ARG_EXPAND);
 typedef void (*glShaderBinary_PTR)(glShaderBinary_ARG_EXPAND);
 void gl4es_glShaderSource(glShaderSource_ARG_EXPAND);
 typedef void (*glShaderSource_PTR)(glShaderSource_ARG_EXPAND);
+void gl4es_glReadBuffer(glReadBuffer_ARG_EXPAND);
+typedef void (*glReadBuffer_PTR)(glReadBuffer_ARG_EXPAND);
+void gl4es_glDispatchCompute(glDispatchCompute_ARG_EXPAND);
+typedef void (*glDispatchCompute_PTR)(glDispatchCompute_ARG_EXPAND);
+void gl4es_glDispatchComputeIndirect(glDispatchComputeIndirect_ARG_EXPAND);
+typedef void (*glDispatchComputeIndirect_PTR)(glDispatchComputeIndirect_ARG_EXPAND);
 void gl4es_glStencilFunc(glStencilFunc_ARG_EXPAND);
 typedef void (*glStencilFunc_PTR)(glStencilFunc_ARG_EXPAND);
 void gl4es_glStencilFuncSeparate(glStencilFuncSeparate_ARG_EXPAND);

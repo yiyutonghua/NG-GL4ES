@@ -9,6 +9,8 @@ extern "C" {
 #include "light.h"
 #include "pointsprite.h"
 #include "queries.h"
+#include "texture.h"
+#include "state.h"
 #include "stack.h"
 #include "stencil.h"
 
@@ -125,6 +127,7 @@ typedef struct glstate_s {
     int                 helper_texlen[MAX_TEX];
     GLfloat*            texgened[MAX_TEX];
     int                 texgenedsz[MAX_TEX];
+    samplers_t          samplers;
 
     bind_buffers_t      bind_buffer;
 } glstate_t;

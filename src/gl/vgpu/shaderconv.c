@@ -181,13 +181,17 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
             while (isspace((unsigned char)*cursor)) cursor++;
 
             // may be precision qualifier
+            char* precision = "";
             if (startsWith(cursor, "highp")) {
+                precision = " highp";
                 cursor += 5;
                 while (isspace((unsigned char)*cursor)) cursor++;
             } else if (startsWith(cursor, "lowp")) {
+                precision = " lowp";
                 cursor += 4;
                 while (isspace((unsigned char)*cursor)) cursor++;
             } else if (startsWith(cursor, "mediump")) {
+                precision = " mediump";
                 cursor += 7;
                 while (isspace((unsigned char)*cursor)) cursor++;
             };
@@ -229,9 +233,9 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
             int len = 0;
 
             if (*initial_value) {
-                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform %s %s;", type, name);
+                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type, name);
             } else {
-                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform %s %s;", type, name);
+                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type, name);
             }
 
             if (len < 0 || len >= spaceLeft) {
@@ -256,8 +260,6 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
     modifiedGlslCode[modifiedCodeIndex] = '\0';
     return modifiedGlslCode;
 }
-
-
 
 /**
  * Makes more and more destructive conversions to make the shader compile

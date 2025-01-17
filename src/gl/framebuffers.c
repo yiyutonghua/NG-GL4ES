@@ -1740,6 +1740,11 @@ void gl4es_restoreCurrentFBO()
     }
 }
 
+VISITABLE void glReadBuffer(GLenum src) {
+    LOAD_GLES3(glReadBuffer);
+    //glReadBuffer(src);
+}
+
 // direct wrapper
 
 void glGenFramebuffers(GLsizei n, GLuint *ids) AliasExport("gl4es_glGenFramebuffers");

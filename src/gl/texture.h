@@ -7,7 +7,6 @@ extern "C" {
 #include "buffers.h"
 #include "const.h"
 #include "gles.h"
-#include "samplers.h"
 
 void gl4es_glTexImage2D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLint border,
@@ -258,6 +257,7 @@ GLboolean isDXTc(GLenum format);
 
 void realize_bound(int TMU, GLenum target);
 void realize_textures(int drawing);
+void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler_t* sampler);
 void realize_active();
 
 #endif // _GL4ES_TEXTURE_H_

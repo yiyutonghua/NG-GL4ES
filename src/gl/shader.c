@@ -91,7 +91,7 @@ void actualy_detachshader(GLuint shader) {
     if (k != kh_end(shaders)) {
         shader_t *glshader = kh_value(shaders, k);
         if((--glshader->attached)<1 && glshader->deleted)
-            actualy_deleteshader(shader); 
+            actualy_deleteshader(shader);
     }
 }
 
@@ -114,7 +114,7 @@ void gl4es_glDeleteShader(GLuint shader) {
         if(gles_glDeleteShader) {
             errorGL();
             gles_glDeleteShader(shader);
-        }   
+        }
     }
 }
 
@@ -243,7 +243,7 @@ void gl4es_glShaderSource(GLuint shader, GLsizei count, const GLchar * const *st
 
 void accumShaderNeeds(GLuint shader, shaderconv_need_t *need) {
     CHECK_SHADER(void, shader)
-    if(!glshader->converted) 
+    if(!glshader->converted)
         return;
     #define GO(A) if(need->need_##A < glshader->need.need_##A) need->need_##A = glshader->need.need_##A;
     #define GO2(A) need->need_##A |= glshader->need.need_##A;

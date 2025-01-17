@@ -9,7 +9,9 @@
 #include <fstream>
 #include "../gl/logs.h"
 #include "glslang/SPIRV/GlslangToSpv.h"
+#include <string>
 #include <regex>
+#include <strstream>
 
 #define DBG(d)
 
@@ -149,9 +151,9 @@ std::string forceSupporter(const std::string& glslCode) {
     if (!hasPrecisionFloat) {
         size_t firstNewline = result.find('\n');
         if (firstNewline != std::string::npos) {
-            result.insert(firstNewline + 1, "precision mediump float;\n");
+            result.insert(firstNewline + 1, "precision highp float;\n");
         } else {
-            result = "precision mediump float;\n" + result;
+            result = "precision highp float;\n" + result;
         }
     }
 
@@ -170,6 +172,12 @@ std::string forceSupporter(const std::string& glslCode) {
 std::string removeLayoutBinding(const std::string& glslCode) {
     std::regex bindingRegex(R"(layout\s*\(\s*binding\s*=\s*\d+\s*\)\s*)");
     std::string result = std::regex_replace(glslCode, bindingRegex, "");
+    return result;
+}
+
+std::string removeLocationBinding(const std::string& glslCode) {
+    std::regex locationRegex(R"(layout\s*\(\s*location\s*=\s*\d+\s*\)\s*)");
+    std::string result = std::regex_replace(glslCode, locationRegex, "");
     return result;
 }
 
@@ -240,6 +248,36 @@ char* removeLineDirective(char* glslCode) {
     return modifiedGlslCode;
 }
 
+std::string replaceText(const std::string& input, const std::string& from, const std::string& to) {
+    std::string result = input;
+    size_t pos = 0;
+    while ((pos = result.find(from, pos)) != std::string::npos) {
+        result.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+    return result;
+}
+
+std::string addPrecisionToSampler2DShadow(const std::string& glslCode) {
+    std::string result = glslCode;
+
+    SHUT_LOGD("[]Ori:\n%s", result.c_str());
+
+    // �滻 " sampler2DShadow " Ϊ " highp sampler2DShadow "
+    result = replaceText(result, " sampler2DShadow ", " highp sampler2DShadow ");
+
+    // �滻 " mediump highp " Ϊ " mediump "
+    result = replaceText(result, " mediump highp ", " mediump ");
+
+    // �滻 " lowp highp " Ϊ " lowp "
+    result = replaceText(result, " lowp highp ", " lowp ");
+
+    // �滻 " highp highp " Ϊ " highp "
+    result = replaceText(result, " highp highp ", " highp ");
+
+    SHUT_LOGD("[]end:\n%s", result.c_str());
+    return result;
+}
 
 char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     glslang::InitializeProcess();
@@ -337,6 +375,8 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     spvc_context_destroy(context);
 
     essl = removeLayoutBinding(essl);
+    //essl = removeLocationBinding(essl);
+    //essl = addPrecisionToSampler2DShadow(essl);
     essl = forceSupporter(essl);
     char* result_essl = new char[essl.length() + 1];
     std::strcpy(result_essl, essl.c_str());

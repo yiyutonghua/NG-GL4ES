@@ -53,6 +53,7 @@ void gl4es_glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, G
 void *gl4es_glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
 void gl4es_glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
 
+void bindBuffer(GLenum target, GLuint buffer);
 void glGenBuffers(GLsizei n, GLuint * buffers);
 void glBindBuffer(GLenum target, GLuint buffer);
 void glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);

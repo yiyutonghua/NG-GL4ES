@@ -15,8 +15,6 @@
 #define GL_NAME_LENGTH 0x92f9
 #define GL_PROGRAM_BINARY_FORMAT_MESA     0x875F
 
-#define VISITABLE __attribute__((visibility("default")))
-
 #include <GL/gl.h>
 #include <vector>
 #include <functional>

@@ -832,86 +832,6 @@ void realize_active() {
     gles_glActiveTexture(GL_TEXTURE0 + glstate->gleshard->active);
 }
 
-void realize_textures(int drawing) {
-    LOAD_GLES(glEnable);
-    LOAD_GLES(glDisable);
-    LOAD_GLES(glBindTexture);
-    LOAD_GLES(glActiveTexture);
-#ifdef TEXSTREAM
-    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
-#else
-    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
-#endif
-    for (int i=0; i<glstate->bound_changed; i++) {
-        // get highest priority texture unit
-        int tmp = glstate->enable.texture[glstate->texture.active];
-        int tgt = ENABLED_TEX2D; // default to TEX2D
-        if(IS_TEX3D(tmp))
-            tgt = ENABLED_TEX3D;
-        else if(IS_TEXTURE_RECTANGLE(tmp))
-            tgt = ENABLED_TEXTURE_RECTANGLE;
-        else if(IS_TEX2D(tmp))
-            tgt = ENABLED_TEX2D;
-        else if(IS_TEX1D(tmp))
-            tgt = ENABLED_TEX1D;
-        else if(IS_CUBE_MAP(tmp))
-            continue;   // CUBE MAP are immediatly bound
-#ifdef TEXSTREAM
-        if(glstate->bound_stream[i]) {
-            realize_active();
-            if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
-            DeactivateStreaming();
-            glstate->bound_stream[i] = 0;
-        }
-#endif
-        gltexture_t *tex = glstate->texture.bound[i][tgt];
-        GLuint t = tex->glname;
-        if (t!=glstate->actual_tex2d[i]
-#ifdef TEXSTREAM
-            || (glstate->bound_stream[i] != tex->streamed)
-#endif
-        ) {
-            if(glstate->gleshard->active!=i) {
-                glstate->gleshard->active = i;
-                gles_glActiveTexture(GL_TEXTURE0+i);
-            }
-#ifdef TEXSTREAM
-            int streamed = tex->streamed;
-            int streamingID = tex->streamingID;
-            if(glstate->bound_stream[i]) {
-                if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
-                DeactivateStreaming();
-                if(hardext.esversion<2) gles_glEnable(GL_TEXTURE_2D);
-                glstate->bound_stream[i] = 0;
-            }
-            if (globals4es.texstream && (streamingID>-1)) {
-                if (IS_ANYTEX(tmp) && hardext.esversion<2)
-                    gles_glDisable(GL_TEXTURE_2D);
-                ActivateStreaming(streamingID);
-                glstate->bound_stream[i] = 1;
-                glstate->actual_tex2d[i] = t;
-                if (IS_ANYTEX(tmp))
-                    gles_glEnable(GL_TEXTURE_STREAM_IMG);
-                continue;
-            }
-#endif
-
-            // bound...
-            gles_glBindTexture(GL_TEXTURE_2D, t);
-            glstate->actual_tex2d[i] = t;
-            // check, if drawing, if mipmap needs some special care...
-            if(drawing && tex->mipmap_need && !tex->mipmap_done) {
-                LOAD_GLES2_OR_OES(glGenerateMipmap);
-                gles_glGenerateMipmap(GL_TEXTURE_2D);
-                tex->mipmap_done = 1;
-                tex->mipmap_auto = 1;
-            }
-        }
-    }
-    glstate->bound_changed = 0;
-}
-
-
 GLenum get_texture_min_filter(gltexture_t* texture, glsampler_t* sampler)
 {
     GLenum ret = sampler->min_filter;
@@ -1052,6 +972,84 @@ void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler
     }
 }
 
+void realize_textures(int drawing) {
+    LOAD_GLES(glEnable);
+    LOAD_GLES(glDisable);
+    LOAD_GLES(glBindTexture);
+    LOAD_GLES(glActiveTexture);
+#ifdef TEXSTREAM
+    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
+#else
+    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
+#endif
+    for (int i=0; i<glstate->bound_changed; i++) {
+        // get highest priority texture unit
+        int tmp = glstate->enable.texture[glstate->texture.active];
+        int tgt = ENABLED_TEX2D; // default to TEX2D
+        if(IS_TEX3D(tmp))
+            tgt = ENABLED_TEX3D;
+        else if(IS_TEXTURE_RECTANGLE(tmp))
+            tgt = ENABLED_TEXTURE_RECTANGLE;
+        else if(IS_TEX2D(tmp))
+            tgt = ENABLED_TEX2D;
+        else if(IS_TEX1D(tmp))
+            tgt = ENABLED_TEX1D;
+        else if(IS_CUBE_MAP(tmp))
+            continue;   // CUBE MAP are immediatly bound
+#ifdef TEXSTREAM
+        if(glstate->bound_stream[i]) {
+            realize_active();
+            if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
+            DeactivateStreaming();
+            glstate->bound_stream[i] = 0;
+        }
+#endif
+        gltexture_t *tex = glstate->texture.bound[i][tgt];
+        GLuint t = tex->glname;
+        if (t!=glstate->actual_tex2d[i]
+#ifdef TEXSTREAM
+            || (glstate->bound_stream[i] != tex->streamed)
+#endif
+        ) {
+            if(glstate->gleshard->active!=i) {
+                glstate->gleshard->active = i;
+                gles_glActiveTexture(GL_TEXTURE0+i);
+            }
+#ifdef TEXSTREAM
+            int streamed = tex->streamed;
+            int streamingID = tex->streamingID;
+            if(glstate->bound_stream[i]) {
+                if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
+                DeactivateStreaming();
+                if(hardext.esversion<2) gles_glEnable(GL_TEXTURE_2D);
+                glstate->bound_stream[i] = 0;
+            }
+            if (globals4es.texstream && (streamingID>-1)) {
+                if (IS_ANYTEX(tmp) && hardext.esversion<2)
+                    gles_glDisable(GL_TEXTURE_2D);
+                ActivateStreaming(streamingID);
+                glstate->bound_stream[i] = 1;
+                glstate->actual_tex2d[i] = t;
+                if (IS_ANYTEX(tmp))
+                    gles_glEnable(GL_TEXTURE_STREAM_IMG);
+                continue;
+            }
+#endif
+
+            // bound...
+            gles_glBindTexture(GL_TEXTURE_2D, t);
+            glstate->actual_tex2d[i] = t;
+            // check, if drawing, if mipmap needs some special care...
+            if(drawing && tex->mipmap_need && !tex->mipmap_done) {
+                LOAD_GLES2_OR_OES(glGenerateMipmap);
+                gles_glGenerateMipmap(GL_TEXTURE_2D);
+                tex->mipmap_done = 1;
+                tex->mipmap_auto = 1;
+            }
+        }
+    }
+    glstate->bound_changed = 0;
+}
 
 //Direct wrapper
 void glBindTexture(GLenum target, GLuint texture) AliasExport("gl4es_glBindTexture");

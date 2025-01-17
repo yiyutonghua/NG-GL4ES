@@ -2,6 +2,7 @@
 #define _GL4ES_SAMPLERS_H_
 
 #include "gles.h"
+#include "gl4es.h"
 
 void gl4es_glGenSamplers(GLsizei n, GLuint *ids);
 void gl4es_glBindSampler(GLuint unit, GLuint sampler);

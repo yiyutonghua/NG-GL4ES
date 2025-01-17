@@ -92,6 +92,7 @@ set(C_SRC_FILES
         src/glx/gbm.c
         src/glx/streaming.c
         src/gl/vgpu/shaderconv.c
+        src/gl/samplers.c
         )
 
 set(CPP_SRC_FILES

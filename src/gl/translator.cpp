@@ -1,4 +1,5 @@
 #include "ng_gl4es.h"
+#include "loader.h"
 #include <GL/gl.h>
 #include <vector>
 #include <thread>
@@ -27,7 +28,7 @@ void* handle;
 
 extern "C" {
     VISITABLE void threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
-    VISITABLE void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader);
+    VISITABLE void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
     VISITABLE void reportUnsupportedFunction(const char* funcName);
     VISITABLE void glMemoryBarrier(GLbitfield barriers);
     VISITABLE void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
@@ -40,6 +41,7 @@ extern "C" {
     VISITABLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
     VISITABLE GLboolean glIsSync(GLsync sync);
     VISITABLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
+    VISITABLE void glDispatchComputeIndirect(GLuint indirectBuffer);
     //NEEDTOBEDONE
     //void glUseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
     //void glCreateTextures(GLenum target, GLsizei n, GLuint* textures);
@@ -296,8 +298,8 @@ extern "C" {
             }
         }
     }
-
-    void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader) {
+    void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z) {
+        /*
         computeResults.resize(textureWidth * textureHeight * 4);
         unsigned int numThreads = std::thread::hardware_concurrency();
         std::vector<std::thread> threads;
@@ -305,7 +307,7 @@ extern "C" {
         for (unsigned int i = 0; i < numThreads; ++i) {
             GLuint startX = i * groupSizeX;
             GLuint endX = (i == numThreads - 1) ? num_groups_x : startX + groupSizeX;
-
+            //need to add computeShader
             threads.emplace_back(threadComputeTask, startX, endX, num_groups_y, num_groups_z, computeShader, std::ref(computeResults), textureWidth, textureHeight);
         }
         for (auto& thread : threads) {
@@ -314,7 +316,27 @@ extern "C" {
 
         gl4es_glBindTexture(GL_TEXTURE_2D, computeTexture);
         gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, textureWidth, textureHeight, GL_RGBA, GL_FLOAT, computeResults.data());
-        gl4es_glBindTexture(GL_TEXTURE_2D, 0);  // 解除绑定
+        gl4es_glBindTexture(GL_TEXTURE_2D, 0);  // 解除绑定*/
+        LOAD_GLES3(glDispatchCompute);
+        gles_glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
+    }
+
+    void glDispatchComputeIndirect(GLuint indirectBuffer) {
+        /*
+        GLuint bufferData[3];
+        gl4es_glBindBuffer(GL_ARRAY_BUFFER, indirectBuffer);
+        gl4es_glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(bufferData), bufferData);
+        gl4es_glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        GLuint num_groups_x = bufferData[0];
+        GLuint num_groups_y = bufferData[1];
+        GLuint num_groups_z = bufferData[2];
+
+        glDispatchCompute(num_groups_x, num_groups_y, num_groups_z, computeShader);
+         */
+
+        LOAD_GLES3(glDispatchComputeIndirect);
+        gles_glDispatchComputeIndirect(indirectBuffer);
     }
 
     void reportUnsupportedFunction(const char* funcName) {
@@ -346,6 +368,7 @@ extern "C" {
     }
 
     void glMemoryBarrier(GLbitfield barriers) {
+        /*
         std::lock_guard<std::mutex> lock(barrierMutex);
         // Not completed
         if (barriers & MEMORY_BARRIER_VERTEX_ATTRIB_ARRAY) {
@@ -368,6 +391,7 @@ extern "C" {
         }
         currentBarrierState |= barriers;
         std::cout << "[MemoryBarrier] Updated current barrier state: " << currentBarrierState << std::endl;
+         */
     }
 
     void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format) {
