@@ -142,7 +142,7 @@ void initialize_gl4es() {
       env(LIBGL_FBONOALPHA, globals4es.fbo_noalpha, "Main FBO have no alpha channel");
     }
 
-		globals4es.es=ReturnEnvVarInt("LIBGL_ES");
+    globals4es.es=ReturnEnvVarInt("LIBGL_ES");
     switch(globals4es.es) {
       case 1:
       case 2:
@@ -153,7 +153,9 @@ void initialize_gl4es() {
         globals4es.es = DEFAULT_ES;
         break;
     }
-    globals4es.esversion = -1;
+
+    uint env_es_version = (uint)ReturnEnvVarInt("LIBGL_ES_VERSION");
+    globals4es.esversion = env_es_version ? env_es_version : -1;
     globals4es.use_mc_color=ReturnEnvVarInt("LIBGL_USE_MC_COLOR");
     globals4es.gl=ReturnEnvVarInt("LIBGL_GL");
     switch(globals4es.gl) {

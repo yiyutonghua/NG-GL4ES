@@ -1,3 +1,4 @@
+
 #include "glsl_for_es.h"
 
 #include <glslang/Public/ShaderLang.h>
@@ -260,22 +261,10 @@ std::string replaceText(const std::string& input, const std::string& from, const
 
 std::string addPrecisionToSampler2DShadow(const std::string& glslCode) {
     std::string result = glslCode;
-
-    SHUT_LOGD("[]Ori:\n%s", result.c_str());
-
-    // �滻 " sampler2DShadow " Ϊ " highp sampler2DShadow "
     result = replaceText(result, " sampler2DShadow ", " highp sampler2DShadow ");
-
-    // �滻 " mediump highp " Ϊ " mediump "
     result = replaceText(result, " mediump highp ", " mediump ");
-
-    // �滻 " lowp highp " Ϊ " lowp "
     result = replaceText(result, " lowp highp ", " lowp ");
-
-    // �滻 " highp highp " Ϊ " highp "
     result = replaceText(result, " highp highp ", " highp ");
-
-    SHUT_LOGD("[]end:\n%s", result.c_str());
     return result;
 }
 
@@ -367,7 +356,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationBinding));
     })
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
-    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, essl_version);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, essl_version >= 300);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);
