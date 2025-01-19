@@ -10,7 +10,7 @@
 void pandora_set_gamma();
 #endif
 
-void gl4es_glHint(GLenum pname, GLenum mode) {
+void APIENTRY_GL4ES gl4es_glHint(GLenum pname, GLenum mode) {
     
     FLUSH_BEGINEND;
 
@@ -132,4 +132,4 @@ void gl4es_glHint(GLenum pname, GLenum mode) {
             gles_glHint(pname, mode);
     }
 }
-void glHint(GLenum pname, GLenum mode) AliasExport("gl4es_glHint");
+AliasExport(void,glHint,,(GLenum pname, GLenum mode));

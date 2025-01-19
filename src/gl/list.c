@@ -6,6 +6,7 @@
 #include "glstate.h"
 #include "init.h"
 #include "loader.h"
+#include "buffers.h"
 
 // KH Map implementation
 KHASH_MAP_IMPL_INT(material, rendermaterial_t *);
@@ -15,7 +16,6 @@ KHASH_MAP_IMPL_INT(texenv, rendertexenv_t *);
 KHASH_MAP_IMPL_INT(gllisthead, renderlist_t*);
 
 renderlist_t *alloc_renderlist() {
-    int a;
 
     renderlist_t *list = (renderlist_t *)malloc(sizeof(renderlist_t));
     memset(list, 0, sizeof(renderlist_t));
@@ -671,7 +671,6 @@ renderlist_t* append_calllist(renderlist_t *list, renderlist_t *a)
 }
 
 void free_renderlist(renderlist_t *list) {
-    LOAD_GLES2(glDeleteBuffers);
 	// test if list is NULL
 	if (list == NULL)
 		return;
@@ -762,9 +761,9 @@ void free_renderlist(renderlist_t *list) {
         if(list->final_colors)
             free(list->final_colors);
         if(list->vbo_array)
-            gles_glDeleteBuffers(1, &list->vbo_array);
+            deleteSingleBuffer(list->vbo_array);
         if(list->vbo_indices)
-            gles_glDeleteBuffers(1, &list->vbo_indices);
+            deleteSingleBuffer(list->vbo_indices);
 
         next = list->next;
         free(list);
@@ -838,9 +837,9 @@ void adjust_renderlist(renderlist_t *list) {
         if (list->set_texture && (list->tmu == a))
             bound = gl4es_getTexture(list->target_texture, list->texture);
 	    // GL_ARB_texture_rectangle
-	    if ((list->tex[a]) && (itarget == ENABLED_TEXTURE_RECTANGLE) && (bound)) {
-		    tex_coord_rect_arb(list->tex[a], list->tex_stride[a]>>2, list->len, bound->width, bound->height);
-	    }
+        if ((list->tex[a]) && (itarget == ENABLED_TEXTURE_RECTANGLE) && (bound)) {
+            tex_coord_rect_arb(list->tex[a], list->tex_stride[a]>>2, list->len, bound->width, bound->height);
+        }
     }
 }
 

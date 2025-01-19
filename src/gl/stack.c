@@ -15,7 +15,7 @@
 #define DBG(a)
 #endif
 
-void gl4es_glPushAttrib(GLbitfield mask) {
+void APIENTRY_GL4ES gl4es_glPushAttrib(GLbitfield mask) {
     DBG(SHUT_LOGD("glPushAttrib(0x%04X)\n", mask);)
     realize_textures(0);
     noerrorShim();
@@ -238,15 +238,15 @@ void gl4es_glPushAttrib(GLbitfield mask) {
     // TODO: GL_STENCIL_BUFFER_BIT on both faces
     if (mask & GL_STENCIL_BUFFER_BIT) {
         cur->stencil_test = gl4es_glIsEnabled(GL_STENCIL_TEST);
-        gl4es_glGetIntegerv(GL_STENCIL_FUNC, &cur->stencil_func);
-        gl4es_glGetIntegerv(GL_STENCIL_VALUE_MASK, &cur->stencil_mask);
-        gl4es_glGetIntegerv(GL_STENCIL_REF, &cur->stencil_ref);
+        gl4es_glGetIntegerv(GL_STENCIL_FUNC, (GLint *) &cur->stencil_func);
+        gl4es_glGetIntegerv(GL_STENCIL_VALUE_MASK, (GLint *) &cur->stencil_mask);
+        gl4es_glGetIntegerv(GL_STENCIL_REF, (GLint *) &cur->stencil_ref);
         //TODO: glStencilFuncSeperate
         
         //TODO: Stencil value mask
-        gl4es_glGetIntegerv(GL_STENCIL_FAIL, &cur->stencil_sfail);
-        gl4es_glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &cur->stencil_dpfail);
-        gl4es_glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &cur->stencil_dppass);
+        gl4es_glGetIntegerv(GL_STENCIL_FAIL, (GLint *) &cur->stencil_sfail);
+        gl4es_glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, (GLint *) &cur->stencil_dpfail);
+        gl4es_glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, (GLint *) &cur->stencil_dppass);
         //TODO: glStencilOpSeparate
 
         gl4es_glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &cur->stencil_clearvalue);
@@ -277,7 +277,7 @@ void gl4es_glPushAttrib(GLbitfield mask) {
 				*(cur->clip_planes_enabled + i) = gl4es_glIsEnabled(GL_CLIP_PLANE0 + i);
 			}
 		}
-		gl4es_glGetIntegerv(GL_MATRIX_MODE, &cur->matrix_mode);
+		gl4es_glGetIntegerv(GL_MATRIX_MODE, (GLint *) &cur->matrix_mode);
 		cur->rescale_normal_flag = gl4es_glIsEnabled(GL_RESCALE_NORMAL);
 		cur->normalize_flag = gl4es_glIsEnabled(GL_NORMALIZE);
 	}
@@ -290,7 +290,7 @@ void gl4es_glPushAttrib(GLbitfield mask) {
     glstate->stack->len++;
 }
 
-void gl4es_glPushClientAttrib(GLbitfield mask) {
+void APIENTRY_GL4ES gl4es_glPushClientAttrib(GLbitfield mask) {
     DBG(SHUT_LOGD("glPushClientAttrib(0x%04X)\n", mask);)
     noerrorShim();
     if (glstate->clientStack == NULL) {
@@ -335,7 +335,7 @@ void gl4es_glPushClientAttrib(GLbitfield mask) {
 #define v3(c) v2(c), c[2]
 #define v4(c) v3(c), c[3]
 
-void gl4es_glPopAttrib() {
+void APIENTRY_GL4ES gl4es_glPopAttrib(void) {
 DBG(SHUT_LOGD("glPopAttrib()\n");)
     noerrorShim();
     if (glstate->list.active)
@@ -363,7 +363,6 @@ DBG(SHUT_LOGD("glPopAttrib()\n");)
         enable_disable(GL_COLOR_LOGIC_OP, cur->color_logic_op);
         gl4es_glLogicOp(cur->logic_op);
 
-        GLfloat *c;
         gl4es_glClearColor(v4(cur->clear_color));
         gl4es_glColorMask(v4(cur->color_mask));
     }
@@ -619,7 +618,7 @@ DBG(SHUT_LOGD("glPopAttrib()\n");)
     if (enabled) gl4es_glEnableClientState(pname);       \
     else gl4es_glDisableClientState(pname)
 
-void gl4es_glPopClientAttrib() {
+void APIENTRY_GL4ES gl4es_glPopClientAttrib(void) {
     DBG(SHUT_LOGD("glPopClientAttrib()\n");)
     noerrorShim();
 	//LOAD_GLES(glVertexPointer);
@@ -659,7 +658,7 @@ void gl4es_glPopClientAttrib() {
 #undef v4
 
 //Direct wrapper
-void glPushClientAttrib(GLbitfield mask) AliasExport("gl4es_glPushClientAttrib");
-void glPopClientAttrib() AliasExport("gl4es_glPopClientAttrib");
-void glPushAttrib(GLbitfield mask) AliasExport("gl4es_glPushAttrib");
-void glPopAttrib() AliasExport("gl4es_glPopAttrib");
+AliasExport(void,glPushClientAttrib,,(GLbitfield mask));
+AliasExport_V(void,glPopClientAttrib);
+AliasExport(void,glPushAttrib,,(GLbitfield mask));
+AliasExport_V(void,glPopAttrib);

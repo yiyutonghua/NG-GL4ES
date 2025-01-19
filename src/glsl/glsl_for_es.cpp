@@ -282,7 +282,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
             shader_language = EShLanguage::EShLangCompute;
             break;
         default:
-            SHUT_LOGE("GLSL type not supported!");
+            SHUT_LOGD("GLSL type not supported!");
             return nullptr;
     }
 
@@ -309,7 +309,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     TBuiltInResource TBuiltInResource_resources = InitResources();
 
     if (!shader.parse(&TBuiltInResource_resources, glsl_version, true, EShMsgDefault)) {
-        DBG(SHUT_LOGE("GLSL Compiling ERROR: \n%s",shader.getInfoLog());)
+        DBG(SHUT_LOGD("GLSL Compiling ERROR: \n%s",shader.getInfoLog());)
         return NULL;
     }
     DBG(SHUT_LOGD("GLSL Compiled.");)
@@ -318,7 +318,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     program.addShader(&shader);
 
     if (!program.link(EShMsgDefault)) {
-        DBG(SHUT_LOGE("Shader Linking ERROR: %s",program.getInfoLog());)
+        DBG(SHUT_LOGD("Shader Linking ERROR: %s",program.getInfoLog());)
         return nullptr;
     }
     DBG(SHUT_LOGD("Shader Linked." );)
@@ -356,7 +356,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
                spvc_compiler_get_decoration(compiler_glsl, list[i].id, SpvDecorationBinding));
     })
     spvc_compiler_create_compiler_options(compiler_glsl, &options);
-    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, essl_version >= 300);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, essl_version >= 300 ? essl_version : 300);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_TRUE);
     spvc_compiler_install_compiler_options(compiler_glsl, options);
     spvc_compiler_compile(compiler_glsl, &result);

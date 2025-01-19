@@ -60,12 +60,12 @@ void rpi_init() {
     bcm_host_init = dlsym(bcm_host, "bcm_host_init");
     bcm_host_deinit = dlsym(bcm_host, "bcm_host_deinit");
     if(!bcm_host_init || !bcm_host_deinit) {
-        printf("LIBGL: Warning, bcm_host function missing (init=%p, deinit=%p)\n", bcm_host_init, bcm_host_deinit);
+        SHUT_LOGD("LIBGL: Warning, bcm_host function missing (init=%p, deinit=%p)\n", bcm_host_init, bcm_host_deinit);
         return;
     }
     bcm_host_init();
 
-    #define GO(A) A=dlsym(bcm_host, #A); if(A==NULL) A=dlsym(vcos, #A); if(A==NULL) printf("LIBGL: Warning, " #A " is null")
+    #define GO(A) A=dlsym(bcm_host, #A); if(A==NULL) A=dlsym(vcos, #A); if(A==NULL) SHUT_LOGD("LIBGL: Warning, " #A " is null")
     GO(graphics_get_display_size);
     GO(vc_dispmanx_display_open);
     GO(vc_dispmanx_update_start);

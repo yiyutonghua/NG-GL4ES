@@ -3,9 +3,10 @@ extern "C" {
 #endif
 #ifndef _GL4ES_GL4ES_H_
 #define _GL4ES_GL4ES_H_
+
 //#define DEBUG
 
-#define VISITABLE __attribute__((visibility("default")))
+#define VISIBLE __attribute__((visibility("default")))
 
 #include "khash.h"
 
@@ -17,17 +18,17 @@ extern "C" {
 #include "gles.h"
 #include "glstate.h"
 
-packed_call_t* glCopyPackedCall(const packed_call_t *packed);
+packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 
 #define checkError(code)                          \
     {int error; while ((error = glGetError())) {} \
     code                                          \
     if ((error = glGetError()))                   \
-        printf(#code " -> %i\n", error);}
+        SHUT_LOGD(#code " -> %i\n", error);}
 
 #define printError(file, line)              \
     {int error; if ((error = glGetError())) \
-        printf(file ":%i -> %i\n", line, error);}
+        SHUT_LOGD(file ":%i -> %i\n", line, error);}
 
 #define FLUSH_BEGINEND if(glstate->list.pending) gl4es_flush()
 
@@ -35,67 +36,70 @@ packed_call_t* glCopyPackedCall(const packed_call_t *packed);
 
 void write_log(const char* format, ...);
 
-const GLubyte *gl4es_glGetString(GLenum name);
-void gl4es_glGetIntegerv(GLenum pname, GLint *params);
-void gl4es_glGetFloatv(GLenum pname, GLfloat *params);
-void gl4es_glEnable(GLenum cap);
-void gl4es_glDisable(GLenum cap);
-void gl4es_glEnableClientState(GLenum cap);
-void gl4es_glDisableClientState(GLenum cap);
-GLboolean gl4es_glIsEnabled(GLenum cap);
-void gl4es_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
-void gl4es_glDrawArrays(GLenum mode, GLint first, GLsizei count);
-void gl4es_glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
-void gl4es_glBegin(GLenum mode);
-void gl4es_glEnd();
-void gl4es_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
-void gl4es_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-void gl4es_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-void gl4es_glSecondaryColor3f(GLfloat r, GLfloat g, GLfloat b);
-void gl4es_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
-void gl4es_glMaterialf(GLenum face, GLenum pname, const GLfloat param);
-void gl4es_glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-void gl4es_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-void gl4es_glArrayElement(GLint i);
-void gl4es_glLockArrays(GLint first, GLsizei count);
-void gl4es_glUnlockArrays();
-GLuint gl4es_glGenLists(GLsizei range);
-void gl4es_glNewList(GLuint list, GLenum mode);
-void gl4es_glEndList();
-void gl4es_glCallList(GLuint list);
-void gl4es_glCallLists(GLsizei n, GLenum type, const GLvoid *lists);
-void gl4es_glDeleteLists(GLuint list, GLsizei range);
-void gl4es_glListBase(GLuint base);
-GLboolean gl4es_glIsList(GLuint list);
-void gl4es_glPolygonMode(GLenum face, GLenum mode);
-GLenum gl4es_glGetError();
+const GLubyte* APIENTRY_GL4ES gl4es_glGetString(GLenum name);
+void APIENTRY_GL4ES gl4es_glGetIntegerv(GLenum pname, GLint *params);
+void APIENTRY_GL4ES gl4es_glGetFloatv(GLenum pname, GLfloat *params);
+void APIENTRY_GL4ES gl4es_glEnable(GLenum cap);
+void APIENTRY_GL4ES gl4es_glDisable(GLenum cap);
+void APIENTRY_GL4ES gl4es_glEnableClientState(GLenum cap);
+void APIENTRY_GL4ES gl4es_glDisableClientState(GLenum cap);
+GLboolean APIENTRY_GL4ES gl4es_glIsEnabled(GLenum cap);
+void APIENTRY_GL4ES gl4es_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+void APIENTRY_GL4ES gl4es_glDrawArrays(GLenum mode, GLint first, GLsizei count);
+void APIENTRY_GL4ES gl4es_glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GL4ES gl4es_glBegin(GLenum mode);
+void APIENTRY_GL4ES gl4es_glEnd(void);
+void APIENTRY_GL4ES gl4es_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
+void APIENTRY_GL4ES gl4es_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+void APIENTRY_GL4ES gl4es_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+void APIENTRY_GL4ES gl4es_glSecondaryColor3f(GLfloat r, GLfloat g, GLfloat b);
+void APIENTRY_GL4ES gl4es_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
+void APIENTRY_GL4ES gl4es_glMaterialf(GLenum face, GLenum pname, const GLfloat param);
+void APIENTRY_GL4ES gl4es_glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+void APIENTRY_GL4ES gl4es_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+void APIENTRY_GL4ES gl4es_glArrayElement(GLint i);
+void APIENTRY_GL4ES gl4es_glLockArrays(GLint first, GLsizei count);
+void APIENTRY_GL4ES gl4es_glUnlockArrays(void);
+GLuint APIENTRY_GL4ES gl4es_glGenLists(GLsizei range);
+void APIENTRY_GL4ES gl4es_glNewList(GLuint list, GLenum mode);
+void APIENTRY_GL4ES gl4es_glEndList(void);
+void APIENTRY_GL4ES gl4es_glCallList(GLuint list);
+void APIENTRY_GL4ES gl4es_glCallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void APIENTRY_GL4ES gl4es_glDeleteLists(GLuint list, GLsizei range);
+void APIENTRY_GL4ES gl4es_glListBase(GLuint base);
+GLboolean APIENTRY_GL4ES gl4es_glIsList(GLuint list);
+void APIENTRY_GL4ES gl4es_glPolygonMode(GLenum face, GLenum mode);
+GLenum APIENTRY_GL4ES gl4es_glGetError(void);
 
-void gl4es_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void gl4es_glIndexPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
-void gl4es_glEdgeFlagPointer(GLsizei stride, const GLvoid * pointer);
-void gl4es_glGetPointerv(GLenum pname, GLvoid* *params);
-void gl4es_glFlush();
-void gl4es_glFinish();
-void gl4es_glFogfv(GLenum pname, const GLfloat* params);
+void APIENTRY_GL4ES gl4es_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GL4ES gl4es_glIndexPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
+void APIENTRY_GL4ES gl4es_glEdgeFlagPointer(GLsizei stride, const GLvoid * pointer);
+void APIENTRY_GL4ES gl4es_glGetPointerv(GLenum pname, GLvoid* *params);
+void APIENTRY_GL4ES gl4es_glFlush(void);
+void APIENTRY_GL4ES gl4es_glFinish(void);
+void APIENTRY_GL4ES gl4es_glFogfv(GLenum pname, const GLfloat* params);
 
-void gl4es_glStencilMaskSeparate(GLenum face, GLuint mask);
+void APIENTRY_GL4ES gl4es_glStencilMaskSeparate(GLenum face, GLuint mask);
 
-void gl4es_glMultiDrawArrays(GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount);
-void gl4es_glMultiDrawElements( GLenum mode, GLsizei *count, GLenum type, const void * const *indices, GLsizei primcount);
-void gl4es_glMultiDrawElementsBaseVertex(GLenum mode, GLsizei *counts, GLenum type, const void * const *indices, GLsizei primcount, const GLint * basevertex);
+void APIENTRY_GL4ES gl4es_glMultiDrawArrays(GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount);
+void APIENTRY_GL4ES gl4es_glMultiDrawElements( GLenum mode, GLsizei *count, GLenum type, const void * const *indices, GLsizei primcount);
+void APIENTRY_GL4ES gl4es_glMultiDrawElementsBaseVertex( GLenum mode, GLsizei *counts, GLenum type, const void * const *indices, GLsizei primcount, const GLint * basevertex);
 
-void gl4es_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
-void gl4es_glDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices, GLint basevertex);
+void APIENTRY_GL4ES gl4es_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
+void APIENTRY_GL4ES gl4es_glDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices, GLint basevertex);
 
-void gl4es_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-void gl4es_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
-void gl4es_glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount, GLint basevertex);
+void APIENTRY_GL4ES gl4es_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+void APIENTRY_GL4ES gl4es_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
+void APIENTRY_GL4ES gl4es_glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount, GLint basevertex);
 
-const GLubyte *gl4es_glGetStringi(GLenum name, GLuint index);
+const GLubyte* APIENTRY_GL4ES gl4es_glGetStringi(GLenum name, GLuint index);
 
-void gl4es_glClampColor(GLenum target, GLenum clamp);
+void APIENTRY_GL4ES gl4es_glClampColor(GLenum target, GLenum clamp);
 
 void gl4es_flush(void);
+
+void clear_log();
+void trim(char* str);
 
 int adjust_vertices(GLenum mode, int nb);
 
@@ -104,20 +108,28 @@ extern glstate_t *glstate;
 void fpe_Init(glstate_t *glstate);       // defined in fpe.c
 void fpe_Dispose(glstate_t *glstate);    // defined in fpe.c
 
+// glGetError() return last error, but that error is not reset until read
+// So if 2 operations generate an error, 
+//  the 2nd error is lost if glGetError has not been called after 1st op
 static inline void errorGL() {	// next glGetError will be from GL 
-	glstate->shim_error = 0;
+    if(glstate->type_error && glstate->shim_error==GL_NO_ERROR)
+	    glstate->type_error = 0;
+    else if(glstate->type_error==2)
+        glstate->type_error = 1;    // will need to read glGetError...
 }
 static inline void errorShim(GLenum error) {	// next glGetError will be "error" from gl4es
-	glstate->shim_error = 1;
-	glstate->last_error = error;
+    if(glstate->type_error && glstate->shim_error==GL_NO_ERROR)
+	    glstate->type_error = 1;
+    if(glstate->shim_error == GL_NO_ERROR)
+	    glstate->shim_error = error;
 }
 static inline void noerrorShim() {
-	errorShim(GL_NO_ERROR);
+    if(glstate->type_error && glstate->shim_error==GL_NO_ERROR)
+	    glstate->type_error = 1;
 }
 
 static inline void noerrorShimNoPurge() {
-	glstate->shim_error = 2;
-	glstate->last_error = GL_NO_ERROR;
+    // doing nothing
 }
 
 void gl4es_scratch(int alloc);
@@ -129,37 +141,44 @@ void gl4es_use_scratch_indices(int use);
 void ToBuffer(int first, int count);
 void UnBuffer();
 
-GLboolean glIsList(GLuint list);
-GLuint glGenLists(GLsizei range);
-void glActiveTextureARB(GLenum texture);
-void glArrayElement(GLint i);
-void glBegin(GLenum mode);
-void glCallList(GLuint list);
-void glCallLists(GLsizei n, GLenum type, const GLvoid *lists);
-void glClearDepth(GLdouble depth);
-void glDeleteList(GLuint list);
-void glDeleteLists(GLuint list, GLsizei range);
-void glDrawArrays(GLenum mode, GLint first, GLsizei count);
-void glEnd();
-void glEndList();
-void glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-void glGetDoublev(GLenum pname, GLdouble *params);
-void glIndexf(GLfloat i);
-void glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
-void glListBase(GLuint base);
-void glLockArraysEXT(GLint first, GLsizei count);
-void glNewList(GLuint list, GLenum mode);
-void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-void glSecondaryColor3f(GLfloat r, GLfloat g, GLfloat b);
-void glTexCoord2f(GLfloat s, GLfloat t);
-void glUnlockArraysEXT();
-void glVertex2f(GLfloat x, GLfloat y);
-void glVertex2i(GLint x, GLint y);
-void glVertex3f(GLfloat x, GLfloat y, GLfloat z);
-GLenum glGetError();
+GLboolean APIENTRY_GL4ES glIsList(GLuint list);
+GLuint APIENTRY_GL4ES glGenLists(GLsizei range);
+void APIENTRY_GL4ES glActiveTextureARB(GLenum texture);
+void APIENTRY_GL4ES glArrayElement(GLint i);
+void APIENTRY_GL4ES glBegin(GLenum mode);
+void APIENTRY_GL4ES glCallList(GLuint list);
+void APIENTRY_GL4ES glCallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void APIENTRY_GL4ES glClearDepth(GLdouble depth);
+void APIENTRY_GL4ES glDeleteList(GLuint list);
+void APIENTRY_GL4ES glDeleteLists(GLuint list, GLsizei range);
+void APIENTRY_GL4ES glDrawArrays(GLenum mode, GLint first, GLsizei count);
+void APIENTRY_GL4ES glEnd(void);
+void APIENTRY_GL4ES glEndList(void);
+void APIENTRY_GL4ES glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble Near, GLdouble Far);
+void APIENTRY_GL4ES glGetDoublev(GLenum pname, GLdouble *params);
+void APIENTRY_GL4ES glIndexf(GLfloat i);
+void APIENTRY_GL4ES glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GL4ES glListBase(GLuint base);
+void APIENTRY_GL4ES glLockArraysEXT(GLint first, GLsizei count);
+void APIENTRY_GL4ES glNewList(GLuint list, GLenum mode);
+void APIENTRY_GL4ES glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble Near, GLdouble Far);
+void APIENTRY_GL4ES glSecondaryColor3f(GLfloat r, GLfloat g, GLfloat b);
+void APIENTRY_GL4ES glTexCoord2f(GLfloat s, GLfloat t);
+void APIENTRY_GL4ES glUnlockArraysEXT(void);
+void APIENTRY_GL4ES glVertex2f(GLfloat x, GLfloat y);
+void APIENTRY_GL4ES glVertex2i(GLint x, GLint y);
+void APIENTRY_GL4ES glVertex3f(GLfloat x, GLfloat y, GLfloat z);
+GLenum APIENTRY_GL4ES glGetError(void);
+
+void rlVertexP4uiv(renderlist_t* list, GLuint* p);
+void rlVertexP3uiv(renderlist_t* list, GLuint* p);
+void rlVertexP2uiv(renderlist_t* list, GLuint* p);
+void rlVertexP4ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3, GLuint p4);
+void rlVertexP3ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3);
+void rlVertexP2ui(renderlist_t* list, GLuint p1, GLuint p2);
 
 // custom functions
-void glPushCall(void *call);
+void APIENTRY_GL4ES glPushCall(void *call);
 
 #endif // _GL4ES_GL4ES_H_
 #ifdef __cplusplus

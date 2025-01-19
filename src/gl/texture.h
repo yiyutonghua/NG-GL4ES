@@ -8,81 +8,81 @@ extern "C" {
 #include "const.h"
 #include "gles.h"
 
-void gl4es_glTexImage2D(GLenum target, GLint level, GLint internalFormat,
+void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLint border,
                   GLenum format, GLenum type, const GLvoid *data);
 
-void gl4es_glTexImage1D(GLenum target, GLint level, GLint internalFormat,
+void APIENTRY_GL4ES gl4es_glTexImage1D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border,
                   GLenum format, GLenum type, const GLvoid *data);
 
-void gl4es_glTexImage3D(GLenum target, GLint level, GLint internalFormat,
+void APIENTRY_GL4ES gl4es_glTexImage3D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth,
                   GLint border, GLenum format, GLenum type, const GLvoid *data);
 
-void gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+void APIENTRY_GL4ES gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
                      GLsizei width, GLsizei height, GLenum format, GLenum type,
                      const GLvoid *data);
                      
-void gl4es_glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+void APIENTRY_GL4ES gl4es_glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
                      GLsizei width, GLenum format, GLenum type,
                      const GLvoid *data);
                      
-void gl4es_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, 
+void APIENTRY_GL4ES gl4es_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, 
                      GLsizei width, GLsizei height, GLsizei depth, GLenum format,
                      GLenum type, const GLvoid *data);
 
-void gl4es_glBindTexture(GLenum target, GLuint texture);
-void gl4es_glGenTextures(GLsizei n, GLuint * textures);
-void gl4es_glDeleteTextures(GLsizei n, const GLuint * textures);
-void gl4es_glTexParameteri(GLenum target, GLenum pname, GLint param);
-void gl4es_glTexParameterf(GLenum target, GLenum pname, GLfloat param);
-GLboolean gl4es_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences);
-void gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params);
-void gl4es_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid * img);
-void gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * data);
+void APIENTRY_GL4ES gl4es_glBindTexture(GLenum target, GLuint texture);
+void APIENTRY_GL4ES gl4es_glGenTextures(GLsizei n, GLuint * textures);
+void APIENTRY_GL4ES gl4es_glDeleteTextures(GLsizei n, const GLuint * textures);
+void APIENTRY_GL4ES gl4es_glTexParameteri(GLenum target, GLenum pname, GLint param);
+void APIENTRY_GL4ES gl4es_glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+GLboolean APIENTRY_GL4ES gl4es_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences);
+void APIENTRY_GL4ES gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params);
+void APIENTRY_GL4ES gl4es_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid * img);
+void APIENTRY_GL4ES gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * data);
 
-void gl4es_glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
+void APIENTRY_GL4ES gl4es_glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
 							GLsizei width, GLsizei height, GLint border,
 							GLsizei imageSize, const GLvoid *data);
-void gl4es_glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat,
+void APIENTRY_GL4ES gl4es_glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat,
 							GLsizei width, GLint border,
 							GLsizei imageSize, const GLvoid *data);
-void gl4es_glCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat,
+void APIENTRY_GL4ES gl4es_glCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat,
 							GLsizei width, GLsizei height, GLsizei depth, GLint border,
 							GLsizei imageSize, const GLvoid *data);
 							
-void gl4es_glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+void APIENTRY_GL4ES gl4es_glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 							   GLsizei width, GLsizei height, GLenum format, 
 							   GLsizei imageSize, const GLvoid *data);
-void gl4es_glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+void APIENTRY_GL4ES gl4es_glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 							   GLsizei width, GLenum format, 
 							   GLsizei imageSize, const GLvoid *data);
-void gl4es_glCompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+void APIENTRY_GL4ES gl4es_glCompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
 							   GLsizei width, GLsizei height, GLsizei depth, GLenum format, 
 							   GLsizei imageSize, const GLvoid *data);
                                
-void gl4es_glGetCompressedTexImage(GLenum target, GLint lod, GLvoid *img);
+void APIENTRY_GL4ES gl4es_glGetCompressedTexImage(GLenum target, GLint lod, GLvoid *img);
 
                                
-void gl4es_glCopyTexImage1D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
+void APIENTRY_GL4ES gl4es_glCopyTexImage1D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
 								GLsizei width,  GLint border);
 
-void gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
+void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
 								GLsizei width,  GLsizei height,  GLint border);
 
-void gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+void APIENTRY_GL4ES gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
                                 GLint x, GLint y, GLsizei width, GLsizei height);
                                 
-void gl4es_glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y,
+void APIENTRY_GL4ES gl4es_glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y,
                                 GLsizei width);
 
-void gl4es_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+void APIENTRY_GL4ES gl4es_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
                                 GLint x, GLint y, GLsizei width, GLsizei height);
 
-void gl4es_glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
-void gl4es_glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-void gl4es_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+void APIENTRY_GL4ES gl4es_glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
+void APIENTRY_GL4ES gl4es_glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+void APIENTRY_GL4ES gl4es_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 
 void tex_coord_rect_arb(GLfloat *tex, int stride, GLsizei len,
                         GLsizei width, GLsizei height);
@@ -106,8 +106,8 @@ typedef enum {
 typedef struct {
     GLuint glname;
     GLenum target;
-    GLenum min_filter;
-    GLenum mag_filter;
+	GLenum min_filter;
+	GLenum mag_filter;
     GLenum wrap_s;
     GLenum wrap_t;
     GLenum wrap_r;
@@ -126,31 +126,24 @@ typedef struct {
     GLsizei height;
     GLsizei nwidth;
     GLsizei nheight;
+    GLboolean mipmap_auto;
+    GLboolean mipmap_need;
+    GLboolean mipmap_done;
+    int base_level;
+    int max_level;
     GLenum  format;
     GLenum  type;
     GLenum  wanted_internal;
     GLenum  orig_internal;
     GLenum  internalformat;
     GLenum  inter_format, inter_type;
+    int aniso;
     int shrink;
-    GLboolean mipmap_auto;
-    GLboolean mipmap_need;
-    GLboolean mipmap_done;
-	GLenum min_filter;
-    GLenum wanted_min;
-	GLenum mag_filter;
-    GLenum wanted_mag;
-    GLenum wrap_s;
-    GLenum wrap_t;
-    GLenum compare;
     GLboolean alpha;
     GLboolean compressed;
     GLboolean streamed;
     int valid;
 	int	streamingID;
-    int base_level;
-    int max_level;
-    int aniso;
     int fpe_format; // tracking simplified internal format for FPE
     int npot;
     int adjust; // flag if width/height has to be adjusted
@@ -159,12 +152,13 @@ typedef struct {
     float ratiox, ratioy;
     int   binded_fbo;   // non zero if binded to an fbo
     GLenum binded_attachment; // What binding (texture, depth, stencil, depth_stencil)
-    GLuint renderdepth; // incase renderbuffer where used instead...
+    GLuint renderdepth; // in case renderbuffer where used instead...
     GLuint renderstencil;
+    int     trace;  // internal use for debug
     GLvoid *data;	// in case we want to keep a copy of it (it that case, always RGBA/GL_UNSIGNED_BYTE
-    float fbtex_ratio;
-    glsampler_t sampler;
-    glsampler_t actual;
+    glsampler_t sampler;    // internal sampler if not superseded by glBindSampler
+    glsampler_t actual;     // actual sampler
+    float fbtex_ratio; // Lower rendering resolution
 } gltexture_t;
 
 KHASH_MAP_DECLARE_INT(tex, gltexture_t *);
@@ -241,10 +235,10 @@ static inline GLint get_target(GLuint enabled) {
     return itarget;
 }
 
-void gl4es_glActiveTexture( GLenum texture );
-void gl4es_glClientActiveTexture( GLenum texture );
-void gl4es_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t );
-GLboolean gl4es_glIsTexture( GLuint texture );
+void APIENTRY_GL4ES gl4es_glActiveTexture( GLenum texture );
+void APIENTRY_GL4ES gl4es_glClientActiveTexture( GLenum texture );
+void APIENTRY_GL4ES gl4es_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t );
+GLboolean APIENTRY_GL4ES gl4es_glIsTexture( GLuint texture );
 
 int  tex_setup_needchange(GLuint itarget);
 void tex_setup_texcoord(GLuint len, int changes, GLuint texture, vertexattrib_t* ptr);
@@ -256,9 +250,17 @@ GLenum minmag_float(GLenum filt);
 GLboolean isDXTc(GLenum format);
 
 void realize_bound(int TMU, GLenum target);
+void realize_1texture(GLenum target, int TMU, gltexture_t* tex, glsampler_t* sampler);
 void realize_textures(int drawing);
-void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler_t* sampler);
 void realize_active();
+
+// defined in samplers.c
+// return 0 if pname not handled, 1 if ok (or ok with error)
+int samplerParameterfv(glsampler_t* sampler, GLenum pname, const GLfloat *param);
+// return 0 if pname not handled, 1 if ok (or ok with error)
+int getSamplerParameterfv(glsampler_t* sampler, GLenum pname, GLfloat *params);
+
+void init_sampler(glsampler_t* sampler);
 
 #endif // _GL4ES_TEXTURE_H_
 #ifdef __cplusplus

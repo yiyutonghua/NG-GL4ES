@@ -108,7 +108,7 @@ void set_fpe_textureidentity() {
 		glstate->fpe_state->texture[glstate->texture.active].texmat = 1;
 }
 
-void gl4es_glMatrixMode(GLenum mode) {
+void APIENTRY_GL4ES gl4es_glMatrixMode(GLenum mode) {
 DBG(SHUT_LOGD("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.active);)
 	noerrorShim();
 	if (glstate->list.active && glstate->list.pending && glstate->matrix_mode==GL_MODELVIEW && mode==GL_MODELVIEW) {
@@ -127,7 +127,7 @@ DBG(SHUT_LOGD("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.acti
     }
 }
 
-void gl4es_glPushMatrix() {
+void APIENTRY_GL4ES gl4es_glPushMatrix(void) {
 DBG(SHUT_LOGD("glPushMatrix(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active && !glstate->list.pending) {
 		PUSH_IF_COMPILING(glPushMatrix);
@@ -163,7 +163,7 @@ DBG(SHUT_LOGD("glPushMatrix(), list=%p\n", glstate->list.active);)
 	}
 }
 
-void gl4es_glPopMatrix() {
+void APIENTRY_GL4ES gl4es_glPopMatrix(void) {
 DBG(SHUT_LOGD("glPopMatrix(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active 
 	 && !(glstate->list.compiling)
@@ -216,7 +216,7 @@ DBG(SHUT_LOGD("glPopMatrix(), list=%p\n", glstate->list.active);)
 	}
 }
 
-void gl4es_glLoadMatrixf(const GLfloat * m) {
+void APIENTRY_GL4ES gl4es_glLoadMatrixf(const GLfloat * m) {
 DBG(SHUT_LOGD("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
@@ -243,7 +243,7 @@ DBG(SHUT_LOGD("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[
 	}
 }
 
-void gl4es_glMultMatrixf(const GLfloat * m) {
+void APIENTRY_GL4ES gl4es_glMultMatrixf(const GLfloat * m) {
 DBG(SHUT_LOGD("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
@@ -277,7 +277,7 @@ DBG(SHUT_LOGD("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[
 	}
 }
 
-void gl4es_glLoadIdentity() {
+void APIENTRY_GL4ES gl4es_glLoadIdentity(void) {
 DBG(SHUT_LOGD("glLoadIdentity(), list=%p\n", glstate->list.active);)
 	if (glstate->list.active) {
 		if(glstate->list.pending) gl4es_flush();
@@ -302,7 +302,7 @@ DBG(SHUT_LOGD("glLoadIdentity(), list=%p\n", glstate->list.active);)
 	}
 }
 
-void gl4es_glTranslatef(GLfloat x, GLfloat y, GLfloat z) {
+void APIENTRY_GL4ES gl4es_glTranslatef(GLfloat x, GLfloat y, GLfloat z) {
 DBG(SHUT_LOGD("glTranslatef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
 	// create a translation matrix than multiply it...
 	GLfloat tmp[16];
@@ -313,7 +313,7 @@ DBG(SHUT_LOGD("glTranslatef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.acti
 	gl4es_glMultMatrixf(tmp);
 }
 
-void gl4es_glScalef(GLfloat x, GLfloat y, GLfloat z) {
+void APIENTRY_GL4ES gl4es_glScalef(GLfloat x, GLfloat y, GLfloat z) {
 DBG(SHUT_LOGD("glScalef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);)
 	// create a scale matrix than multiply it...
 	GLfloat tmp[16];
@@ -325,7 +325,7 @@ DBG(SHUT_LOGD("glScalef(%f, %f, %f), list=%p\n", x, y, z, glstate->list.active);
 	gl4es_glMultMatrixf(tmp);
 }
 
-void gl4es_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
+void APIENTRY_GL4ES gl4es_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
 DBG(SHUT_LOGD("glRotatef(%f, %f, %f, %f), list=%p\n", angle, x, y, z, glstate->list.active);)
 	// create a rotation matrix than multiply it...
 	GLfloat tmp[16];
@@ -350,7 +350,7 @@ DBG(SHUT_LOGD("glRotatef(%f, %f, %f, %f), list=%p\n", angle, x, y, z, glstate->l
 	gl4es_glMultMatrixf(tmp);
 }
 
-void gl4es_glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal) {
+void APIENTRY_GL4ES gl4es_glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal) {
 DBG(SHUT_LOGD("glOrthof(%f, %f, %f, %f, %f, %f), list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
@@ -363,7 +363,7 @@ DBG(SHUT_LOGD("glOrthof(%f, %f, %f, %f, %f, %f), list=%p\n", left, right, top, b
 	gl4es_glMultMatrixf(tmp);
 }
 
-void gl4es_glFrustumf(GLfloat left,	GLfloat right, GLfloat bottom, GLfloat top,	GLfloat nearVal, GLfloat farVal) {
+void APIENTRY_GL4ES gl4es_glFrustumf(GLfloat left,	GLfloat right, GLfloat bottom, GLfloat top,	GLfloat nearVal, GLfloat farVal) {
 DBG(SHUT_LOGD("glFrustumf(%f, %f, %f, %f, %f, %f) list=%p\n", left, right, top, bottom, nearVal, farVal, glstate->list.active);)
 	GLfloat tmp[16];
 	memset(tmp, 0, 16*sizeof(GLfloat));
@@ -376,14 +376,14 @@ DBG(SHUT_LOGD("glFrustumf(%f, %f, %f, %f, %f, %f) list=%p\n", left, right, top, 
 	gl4es_glMultMatrixf(tmp);
 }
 
-void glMatrixMode(GLenum mode) AliasExport("gl4es_glMatrixMode");
-void glPushMatrix() AliasExport("gl4es_glPushMatrix");
-void glPopMatrix() AliasExport("gl4es_glPopMatrix");
-void glLoadMatrixf(const GLfloat * m) AliasExport("gl4es_glLoadMatrixf");
-void glMultMatrixf(const GLfloat * m) AliasExport("gl4es_glMultMatrixf");
-void glLoadIdentity() AliasExport("gl4es_glLoadIdentity");
-void glTranslatef(GLfloat x, GLfloat y, GLfloat z) AliasExport("gl4es_glTranslatef");
-void glScalef(GLfloat x, GLfloat y, GLfloat z) AliasExport("gl4es_glScalef");
-void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) AliasExport("gl4es_glRotatef");
-void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal) AliasExport("gl4es_glOrthof");
-void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal) AliasExport("gl4es_glFrustumf");
+AliasExport(void,glMatrixMode,,(GLenum mode));
+AliasExport_V(void,glPushMatrix);
+AliasExport_V(void,glPopMatrix);
+AliasExport(void,glLoadMatrixf,,(const GLfloat * m));
+AliasExport(void,glMultMatrixf,,(const GLfloat * m));
+AliasExport_V(void,glLoadIdentity);
+AliasExport(void,glTranslatef,,(GLfloat x, GLfloat y, GLfloat z));
+AliasExport(void,glScalef,,(GLfloat x, GLfloat y, GLfloat z));
+AliasExport(void,glRotatef,,(GLfloat angle, GLfloat x, GLfloat y, GLfloat z));
+AliasExport(void,glOrthof,,(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal));
+AliasExport(void,glFrustumf,,(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearVal, GLfloat farVal));

@@ -130,7 +130,7 @@ static int init_drm_and_gbm()
 
     resources = gbmdrm_drmModeGetResources(drm_fd);
     if(!resources) {
-        printf("LIBGL: Error initializing drm resources\n");
+        SHUT_LOGD("LIBGL: Error initializing drm resources\n");
         return 0;
     }
     /* find a connected connector: */
@@ -147,10 +147,10 @@ static int init_drm_and_gbm()
         /* we could be fancy and listen for hotplug events and wait for
          * a connector..
          */
-        printf("LIBGL: DRM no connected connector!\n");
+        SHUT_LOGD("LIBGL: DRM no connected connector!\n");
         return 0;
     }
-    /* find prefered mode or the highest resolution mode: */
+    /* find preferred mode or the highest resolution mode: */
     for (i = 0, area = 0; i < connector->count_modes; i++) {
         drmModeModeInfo *current_mode = &connector->modes[i];
 
@@ -165,7 +165,7 @@ static int init_drm_and_gbm()
         }
     }
     if (!drm_mode) {
-        printf("LIBGL: DRM could not find mode!\n");
+        SHUT_LOGD("LIBGL: DRM could not find mode!\n");
         return 0;
     }
     /* find encoder: */
@@ -181,7 +181,7 @@ static int init_drm_and_gbm()
     } else {
         uint32_t crtc_id = find_crtc_for_connector(resources, connector);
         if (crtc_id == 0) {
-            printf("LIBGL: DRM no crtc found!\n");
+            SHUT_LOGD("LIBGL: DRM no crtc found!\n");
             return 0;
         }
 
@@ -192,14 +192,14 @@ static int init_drm_and_gbm()
 
     gbmdev = gbmdrm_gbm_create_device(drm_fd);
     if(!gbmdev) {
-        printf("LIBGL: Error initializing gbm device\n");
+        SHUT_LOGD("LIBGL: Error initializing gbm device\n");
         return 0;
     }
 
     gbmsurf = gbmdrm_gbm_surface_create(gbmdev, drm_mode->hdisplay, drm_mode->vdisplay, 
         GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
     if(!gbmsurf) {
-        printf("LIBGL: Error initializing gbm surface\n");
+        SHUT_LOGD("LIBGL: Error initializing gbm surface\n");
         return 0;
     }
 
@@ -236,7 +236,7 @@ static struct drm_fb * drm_fb_get_from_bo(struct gbm_bo *bo)
 
     ret = gbmdrm_drmModeAddFB(drm_fd, width, height, 24, 32, stride, handle, &fb->fb_id);
     if (ret) {
-        printf("failed to create fb: %s\n", strerror(errno));
+        SHUT_LOGD("failed to create fb: %s\n", strerror(errno));
         free(fb);
         return NULL;
     }
@@ -253,7 +253,7 @@ static int OpenGBM()
     available = init_drm_and_gbm();
 
 
-    SHUT(printf("LIBGL: GBM on card %s is %s\n", globals4es.drmcard, available?"Available":"Not available"));
+    SHUT(SHUT_LOGD("LIBGL: GBM on card %s is %s\n", globals4es.drmcard, available?"Available":"Not available"));
 
     return available;
 }
@@ -270,7 +270,7 @@ void LoadGBMFunctions()
     #define GBMFUNC(ret, name, args) \
         gbmdrm_##name = (PFN##name)dlsym(gbm, #name); \
         if(!gbmdrm_##name) { \
-            printf("LIBGL: libgbm function %s missing, no gbm surface enabled\n", #name); \
+            SHUT_LOGD("LIBGL: libgbm function %s missing, no gbm surface enabled\n", #name); \
             CancelGBM(); \
             return; \
         }
@@ -280,7 +280,7 @@ void LoadGBMFunctions()
     #define DRMFUNC(ret, name, args) \
         gbmdrm_##name = (PFN##name)dlsym(drm, #name); \
         if(!gbmdrm_##name) { \
-            printf("LIBGL: libdrm function %s missing, no gbm surface enabled\n", #name); \
+            SHUT_LOGD("LIBGL: libdrm function %s missing, no gbm surface enabled\n", #name); \
             CancelGBM(); \
             return; \
         }
@@ -323,7 +323,7 @@ void* CreateGBMWindow(int w, int h)
 {
     void* ret = gbmsurf;
     if(!ret)
-        printf("LIBGL: Warning, cannot create gbm surface %dx%d\n", w, h);
+        SHUT_LOGD("LIBGL: Warning, cannot create gbm surface %dx%d\n", w, h);
 }
 
 void DeleteGBMWindow(void* win)
@@ -345,7 +345,7 @@ int FindGBMConfig(EGLDisplay eglDisp, EGLConfig *configs, int numFounds)
         }
         ++idx;
     }
-    printf("LIBGL: Warning, no EGLConfig matching GBM Format found\n");
+    SHUT_LOGD("LIBGL: Warning, no EGLConfig matching GBM Format found\n");
     return 0;   // not found...
 }
 EGLBoolean GBMMakeCurrent(EGLDisplay eglDisp, EGLSurface draw, EGLSurface read, EGLContext ctx)
@@ -374,7 +374,7 @@ EGLBoolean GBMMakeCurrent(EGLDisplay eglDisp, EGLSurface draw, EGLSurface read, 
     int r = gbmdrm_drmModeSetCrtc(drm_fd, drm_crtc_id, fb->fb_id, 0, 0,
                          &drm_connector_id, 1, drm_mode);
     if (r) {
-        printf("LIBGL: GBM failed to set mode: %s\n", strerror(errno));
+        SHUT_LOGD("LIBGL: GBM failed to set mode: %s\n", strerror(errno));
         return EGL_FALSE;
     }
 

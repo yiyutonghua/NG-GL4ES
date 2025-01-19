@@ -5,6 +5,8 @@
 #ifndef _GLX_HARDEXT_H_
 #define _GLX_HARDEXT_H_
 
+#include "../gl/attributes.h"
+
 #define VEND_IMGTEC     0x0100
 #define VEND_ARM        0x0200
 
@@ -39,6 +41,11 @@ typedef struct _hardext {
     int halffloattex;   // GL_OES_texture_half_float
     int floatfbo;       // GL_EXT_color_buffer_float
     int halffloatfbo;   // GL_EXT_color_buffer_half_float
+    int rgb332;         // GL_AOS4_texture_format_RGB332
+    int rgb332rev;      // GL_AOS4_texture_format_RGB332REV
+    int rgba1555rev;    // GL_AOS4_texture_format_RGBA1555REV
+    int rgba8888;       // GL_AOS4_texture_format_RGBA8888
+    int rgba8888rev;    // GL_AOS4_texture_format_RGBA8888REV
     int mirrored;       // GL_OES_texture_mirrored_repeat
     int aniso;          // Max ANISOTROPIC filter available (0 if not)
     int srgb;           // EGL_KHR_gl_colorspace
@@ -64,17 +71,15 @@ typedef struct _hardext {
     int eglnoalpha;     // EGL surface doesn't seems to have any alpha channel (auto detect)
     int prgbinary;      // GL_OES_get_program extension
     int prgbin_n;       // number of program binary format support
+    int shader_fbfetch; // GL_ARM_shader_framebuffer_fetch
     int glsl120;        // does version 120 glsl shader are supported ?
     int glsl300es;      // does version 300es glsl shader are supported ?
     int glsl310es;      // does version 300es glsl shader are supported ?
     int glsl320es;      // VGPU specific ; does version 320es glsl shader are supported ?
-    int rgba8888;
-    int rgba1555rev;
 } hardext_t;
 
-extern hardext_t hardext;
+EXPORT extern hardext_t hardext;
 
-void GetHardwareExtensions(int test);
-int testGenericShader(struct shader_s * shader_source);
+EXPORT void GetHardwareExtensions(int test);
 
 #endif

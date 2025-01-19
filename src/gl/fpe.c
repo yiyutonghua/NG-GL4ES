@@ -5,13 +5,26 @@
 #include "fpe_shader.h"
 #include "glcase.h"
 #include "init.h"
+#include "gl4es.h"
 #include "loader.h"
 #include "matrix.h"
 #include "matvec.h"
 #include "program.h"
 #include "shaderconv.h"
-#include "fpe_cache.h"
+
 #include "fpe.h"
+
+#define fpe_state_t fpe_state_t
+#define fpe_fpe_t fpe_fpe_t
+#define kh_fpecachelist_t kh_fpecachelist_t
+#include "fpe_cache.h"
+#undef fpe_state_t
+#undef fpe_fpe_t
+#undef kh_fpecachelist_t
+
+#ifndef fpe_cache_t
+#   define fpe_cache_t kh_fpecachelist_t
+#endif
 
 //#define DEBUG
 #ifdef DEBUG
@@ -36,9 +49,9 @@ void fpe_Dispose(glstate_t *glstate) {
     glstate->fpe_cache = NULL;
 }
 
-void fpe_ReleventState_DefaultVertex(fpe_state_t *dest, fpe_state_t *src, shaderconv_need_t* need)
+void APIENTRY_GL4ES fpe_ReleventState_DefaultVertex(fpe_state_t *dest, fpe_state_t *src, shaderconv_need_t* need)
 {
-    // filter out some non relevent state (like texture stuff if texture is disabled)
+    // filter out some non relevant state (like texture stuff if texture is disabled)
     memcpy(dest, src, sizeof(fpe_state_t));
     // alpha test
     if(!dest->alphatest) {
@@ -63,7 +76,7 @@ void fpe_ReleventState_DefaultVertex(fpe_state_t *dest, fpe_state_t *src, shader
             if(((dest->light>>i)&1)==0) {
                 dest->light_cutoff180 &= ~(1<<i);
                 dest->light_direction &= ~(1<<i);
-            }
+            }            
         }
     }
     // texturing
@@ -127,15 +140,23 @@ void fpe_ReleventState_DefaultVertex(fpe_state_t *dest, fpe_state_t *src, shader
         dest->pointsprite_upper = 0;
         dest->pointsprite_coord = 0;
     }
+    if(!dest->blend_enable) {
+        dest->blendsrcrgb = 0;
+        dest->blenddstrgb = 0;
+        dest->blendsrcalpha = 0;
+        dest->blenddstalpha = 0;
+        dest->blendeqrgb = 0;
+        dest->blendeqalpha = 0;
+    }
     // ARB_vertex_program and ARB_fragment_program
     dest->vertex_prg_id = 0;    // it's a default vertex program...
     if(!dest->fragment_prg_enable)
         dest->fragment_prg_id = 0;
 }
 
-void fpe_ReleventState(fpe_state_t *dest, fpe_state_t *src, int fixed)
+void APIENTRY_GL4ES fpe_ReleventState(fpe_state_t *dest, fpe_state_t *src, int fixed)
 {
-    // filter out some non relevent state (like texture stuff if texture is disabled)
+    // filter out some non relevant state (like texture stuff if texture is disabled)
     memcpy(dest, src, sizeof(fpe_state_t));
     // alpha test
     if(!dest->alphatest) {
@@ -160,7 +181,7 @@ void fpe_ReleventState(fpe_state_t *dest, fpe_state_t *src, int fixed)
             if(((dest->light>>i)&1)==0) {
                 dest->light_cutoff180 &= ~(1<<i);
                 dest->light_direction &= ~(1<<i);
-            }
+            }            
         }
     }
     // texturing
@@ -247,9 +268,17 @@ void fpe_ReleventState(fpe_state_t *dest, fpe_state_t *src, int fixed)
         dest->vertex_prg_enable = 0;
         dest->fragment_prg_enable = 0;
     }
+    if(!fixed || !dest->blend_enable) {
+        dest->blendsrcrgb = 0;
+        dest->blenddstrgb = 0;
+        dest->blendsrcalpha = 0;
+        dest->blenddstalpha = 0;
+        dest->blendeqrgb = 0;
+        dest->blendeqalpha = 0;
+    }
 }
 
-int fpe_IsEmpty(fpe_state_t *state) {
+int APIENTRY_GL4ES fpe_IsEmpty(fpe_state_t *state) {
     uint8_t* p = (uint8_t*)state;
     for (int i=0; i<sizeof(fpe_state_t); ++i)
         if(p[i])
@@ -269,7 +298,7 @@ uniform_t* findUniform(khash_t(uniformlist) *uniforms, const char* name)
 
 }
 // ********* Old Program binding Handling *********
-void fpe_oldprogram(fpe_state_t* state) {
+void APIENTRY_GL4ES fpe_oldprogram(fpe_state_t* state) {
     LOAD_GLES2(glGetShaderInfoLog);
     LOAD_GLES2(glGetProgramInfoLog);
     GLint status;
@@ -279,16 +308,16 @@ void fpe_oldprogram(fpe_state_t* state) {
 
     glstate->fpe->vert = gl4es_glCreateShader(GL_VERTEX_SHADER);
     if(state->vertex_prg_id) {
-        gl4es_glShaderSource(glstate->fpe->vert, 1, fpe_CustomVertexShader(old_vtx->shader->source, state), NULL);
+        gl4es_glShaderSource(glstate->fpe->vert, 1, fpe_CustomVertexShader(old_vtx->shader->source, state, state->fragment_prg_id?0:1), NULL);
         gl4es_glCompileShader(glstate->fpe->vert);
         gl4es_glGetShaderiv(glstate->fpe->vert, GL_COMPILE_STATUS, &status);
         if(status!=GL_TRUE) {
             char buff[1000];
             gles_glGetShaderInfoLog(glstate->fpe->vert, 1000, NULL, buff);
             if(globals4es.logshader)
-                printf("LIBGL: FPE ARB Vertex program compile failed: ARB source is\n%s\n=======\nGLSL source is\n%s\nError is: %s\n", old_vtx->string, old_vtx->shader->source, buff);
+                SHUT_LOGD("LIBGL: FPE ARB Vertex program compile failed: ARB source is\n%s\n=======\nGLSL source is\n%s\nError is: %s\n", old_vtx->string, old_vtx->shader->source, buff)
             else
-                printf("LIBGL: FPE ARB Vertex program compile failed: %s\n", buff);
+                SHUT_LOGD("LIBGL: FPE ARB Vertex program compile failed: %s\n", buff)
         }
         getShader(glstate->fpe->vert)->old = old_vtx;
     } else {
@@ -299,7 +328,7 @@ void fpe_oldprogram(fpe_state_t* state) {
         if(status!=GL_TRUE) {
             char buff[1000];
             gles_glGetShaderInfoLog(glstate->fpe->vert, 1000, NULL, buff);
-            printf("LIBGL: FPE ARB Default Vertex program compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE ARB Default Vertex program compile failed: %s\n", buff);
         }
     }
     gl4es_glAttachShader(glstate->fpe->prog, glstate->fpe->vert);
@@ -312,9 +341,9 @@ void fpe_oldprogram(fpe_state_t* state) {
             char buff[1000];
             gles_glGetShaderInfoLog(glstate->fpe->frag, 1000, NULL, buff);
             if(globals4es.logshader)
-                printf("LIBGL: FPE ARB Fragment program compile failed: ARB source is\n%s\n=======\nGLSL source is\n%s\nError is: %s\n", old_frg->string, old_frg->shader->source, buff);
+                SHUT_LOGD("LIBGL: FPE ARB Fragment program compile failed: ARB source is\n%s\n=======\nGLSL source is\n%s\nError is: %s\n", old_frg->string, old_frg->shader->source, buff)
             else
-                printf("LIBGL: FPE ARB Fragment program compile failed: %s\n", buff);
+                SHUT_LOGD("LIBGL: FPE ARB Fragment program compile failed: %s\n", buff)
         }
         getShader(glstate->fpe->frag)->old = old_frg;
     } else {
@@ -325,7 +354,7 @@ void fpe_oldprogram(fpe_state_t* state) {
         if(status!=GL_TRUE) {
             char buff[1000];
             gles_glGetShaderInfoLog(glstate->fpe->frag, 1000, NULL, buff);
-            printf("LIBGL: FPE ARB Default Fragment program compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE ARB Default Fragment program compile failed: %s\n", buff);
         }
     }
     gl4es_glAttachShader(glstate->fpe->prog, glstate->fpe->frag);
@@ -335,20 +364,26 @@ void fpe_oldprogram(fpe_state_t* state) {
     if(status!=GL_TRUE) {
         char buff[1000];
         gles_glGetProgramInfoLog(glstate->fpe->prog, 1000, NULL, buff);
-        printf("LIBGL: FPE ARB Program link failed: %s\n", buff);
+        if(globals4es.logshader)
+            SHUT_LOGD("LIBGL: FPE ARB Program link failed: %s\n with vertex %s%s%s%s%s and fragment %s%s%s%s%s\n",
+                buff, 
+                state->vertex_prg_id?"custom:\n":"default", state->vertex_prg_id?old_vtx->string:"", state->vertex_prg_id?"\nconverted:\n":"", state->vertex_prg_id?old_vtx->shader->source:"", state->vertex_prg_id?"\n":"", 
+                state->fragment_prg_id?"custom:\n":"default", state->fragment_prg_id?old_frg->string:"", state->fragment_prg_id?"\nconverted:\n":"", state->fragment_prg_id?old_frg->shader->source:"", state->fragment_prg_id?"\n":"")
+        else
+            SHUT_LOGD("LIBGL: FPE ARB Program link failed: %s\n", buff)
     }
     DBG(SHUT_LOGD("Created program %d, with vertex=%d (old=%d) fragment=%d (old=%d), alpha=%d/%d\n", glstate->fpe->prog, glstate->fpe->vert, state->vertex_prg_id, glstate->fpe->frag, state->fragment_prg_id, state->alphatest, state->alphafunc);)
 }
 
 // ********* Shader stuffs handling *********
-void fpe_program(int ispoint) {
+void APIENTRY_GL4ES fpe_program(int ispoint) {
     glstate->fpe_state->point = ispoint;
     fpe_state_t state;
     fpe_ReleventState(&state, glstate->fpe_state, 1);
     if(glstate->fpe==NULL || memcmp(&glstate->fpe->state, &state, sizeof(fpe_state_t))) {
         // get cached fpe (or new one)
         glstate->fpe = fpe_GetCache(glstate->fpe_cache, &state, 1);
-    }
+    }   
     if(glstate->fpe->glprogram==NULL) {
         glstate->fpe->prog = gl4es_glCreateProgram();
         DBG(int from_psa = 1;)
@@ -369,9 +404,9 @@ void fpe_program(int ispoint) {
                     char buff[1000];
                     gles_glGetShaderInfoLog(glstate->fpe->vert, 1000, NULL, buff);
                     if(globals4es.logshader)
-                        printf("LIBGL: FPE Vertex shader compile failed: source is\n%s\n\nError is: %s\n", fpe_VertexShader(NULL, glstate->fpe_state)[0], buff);
+                        SHUT_LOGD("LIBGL: FPE Vertex shader compile failed: source is\n%s\n\nError is: %s\n", fpe_VertexShader(NULL, glstate->fpe_state)[0], buff)
                     else
-                        printf("LIBGL: FPE Vertex shader compile failed: %s\n", buff);
+                        SHUT_LOGD("LIBGL: FPE Vertex shader compile failed: %s\n", buff)
                 }
                 glstate->fpe->frag = gl4es_glCreateShader(GL_FRAGMENT_SHADER);
                 gl4es_glShaderSource(glstate->fpe->frag, 1, fpe_FragmentShader(NULL, glstate->fpe_state), NULL);
@@ -381,9 +416,9 @@ void fpe_program(int ispoint) {
                     char buff[1000];
                     gles_glGetShaderInfoLog(glstate->fpe->frag, 1000, NULL, buff);
                     if(globals4es.logshader)
-                        printf("LIBGL: FPE Fragment shader compile failed: source is\n%s\n\nError is: %s\n", fpe_FragmentShader(NULL, glstate->fpe_state)[0], buff);
+                        SHUT_LOGD("LIBGL: FPE Fragment shader compile failed: source is\n%s\n\nError is: %s\n", fpe_FragmentShader(NULL, glstate->fpe_state)[0], buff)
                     else
-                        printf("LIBGL: FPE Fragment shader compile failed: %s\n", buff);
+                        SHUT_LOGD("LIBGL: FPE Fragment shader compile failed: %s\n", buff)
                 }
                 // program is already created
                 gl4es_glAttachShader(glstate->fpe->prog, glstate->fpe->vert);
@@ -394,10 +429,10 @@ void fpe_program(int ispoint) {
                     char buff[1000];
                     gles_glGetProgramInfoLog(glstate->fpe->prog, 1000, NULL, buff);
                     if(globals4es.logshader) {
-                        printf("LIBGL: FPE Program link failed: source of vertex shader is\n%s\n\n", fpe_VertexShader(NULL, glstate->fpe_state)[0]);
-                        printf("source of fragment shader is \n%s\n\nError is: %s\n", fpe_FragmentShader(NULL, glstate->fpe_state)[0], buff);
+                        SHUT_LOGD("LIBGL: FPE Program link failed: source of vertex shader is\n%s\n\n", fpe_VertexShader(NULL, glstate->fpe_state)[0]);
+                        SHUT_LOGD("source of fragment shader is \n%s\n\nError is: %s\n", fpe_FragmentShader(NULL, glstate->fpe_state)[0], buff);
                     } else
-                        printf("LIBGL: FPE Program link failed: %s\n", buff);
+                        SHUT_LOGD("LIBGL: FPE Program link failed: %s\n", buff);
                 }
                 fpe_AddProgramPSA(glstate->fpe->prog, &state);
             }
@@ -415,7 +450,7 @@ void fpe_program(int ispoint) {
     }
 }
 
-program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
+program_t* APIENTRY_GL4ES fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
 {
     // state is not empty and glprogram already has some cache (it may be empty, but kh'thingy is initialized)
     // TODO: what if program is composed of more then 1 vertex or fragment shader?
@@ -423,13 +458,13 @@ program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
     if(fpe->glprogram==NULL) {
         GLint status;
         fpe->vert = gl4es_glCreateShader(GL_VERTEX_SHADER);
-        gl4es_glShaderSource(fpe->vert, 1, fpe_CustomVertexShader(glprogram->last_vert->source, state), NULL);
+        gl4es_glShaderSource(fpe->vert, 1, fpe_CustomVertexShader(glprogram->last_vert->source, state, 0), NULL);
         gl4es_glCompileShader(fpe->vert);
         gl4es_glGetShaderiv(fpe->vert, GL_COMPILE_STATUS, &status);
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetShaderInfoLog(fpe->vert, 1000, NULL, buff);
-            printf("LIBGL: FPE Custom Vertex shader compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Custom Vertex shader compile failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         fpe->frag = gl4es_glCreateShader(GL_FRAGMENT_SHADER);
@@ -439,7 +474,7 @@ program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetShaderInfoLog(fpe->frag, 1000, NULL, buff);
-            printf("LIBGL: FPE Custom Fragment shader compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Custom Fragment shader compile failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         fpe->prog = gl4es_glCreateProgram();
@@ -458,13 +493,12 @@ program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetProgramInfoLog(fpe->prog, 1000, NULL, buff);
-            printf("LIBGL: FPE Custom Program link failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Custom Program link failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         // now find the program
         khint_t k_program;
         {
-            int ret;
             khash_t(programlist) *programs = glstate->glsl->programs;
             k_program = kh_get(programlist, programs, fpe->prog);
             if (k_program != kh_end(programs))
@@ -493,7 +527,7 @@ program_t* fpe_CustomShader(program_t* glprogram, fpe_state_t* state)
     return fpe->glprogram;
 }
 
-program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* state_vertex)
+program_t* APIENTRY_GL4ES fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* state_vertex)
 {
     // state is not empty and glprogram already has some cache (it may be empty, but kh'thingy is initialized)
     // TODO: what if program is composed of more then 1 vertex or fragment shader?
@@ -507,7 +541,7 @@ program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* sta
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetShaderInfoLog(fpe->vert, 1000, NULL, buff);
-            printf("LIBGL: FPE Default Vertex shader compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Default Vertex shader compile failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         fpe->frag = gl4es_glCreateShader(GL_FRAGMENT_SHADER);
@@ -517,7 +551,7 @@ program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* sta
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetShaderInfoLog(fpe->frag, 1000, NULL, buff);
-            printf("LIBGL: FPE Custom Fragment shader compile failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Custom Fragment shader compile failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         fpe->prog = gl4es_glCreateProgram();
@@ -536,13 +570,12 @@ program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* sta
         if(status!=GL_TRUE) {
             char buff[1000];
             gl4es_glGetProgramInfoLog(fpe->prog, 1000, NULL, buff);
-            printf("LIBGL: FPE Custom Program with Default Vertex link failed: %s\n", buff);
+            SHUT_LOGD("LIBGL: FPE Custom Program with Default Vertex link failed: %s\n", buff);
             return glprogram;   // fallback to non-customized custom program..
         }
         // now find the program
         khint_t k_program;
         {
-            int ret;
             khash_t(programlist) *programs = glstate->glsl->programs;
             k_program = kh_get(programlist, programs, fpe->prog);
             if (k_program != kh_end(programs))
@@ -571,7 +604,7 @@ program_t* fpe_CustomShader_DefaultVertex(program_t* glprogram, fpe_state_t* sta
     return fpe->glprogram;
 }
 
-void fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram) {
+void APIENTRY_GL4ES fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram) {
     //TODO: Optimize this...
     khash_t(uniformlist) *uniforms = glprogram->uniform;
     uniform_t *m;
@@ -610,7 +643,7 @@ void fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram) {
                     GoUniformMatrix4fv(glprogram, m->id, 1, false, (GLfloat*)((uintptr_t)cache->cache+m->parent_offs));
                     break;
                 default:
-                    printf("LIBGL: Warning, sync uniform on father/son program with unknown uniform type %s\n", PrintEnum(m->type));
+                    SHUT_LOGD("LIBGL: Warning, sync uniform on father/son program with unknown uniform type %s\n", PrintEnum(m->type));
             }
         }
     );
@@ -618,11 +651,11 @@ void fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram) {
 }
 // ********* Fixed Pipeling function wrapper *********
 
-void fpe_glClientActiveTexture(GLenum texture) {
+void APIENTRY_GL4ES fpe_glClientActiveTexture(GLenum texture) {
     DBG(SHUT_LOGD("fpe_glClientActiveTexture(%s)\n", PrintEnum(texture));)
 }
 
-void fpe_EnableDisableClientState(GLenum cap, GLboolean val) {
+void APIENTRY_GL4ES fpe_EnableDisableClientState(GLenum cap, GLboolean val) {
     int att = -1;
         switch(cap) {
         case GL_VERTEX_ARRAY:
@@ -663,23 +696,21 @@ DBG(SHUT_LOGD("glstate->vao->vertexattrib[%d].enabled (was %d) = %d (hardware=%d
     }
 }
 
-void fpe_glEnableClientState(GLenum cap) {
+void APIENTRY_GL4ES fpe_glEnableClientState(GLenum cap) {
     DBG(SHUT_LOGD("fpe_glEnableClientState(%s)\n", PrintEnum(cap));)
     fpe_EnableDisableClientState(cap, GL_TRUE);
 }
 
-void fpe_glDisableClientState(GLenum cap) {
+void APIENTRY_GL4ES fpe_glDisableClientState(GLenum cap) {
     DBG(SHUT_LOGD("fpe_glDisableClientState(%s)\n", PrintEnum(cap));)
     fpe_EnableDisableClientState(cap, GL_FALSE);
 }
 
-void fpe_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
+void APIENTRY_GL4ES fpe_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
 }
 
-void fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
+void APIENTRY_GL4ES fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
     DBG(SHUT_LOGD("fpe_glSecondaryColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
-    if(pointer==glstate->vao->vertexattrib[ATT_SECONDARY].pointer)
-        return;
     glstate->vao->vertexattrib[ATT_SECONDARY].size = size;
     glstate->vao->vertexattrib[ATT_SECONDARY].type = type;
     glstate->vao->vertexattrib[ATT_SECONDARY].stride = stride;
@@ -688,12 +719,12 @@ void fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const 
     glstate->vao->vertexattrib[ATT_SECONDARY].normalized = (type==GL_FLOAT)?GL_FALSE:GL_TRUE;
     glstate->vao->vertexattrib[ATT_SECONDARY].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_SECONDARY].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_SECONDARY].buffer = glstate->vao->vertex;
+
 }
 
-void fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-    DBG(SHUT_LOGD("fpe_glVertexPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
-    if(pointer==glstate->vao->vertexattrib[ATT_VERTEX].pointer)
-        return;
+void APIENTRY_GL4ES fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
+    DBG(SHUT_LOGD("fpe_glVertexPointer(%d, %s, %d, %p), vertex_buffer=%p\n", size, PrintEnum(type), stride, pointer, glstate->vao->vertex);)
     glstate->vao->vertexattrib[ATT_VERTEX].size = size;
     glstate->vao->vertexattrib[ATT_VERTEX].type = type;
     glstate->vao->vertexattrib[ATT_VERTEX].stride = stride;
@@ -702,12 +733,11 @@ void fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
     glstate->vao->vertexattrib[ATT_VERTEX].normalized = GL_FALSE;
     glstate->vao->vertexattrib[ATT_VERTEX].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_VERTEX].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_VERTEX].buffer = glstate->vao->vertex;
 }
 
-void fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
+void APIENTRY_GL4ES fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
     DBG(SHUT_LOGD("fpe_glColorPointer(%d, %s, %d, %p)\n", size, PrintEnum(type), stride, pointer);)
-    if(pointer==glstate->vao->vertexattrib[ATT_COLOR].pointer)
-        return;
     glstate->vao->vertexattrib[ATT_COLOR].size = size;
     glstate->vao->vertexattrib[ATT_COLOR].type = type;
     glstate->vao->vertexattrib[ATT_COLOR].stride = stride;
@@ -716,30 +746,28 @@ void fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *p
     glstate->vao->vertexattrib[ATT_COLOR].normalized = (type==GL_FLOAT)?GL_FALSE:GL_TRUE;
     glstate->vao->vertexattrib[ATT_COLOR].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_COLOR].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_COLOR].buffer = glstate->vao->vertex;
 }
 
-void fpe_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
+void APIENTRY_GL4ES fpe_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
     DBG(SHUT_LOGD("fpe_glNormalPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
-    if(pointer==glstate->vao->vertexattrib[ATT_NORMAL].pointer)
-        return;
     glstate->vao->vertexattrib[ATT_NORMAL].size = 3;
     glstate->vao->vertexattrib[ATT_NORMAL].type = type;
     glstate->vao->vertexattrib[ATT_NORMAL].stride = stride;
     glstate->vao->vertexattrib[ATT_NORMAL].pointer = pointer;
     glstate->vao->vertexattrib[ATT_NORMAL].divisor = 0;
-    glstate->vao->vertexattrib[ATT_NORMAL].normalized = GL_FALSE;
+    glstate->vao->vertexattrib[ATT_NORMAL].normalized = (type==GL_FLOAT)?GL_FALSE:GL_TRUE;
     glstate->vao->vertexattrib[ATT_NORMAL].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_NORMAL].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_NORMAL].buffer = glstate->vao->vertex;
 }
 
-void fpe_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
+void APIENTRY_GL4ES fpe_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
     fpe_glTexCoordPointerTMU(size, type, stride, pointer, glstate->texture.client);
 }
 
-void fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer, int TMU) {
+void APIENTRY_GL4ES fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer, int TMU) {
     DBG(SHUT_LOGD("fpe_glTexCoordPointer(%d, %s, %d, %p) on tmu=%d\n", size, PrintEnum(type), stride, pointer, TMU);)
-    if(pointer==glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].pointer)
-        return;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].size = size;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].type = type;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].stride = stride;
@@ -748,12 +776,11 @@ void fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLv
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].normalized = GL_FALSE;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_MULTITEXCOORD0+TMU].buffer = glstate->vao->vertex;
 }
 
-void fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
+void APIENTRY_GL4ES fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
     DBG(SHUT_LOGD("fpe_glFogPointer(%s, %d, %p)\n", PrintEnum(type), stride, pointer);)
-    if(pointer==glstate->vao->vertexattrib[ATT_FOGCOORD].pointer)
-        return;
     glstate->vao->vertexattrib[ATT_FOGCOORD].size = 1;
     glstate->vao->vertexattrib[ATT_FOGCOORD].type = type;
     glstate->vao->vertexattrib[ATT_FOGCOORD].stride = stride;
@@ -762,24 +789,25 @@ void fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
     glstate->vao->vertexattrib[ATT_FOGCOORD].normalized = (type==GL_FLOAT)?GL_FALSE:GL_TRUE;
     glstate->vao->vertexattrib[ATT_FOGCOORD].real_buffer = 0;
     glstate->vao->vertexattrib[ATT_FOGCOORD].real_pointer = 0;
+    glstate->vao->vertexattrib[ATT_FOGCOORD].buffer = glstate->vao->vertex;
 }
 
-void fpe_glEnable(GLenum cap) {
+void APIENTRY_GL4ES fpe_glEnable(GLenum cap) {
     gl4es_glEnable(cap);    // may reset fpe curent program
 }
-void fpe_glDisable(GLenum cap) {
+void APIENTRY_GL4ES fpe_glDisable(GLenum cap) {
     gl4es_glDisable(cap);   // may reset fpe curent program
 }
 
-void fpe_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
+void APIENTRY_GL4ES fpe_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
     noerrorShim();
 }
 
-void fpe_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) {
+void APIENTRY_GL4ES fpe_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) {
     noerrorShim();
 }
 
-void fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count) {
+void APIENTRY_GL4ES fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count) {
     DBG(SHUT_LOGD("fpe_glDrawArrays(%s, %d, %d), program=%d, instanceID=%u\n", PrintEnum(mode), first, count, glstate->glsl->program, glstate->instanceID);)
     scratch_t scratch = {0};
     realize_glenv(mode==GL_POINTS, first, count, 0, NULL, &scratch);
@@ -788,23 +816,25 @@ void fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count) {
     free_scratch(&scratch);
 }
 
-void fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {
+void APIENTRY_GL4ES fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {
     DBG(SHUT_LOGD("fpe_glDrawElements(%s, %d, %s, %p), program=%d, instanceID=%u\n", PrintEnum(mode), count, PrintEnum(type), indices, glstate->glsl->program, glstate->instanceID);)
-    LOAD_GLES2(glBindBuffer);
     scratch_t scratch = {0};
     realize_glenv(mode==GL_POINTS, 0, count, type, indices, &scratch);
     LOAD_GLES(glDrawElements);
     int use_vbo = 0;
-    if(glstate->vao->elements && glstate->vao->elements->real_buffer && indices>=glstate->vao->elements->data && indices<=(glstate->vao->elements->data+glstate->vao->elements->size)) {
+    if(glstate->vao->elements && glstate->vao->elements->real_buffer && indices>=glstate->vao->elements->data && indices<=((void*)((char*)glstate->vao->elements->data+glstate->vao->elements->size))) {
         use_vbo = 1;
-        gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
+        bindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
         indices = (GLvoid*)((uintptr_t)indices - (uintptr_t)(glstate->vao->elements->data));
+        DBG(SHUT_LOGD("Using VBO %d for indices\n", glstate->vao->elements->real_buffer);)
     }
+    realize_bufferIndex();
     gles_glDrawElements(mode, count, type, indices);
+    if(use_vbo)
+        wantBufferIndex(0);
     free_scratch(&scratch);
-    if(use_vbo) gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
-void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount) {
+void APIENTRY_GL4ES fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount) {
     DBG(SHUT_LOGD("fpe_glDrawArraysInstanced(%s, %d, %d, %d), program=%d\n", PrintEnum(mode), first, count, primcount, glstate->glsl->program);)
     LOAD_GLES(glDrawArrays);
     LOAD_GLES2(glVertexAttrib4fv);
@@ -814,7 +844,7 @@ void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei 
     program_t *glprogram = glstate->gleshard->glprogram;
     for (GLint id=0; id<primcount; ++id) {
         GoUniformiv(glprogram, glprogram->builtin_instanceID, 1, 1, &id);
-        for(int i=0; i<hardext.maxvattrib; i++)
+        for(int i=0; i<hardext.maxvattrib; i++) 
         if(glprogram->va_size[i])   // only check used VA...
         {
             vertexattrib_t *w = &glstate->vao->vertexattrib[i];
@@ -854,9 +884,8 @@ void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei 
     }
     free_scratch(&scratch);
 }
-void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount) {
+void APIENTRY_GL4ES fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount) {
     DBG(SHUT_LOGD("fpe_glDrawElementsInstanced(%s, %d, %s, %p, %d), program=%d\n", PrintEnum(mode), count, PrintEnum(type), indices, primcount, glstate->glsl->program);)
-    LOAD_GLES2(glBindBuffer);
     LOAD_GLES(glDrawElements);
     LOAD_GLES2(glVertexAttrib4fv);
     scratch_t scratch = {0};
@@ -865,15 +894,18 @@ void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const 
     int use_vbo = 0;
     void* inds;
     GLfloat tmp[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-    if(glstate->vao->elements && glstate->vao->elements->real_buffer && indices>=glstate->vao->elements->data && indices<=(glstate->vao->elements->data+glstate->vao->elements->size)) {
+    if(glstate->vao->elements && glstate->vao->elements->real_buffer && indices>=glstate->vao->elements->data && indices<=((void*)((char*)glstate->vao->elements->data+glstate->vao->elements->size))) {
         use_vbo = 1;
-        gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
+        bindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
         inds = (void*)((uintptr_t)indices - (uintptr_t)(glstate->vao->elements->data));
-    } else
+    } else {
         inds = (void*)indices;
+        bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    //realize_bufferIndex();    // not useful here
     for (GLint id=0; id<primcount; ++id) {
         GoUniformiv(glprogram, glprogram->builtin_instanceID, 1, 1, &id);
-        for(int i=0; i<hardext.maxvattrib; i++)
+        for(int i=0; i<hardext.maxvattrib; i++) 
         if(glprogram->va_size[i])   // only check used VA...
         {
             vertexattrib_t *w = &glstate->vao->vertexattrib[i];
@@ -911,28 +943,29 @@ void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const 
         }
         gles_glDrawElements(mode, count, type, inds);
     }
+    if(use_vbo)
+        wantBufferIndex(0);
     free_scratch(&scratch);
-    if(use_vbo) gles_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 
-void fpe_glMatrixMode(GLenum mode) {
+void APIENTRY_GL4ES fpe_glMatrixMode(GLenum mode) {
     noerrorShim();
 }
 
-void fpe_glLightModelf(GLenum pname, GLfloat param) {
+void APIENTRY_GL4ES fpe_glLightModelf(GLenum pname, GLfloat param) {
     noerrorShim();
 }
-void fpe_glLightModelfv(GLenum pname, const GLfloat* params) {
+void APIENTRY_GL4ES fpe_glLightModelfv(GLenum pname, const GLfloat* params) {
     noerrorShim();
 }
-void fpe_glLightfv(GLenum light, GLenum pname, const GLfloat* params) {
+void APIENTRY_GL4ES fpe_glLightfv(GLenum light, GLenum pname, const GLfloat* params) {
     noerrorShim();
 }
-void fpe_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
+void APIENTRY_GL4ES fpe_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
     noerrorShim();
 }
-void fpe_glMaterialf(GLenum face, GLenum pname, const GLfloat param) {
+void APIENTRY_GL4ES fpe_glMaterialf(GLenum face, GLenum pname, const GLfloat param) {
     if(face==GL_FRONT_AND_BACK || face==GL_FRONT) {
         glstate->fpe_state->cm_front_nullexp=(param<=0.0)?0:1;
     }
@@ -942,7 +975,7 @@ void fpe_glMaterialf(GLenum face, GLenum pname, const GLfloat param) {
     noerrorShim();
 }
 
-void fpe_glFogfv(GLenum pname, const GLfloat* params) {
+void APIENTRY_GL4ES fpe_glFogfv(GLenum pname, const GLfloat* params) {
     noerrorShim();
     if(pname==GL_FOG_MODE) {
         int p = *params;
@@ -970,14 +1003,14 @@ void fpe_glFogfv(GLenum pname, const GLfloat* params) {
     }
 }
 
-void fpe_glPointParameterfv(GLenum pname, const GLfloat * params) {
+void APIENTRY_GL4ES fpe_glPointParameterfv(GLenum pname, const GLfloat * params) {
     noerrorShim();
 }
-void fpe_glPointSize(GLfloat size) {
+void APIENTRY_GL4ES fpe_glPointSize(GLfloat size) {
     noerrorShim();
 }
 
-void fpe_glAlphaFunc(GLenum func, GLclampf ref) {
+void APIENTRY_GL4ES fpe_glAlphaFunc(GLenum func, GLclampf ref) {
     noerrorShim();
     int f = FPE_ALWAYS;
     switch(func) {
@@ -1018,8 +1051,8 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
     LOAD_GLES2(glEnableVertexAttribArray)
     LOAD_GLES2(glDisableVertexAttribArray);
     LOAD_GLES2(glVertexAttribPointer);
+    LOAD_GLES2(glVertexAttribIPointer);
     LOAD_GLES2(glVertexAttrib4fv);
-    LOAD_GLES2(glBindBuffer);
     LOAD_GLES2(glUseProgram);
     // update texture state for fpe only
     if(glstate->fpe_bound_changed && !glstate->glsl->program) {
@@ -1047,7 +1080,6 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                 glstate->fpe_state->texture[i].texadjust = tex->adjust;
                 if(texunit==ENABLED_TEXTURE_RECTANGLE) glstate->fpe_state->texture[i].texadjust |= 1<<i;
                 glstate->fpe_state->texture[i].textype = fmt;
-
             }
         }
         glstate->fpe_bound_changed = 0;
@@ -1208,7 +1240,6 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
     {
         for (int i=0; i<MAX_LIGHT; i++) {
             if(glprogram->builtin_lights[i].has) {
-               GLfloat tmp[4];
                GoUniformfv(glprogram, glprogram->builtin_lights[i].ambient, 4, 1, glstate->light.lights[i].ambient);
                GoUniformfv(glprogram, glprogram->builtin_lights[i].diffuse, 4, 1, glstate->light.lights[i].diffuse);
                GoUniformfv(glprogram, glprogram->builtin_lights[i].specular, 4, 1, glstate->light.lights[i].specular);
@@ -1398,18 +1429,22 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         #undef GO
     }
     // set VertexAttrib if needed
-    GLuint old_buffer = 0;
-    for(int i=0; i<hardext.maxvattrib; i++)
+    for(int i=0; i<hardext.maxvattrib; i++) 
     if(glprogram->va_size[i])   // only check used VA...
     {
         vertexattrib_t *v = &glstate->gleshard->vertexattrib[i];
         vertexattrib_t *w = &glstate->vao->vertexattrib[i];
+        int enabled = w->enabled;
         int dirty = 0;
+        if(enabled && !w->buffer && !w->pointer) {
+            DBG(SHUT_LOGD("Warning: VA %d Enabled with buffer:0 and NULL pointer, disabling\n", i));
+            enabled = 0;
+        }
         // enable / disable Array if needed
-        if(v->enabled != w->enabled || (v->enabled && w->divisor)) {
+        if(v->enabled != enabled || (v->enabled && w->divisor)) {
             dirty = 1;
-            v->enabled = (w->divisor)?0:w->enabled;
-            DBG(SHUT_LOGD("VertexAttribArray[%d]:%s, divisor=%d\n", i, (w->enabled)?"Enable":"Disable", w->divisor);)
+            v->enabled = (w->divisor)?0:enabled;
+            DBG(SHUT_LOGD("VertexAttribArray[%d]:%s, divisor=%d\n", i, (enabled)?"Enable":"Disable", w->divisor);)
             if(v->enabled)
                 gles_glEnableVertexAttribArray(i);
             else
@@ -1419,10 +1454,11 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
         if(v->enabled) {
             // array case
             void * ptr = (void*)((uintptr_t)w->pointer + ((w->buffer)?(uintptr_t)w->buffer->data:0));
-            if(dirty || v->size!=w->size || v->type!=w->type || v->normalized!=w->normalized
+            if(dirty || v->size!=w->size || v->type!=w->type || v->normalized!=w->normalized 
                 || v->stride!=w->stride || v->buffer!=w->buffer || (w->real_buffer==0 && v->pointer!=ptr)
-                || v->real_buffer!=w->real_buffer || (w->real_buffer!=0 && v->real_pointer != w->real_pointer)) {
-                if((w->size==GL_BGRA || w->type==GL_DOUBLE) && scratch->size<8) {
+                || v->real_buffer!=w->real_buffer || (w->real_buffer!=0 && v->real_pointer != w->real_pointer) 
+                || w->real_buffer!=glstate->bind_buffer.array) {
+                if((w->size==GL_BGRA || w->type==GL_DOUBLE) && scratch->size<8) { 
                     // need to adjust, so first need the min/max (a shame as I already must have that somewhere)
                     int imin, imax;
                     if(type==0) {
@@ -1438,8 +1474,9 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                         v->size = 4;
                         v->type = GL_FLOAT;
                         v->normalized = 0;
+                        v->integer = 0;
                         v->pointer = scratch->scratch[scratch->size++] = copy_gl_pointer_color_bgra(ptr, w->stride, 4, imin, imax);
-                        v->pointer -= imin*4*sizeof(GLfloat);   // adjust for min...
+                        v->pointer = (char*)v->pointer - imin*4*sizeof(GLfloat);   // adjust for min...
                         v->stride = 0;
                         v->buffer = NULL;
                         v->real_buffer = 0;
@@ -1447,7 +1484,7 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                         // TODO
                         static int warn = 1;
                         if(warn) {
-                            printf("LIBGL: VertexAttribArray using GL_DOUBLE unimplemented!\n");
+                            SHUT_LOGD("LIBGL: VertexAttribArray using GL_DOUBLE unimplemented!\n");
                             warn=0;
                         }
                     }
@@ -1455,19 +1492,27 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
                     v->size = w->size;
                     v->type = w->type;
                     v->normalized = w->normalized;
+                    v->integer = w->integer;
                     v->stride = w->stride;
                     v->real_buffer = w->real_buffer;
                     v->real_pointer = w->real_pointer;
                     v->pointer = (v->real_buffer)?v->real_pointer:ptr;
                     v->buffer = w->buffer; // buffer is unused here
                 }
-                if(old_buffer != v->real_buffer) {
-                    DBG(SHUT_LOGD("Switching to Buffer %d\n", v->real_buffer);)
-                    gles_glBindBuffer(GL_ARRAY_BUFFER, v->real_buffer);
-                    old_buffer = v->real_buffer;
+                DBG(SHUT_LOGD("using Buffer %d\n", v->real_buffer);)
+                bindBuffer(GL_ARRAY_BUFFER, v->real_buffer);
+
+                if (v->integer) {
+                    if(gles_glVertexAttribIPointer)
+                        gles_glVertexAttribIPointer(i, v->size, v->type, v->stride, v->pointer);
+                    else
+                        gles_glVertexAttribPointer(i, v->size, v->type, 0, v->stride, v->pointer);
+                    DBG(SHUT_LOGD("glVertexAttribIPointer(%d, %d, %s, %d, %p)\n", i, v->size, PrintEnum(v->type), v->stride, v->pointer);)
                 }
-                gles_glVertexAttribPointer(i, v->size, v->type, v->normalized, v->stride, v->pointer);
-                DBG(SHUT_LOGD("glVertexAttribPointer(%d, %d, %s, %d, %d, %p)\n", i, v->size, PrintEnum(v->type), v->normalized, v->stride, (GLvoid*)((uintptr_t)v->pointer+((v->buffer)?(uintptr_t)v->buffer->data:0)));)
+                else {
+                    gles_glVertexAttribPointer(i, v->size, v->type, v->normalized, v->stride, v->pointer);
+                    DBG(SHUT_LOGD("glVertexAttribPointer(%d, %d, %s, %d, %d, %p)\n", i, v->size, PrintEnum(v->type), v->normalized, v->stride, v->pointer);)
+                }
             }
         } else {
             // single value case
@@ -1515,9 +1560,6 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
             gles_glDisableVertexAttribArray(i);
         }
     }
-    if(old_buffer)
-        gles_glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 }
 
 void realize_blitenv(int alpha) {
@@ -1528,6 +1570,7 @@ void realize_blitenv(int alpha) {
         gles_glUseProgram(glstate->gleshard->program);
     }
     // set VertexAttrib if needed
+    unboundBuffers();
     for(int i=0; i<hardext.maxvattrib; i++) {
         vertexattrib_t *v = &glstate->gleshard->vertexattrib[i];
         // enable / disable Array if needed
@@ -1543,8 +1586,8 @@ void realize_blitenv(int alpha) {
         // check if new value has to be sent to hardware
         if(i<2) {
             // array case
-            if(v->size!=2 || v->type!=GL_FLOAT || v->normalized!=0
-                || v->stride!=0 || v->pointer!=((i==0)?glstate->blit->vert:glstate->blit->tex)
+            if(v->size!=2 || v->type!=GL_FLOAT || v->normalized!=0 
+                || v->stride!=0 || v->pointer!=((i==0)?glstate->blit->vert:glstate->blit->tex) 
                 || v->buffer!=0) {
                 v->size = 2;
                 v->type = GL_FLOAT;
@@ -1588,7 +1631,7 @@ void builtin_Init(program_t *glprogram) {
         glprogram->builtin_material[i].specular = -1;
         glprogram->builtin_material[i].shininess = -1;
         glprogram->builtin_material[i].alpha = -1;
-
+        
         glprogram->builtin_lightmodelprod[i].sceneColor = -1;
 
         for (int j=0; j<MAX_LIGHT; j++) {
@@ -1611,7 +1654,7 @@ void builtin_Init(program_t *glprogram) {
     for (int i=0; i<MAX_TEX; i++) {
         glprogram->builtin_texenvcolor[i] = -1;
         glprogram->builtin_texenvrgbscale[i] = -1;
-        glprogram->builtin_texenvrgbscale[i] = -1;
+        glprogram->builtin_texenvalphascale[i] = -1;
         for (int j=0; j<4; j++) {
             glprogram->builtin_eye[j][i] = -1;
             glprogram->builtin_obj[j][i] = -1;
@@ -1624,6 +1667,7 @@ void builtin_Init(program_t *glprogram) {
     glprogram->builtin_fog.start = -1;
     glprogram->builtin_fog.end = -1;
     glprogram->builtin_fog.scale = -1;
+    glprogram->builtin_blendcolor = -1;
     // fpe uniform
     glprogram->fpe_alpharef = -1;
     // initialise emulated builtin attrib to -1
@@ -1691,6 +1735,7 @@ const char* samplers1d_noa = "_gl4es_Sampler1D_";
 const char* samplers2d_noa = "_gl4es_Sampler2D_";
 const char* samplers3d_noa = "_gl4es_Sampler3D_";
 const char* samplersCube_noa = "_gl4es_SamplerCube_";
+const char* blend_color_code = "_gl4es_BlendColor";
 int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
     if(strncmp(name, gl4es_code, strlen(gl4es_code)))
         return 0;   // doesn't start with "_gl4es_", no need to look further
@@ -1703,7 +1748,7 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
     }
     // lightsource
     if(strncmp(name, lightsource_code, strlen(lightsource_code))==0 || strncmp(name, lightsource_fpe_code, strlen(lightsource_fpe_code))==0) {
-        // it a light! grab it's number - also, fpe or not fpe is the same lenght. The fpe version avoid the array...
+        // it's a light! grab it's number - also, fpe or not fpe is the same length. The fpe version avoids the array...
         int n = name[strlen(lightsource_code)]-'0';   // only 8 light, so this works
         if(n>=0 && n<hardext.maxlights) {
             if(strstr(name, ".ambient")) glprogram->builtin_lights[n].ambient = id;
@@ -1730,7 +1775,7 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->has_builtin_light = 1;
         return 1;
     }
-    if(strncmp(name, frontmaterial_code, strlen(frontmaterial_code))==0
+    if(strncmp(name, frontmaterial_code, strlen(frontmaterial_code))==0 
         || strncmp(name, backmaterial_code, strlen(backmaterial_code))==0)
     {
         // it's a material
@@ -1746,7 +1791,7 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->builtin_material[n].has = 1;
         return 1;
     }
-    if(strncmp(name, frontlightmodelprod_code, strlen(frontlightmodelprod_code))==0
+    if(strncmp(name, frontlightmodelprod_code, strlen(frontlightmodelprod_code))==0 
     || strncmp(name, backlightmodelprod_code, strlen(backlightmodelprod_code))==0)
     {
         // it's a front light model product
@@ -1755,9 +1800,9 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
         glprogram->has_builtin_light = 1;
         return 1;
     }
-    if(strncmp(name, frontlightprod_code, strlen(frontlightprod_code))==0
+    if(strncmp(name, frontlightprod_code, strlen(frontlightprod_code))==0 
     || strncmp(name, backlightprod_code, strlen(backlightprod_code))==0
-    || strncmp(name, frontlightprod_fpe_code, strlen(frontlightprod_fpe_code))==0
+    || strncmp(name, frontlightprod_fpe_code, strlen(frontlightprod_fpe_code))==0 
     || strncmp(name, backlightprod_fpe_code, strlen(backlightprod_fpe_code))==0
     )
     {
@@ -1992,6 +2037,12 @@ int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size) {
             glprogram->has_builtin_texadjust = 1;
             return 1;
         }
+    }
+    // blend color
+    if(strncmp(name, blend_color_code, strlen(blend_color_code))==0) {
+        glprogram->builtin_blendcolor = id;
+        glprogram->has_builtin_blendcolor = 1;
+        return 1;
     }
     // oldprogram
     if(strncmp(name, vtx_progenv_arr, strlen(vtx_progenv_arr))==0) {

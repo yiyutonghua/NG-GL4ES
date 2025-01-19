@@ -24,7 +24,7 @@
 #endif
 
 // 3d stubs
-void gl4es_glTexImage3D(GLenum target, GLint level, GLint internalFormat,
+void APIENTRY_GL4ES gl4es_glTexImage3D(GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth, GLint border,
                   GLenum format, GLenum type, const GLvoid *data) {
 
@@ -32,7 +32,7 @@ void gl4es_glTexImage3D(GLenum target, GLint level, GLint internalFormat,
     gl4es_glTexImage2D(GL_TEXTURE_3D, level, internalFormat, width, height,
                  border, format, type, data);
 }
-void gl4es_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, 
+void APIENTRY_GL4ES gl4es_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, 
                      GLsizei width, GLsizei height, GLsizei depth, GLenum format,
                      GLenum type, const GLvoid *data) {
 
@@ -40,31 +40,31 @@ void gl4es_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoff
                     width, height, format, type, data);
 }
 
-void gl4es_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+void APIENTRY_GL4ES gl4es_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     DBG(SHUT_LOGD("glTexStorage3D(%s, %d, %s, %d, %d, %d)\n", PrintEnum(target), levels, PrintEnum(internalformat), width, height, depth);)
     gl4es_glTexImage3D(target, 0, internalformat, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
-void gl4es_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+void APIENTRY_GL4ES gl4es_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
                                 GLint x, GLint y, GLsizei width, GLsizei height) {
     gl4es_glCopyTexSubImage2D(GL_TEXTURE_3D, level, xoffset, yoffset, x, y, width, height);
 }
 
 
 //Direct wrapper
-void glTexImage3D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glTexImage3D");
-void glTexImage3DEXT(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glTexImage3D");
-void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glTexSubImage3D");
-void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height) AliasExport("gl4es_glCopyTexSubImage3D");
+AliasExport(void,glTexImage3D,,(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glTexImage3D,EXT,(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glTexSubImage3D,,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glCopyTexSubImage3D,,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height));
 
 //EXT mapper
-void glTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glTexSubImage3D");
-void glCopyTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height) AliasExport("gl4es_glCopyTexSubImage3D");
+AliasExport(void,glTexSubImage3D,EXT,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glCopyTexSubImage3D,EXT,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height));
 
 //ARB mapper
-void glTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glTexSubImage3D");
-void glCopyTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height) AliasExport("gl4es_glCopyTexSubImage3D");
+AliasExport(void,glTexSubImage3D,ARB,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,  GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glCopyTexSubImage3D,ARB,(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height));
 
 // TexStorage
-void glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) AliasExport("gl4es_glTexStorage3D");
+AliasExport(void,glTexStorage3D,,(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth));

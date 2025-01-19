@@ -4,6 +4,7 @@ extern "C" {
 #ifndef _GL4ES_GLSTATE_H_
 #define _GL4ES_GLSTATE_H_
 
+#include "oldprogram.h"
 #include "fog.h"
 #include "fpe.h"
 #include "light.h"
@@ -14,7 +15,7 @@ extern "C" {
 #include "stack.h"
 #include "stencil.h"
 
-typedef struct glstate_s {
+struct glstate_s {
     int                 dummy[16];  // dummy zone, test for memory overwriting...
     displaylist_state_t list;
     enable_state_t      enable;
@@ -25,7 +26,7 @@ typedef struct glstate_s {
     texenv_state_t      texenv[MAX_TEX];
     texture_state_t     texture;
     GLboolean           colormask[4];
-    int	                render_mode;
+    int                 render_mode;
     int                 polygon_mode;
     int                 clamp_read_color;
     namestack_t         namestack;
@@ -53,10 +54,9 @@ typedef struct glstate_s {
     GLfloat             *texcoord[MAX_TEX];
     GLfloat             *normal;
     GLfloat             *fogcoord;                  // last shortcut
-    int                 shim_error;
-    GLenum              last_error;
+    int                 type_error;
+    GLenum              shim_error;
     GLint               vp[4];
-    queries_t           queries;
     glstack_t           *stack;
     glclientstack_t     *clientStack;
     raster_state_t      raster;
@@ -79,10 +79,6 @@ typedef struct glstate_s {
     GLenum              shademodel;
     GLenum              alphafunc;
     GLfloat             alpharef;
-    GLenum              blendsfactorrgb;
-    GLenum              blenddfactorrgb;
-    GLenum              blendsfactoralpha;
-    GLenum              blenddfactoralpha;
     GLenum              logicop;
     glsl_t              *glsl;              //shared
     fpe_state_t         *fpe_state;
@@ -92,7 +88,7 @@ typedef struct glstate_s {
     gleshard_t          *gleshard;          //shared
     glesblit_t          *blit;
     fbo_t               fbo;
-    int                 fbowidth, fboheight;    // initial size (usefull only on LIBGL_FB=1 or 2)
+    int                 fbowidth, fboheight;    // initial size (useful only on LIBGL_FB=1 or 2)
     depth_state_t       depth;
     face_state_t        face;
     GLint               instanceID;
@@ -127,10 +123,21 @@ typedef struct glstate_s {
     int                 helper_texlen[MAX_TEX];
     GLfloat*            texgened[MAX_TEX];
     int                 texgenedsz[MAX_TEX];
+    // Sampler
     samplers_t          samplers;
-
+    // Queries
+    queries_t           queries;
+    // Binded buffer (if used)
     bind_buffers_t      bind_buffer;
-} glstate_t;
+    // Blend status
+    float               blend_color[4];
+    GLenum              blendsfactorrgb;
+    GLenum              blenddfactorrgb;
+    GLenum              blendsfactoralpha;
+    GLenum              blenddfactoralpha;
+    GLenum              blendeqrgb;
+    GLenum              blendeqalpha;
+}; // glstate_t defined in oldprogram.h
 
 
 #endif // _GL4ES_GLSTATE_H_

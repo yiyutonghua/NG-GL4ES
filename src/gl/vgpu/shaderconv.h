@@ -5,21 +5,6 @@
 #ifndef UNTITLED_SHADERCONV_H
 #define UNTITLED_SHADERCONV_H
 
-#define MAX_LINE_LENGTH 2048
-#define MAX_VARIABLE_LENGTH 1024
-#define MAX_INITIAL_VALUE_LENGTH 1024
-#define MAX_UNIFORM_VARIABLE_NUMBER 1024
-
-typedef struct {
-    char variable[MAX_VARIABLE_LENGTH];
-    char initial_value[MAX_INITIAL_VALUE_LENGTH];
-} uniform_declaration_s;
-
-typedef uniform_declaration_s uniforms_declarations[MAX_UNIFORM_VARIABLE_NUMBER];
-
-//uniforms_declarations next_program_uniform_declarations;
-//int next_program_uniform_declarations_count;
-
 #include "../shader.h"
 
 void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVector, int uniformCount);

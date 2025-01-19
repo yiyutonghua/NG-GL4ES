@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "gl4es.h"
 #include "const.h"
 #include "debug.h"
 #include "logs.h"

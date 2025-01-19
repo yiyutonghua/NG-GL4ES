@@ -14,8 +14,7 @@
 #define DBG(a)
 #endif
 
-
-void __attribute__((visibility("default"))) glVertexAttribL1d(GLuint index, GLdouble x) {
+void VISIBLE glVertexAttribL1d(GLuint index, GLdouble x) {
     DBG(SHUT_LOGD("glVertexAttribL1d(%d, %f)\n", index, x);)
         FLUSH_BEGINEND;
 
@@ -33,7 +32,7 @@ void __attribute__((visibility("default"))) glVertexAttribL1d(GLuint index, GLdo
     memcpy(glstate->vavalue[index], v, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL2d(GLuint index, GLdouble x, GLdouble y) {
+void VISIBLE glVertexAttribL2d(GLuint index, GLdouble x, GLdouble y) {
     DBG(SHUT_LOGD("glVertexAttribL2d(%d, %f, %f)\n", index, x, y);)
         FLUSH_BEGINEND;
 
@@ -51,7 +50,7 @@ void __attribute__((visibility("default"))) glVertexAttribL2d(GLuint index, GLdo
     memcpy(glstate->vavalue[index], v, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL3d(GLuint index, GLdouble x, GLdouble y, GLdouble z) {
+void VISIBLE glVertexAttribL3d(GLuint index, GLdouble x, GLdouble y, GLdouble z) {
     DBG(SHUT_LOGD("glVertexAttribL3d(%d, %f, %f, %f)\n", index, x, y, z);)
         FLUSH_BEGINEND;
 
@@ -69,7 +68,7 @@ void __attribute__((visibility("default"))) glVertexAttribL3d(GLuint index, GLdo
     memcpy(glstate->vavalue[index], v, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL4d(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
+void VISIBLE glVertexAttribL4d(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w) {
     DBG(SHUT_LOGD("glVertexAttribL4d(%d, %f, %f, %f, %f)\n", index, x, y, z, w);)
         FLUSH_BEGINEND;
 
@@ -87,7 +86,7 @@ void __attribute__((visibility("default"))) glVertexAttribL4d(GLuint index, GLdo
     memcpy(glstate->vavalue[index], v, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL1dv(GLuint index, const GLdouble* v) {
+void VISIBLE glVertexAttribL1dv(GLuint index, const GLdouble* v) {
     DBG(SHUT_LOGD("glVertexAttribL1dv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
 
@@ -105,7 +104,7 @@ void __attribute__((visibility("default"))) glVertexAttribL1dv(GLuint index, con
     memcpy(glstate->vavalue[index], value, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL2dv(GLuint index, const GLdouble* v) {
+void VISIBLE glVertexAttribL2dv(GLuint index, const GLdouble* v) {
     DBG(SHUT_LOGD("glVertexAttribL2dv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
 
@@ -123,7 +122,7 @@ void __attribute__((visibility("default"))) glVertexAttribL2dv(GLuint index, con
     memcpy(glstate->vavalue[index], value, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL3dv(GLuint index, const GLdouble* v) {
+void VISIBLE glVertexAttribL3dv(GLuint index, const GLdouble* v) {
     DBG(SHUT_LOGD("glVertexAttribL3dv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
 
@@ -141,7 +140,7 @@ void __attribute__((visibility("default"))) glVertexAttribL3dv(GLuint index, con
     memcpy(glstate->vavalue[index], value, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glVertexAttribL4dv(GLuint index, const GLdouble* v) {
+void VISIBLE glVertexAttribL4dv(GLuint index, const GLdouble* v) {
     DBG(SHUT_LOGD("glVertexAttribL4dv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
 
@@ -159,7 +158,7 @@ void __attribute__((visibility("default"))) glVertexAttribL4dv(GLuint index, con
     memcpy(glstate->vavalue[index], value, 4 * sizeof(GLfloat));
 }
 
-void __attribute__((visibility("default"))) glBindVertexBuffers(GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* strides) {
+void VISIBLE glBindVertexBuffers(GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* strides) {
     glstate_t* glstate = glstate;
     glvao_t* vao = glstate->vao;
 
@@ -191,7 +190,7 @@ void __attribute__((visibility("default"))) glBindVertexBuffers(GLuint first, GL
 
 
 
-void __attribute__((visibility("default"))) glBindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset, GLsizeiptr stride) {
+void VISIBLE glBindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset, GLsizeiptr stride) {
     glstate_t* glstate = glstate;
 
     khash_t(buff)* buffers = glstate->buffers;
@@ -217,8 +216,8 @@ void __attribute__((visibility("default"))) glBindVertexBuffer(GLuint bindingInd
     }
 }
 
-void gl4es_glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer) {
-    DBG(SHUT_LOGD("glVertexAttribPointer(%d, %d, %s, %d, %d, %p), vertex buffer = %p\n", index, size, PrintEnum(type), normalized, stride, pointer, (glstate->vao->vertex)?glstate->vao->vertex->data:0);)
+void APIENTRY_GL4ES gl4es_glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer) {
+    DBG(SHUT_LOGD("glVertexAttribPointer(%d, %d, %s, %d, %d, %p), vertex %p buffer = %p\n", index, size, PrintEnum(type), normalized, stride, pointer, glstate->vao->vertex, (glstate->vao->vertex)?glstate->vao->vertex->data:0);)
     FLUSH_BEGINEND;
     // sanity test
     if(index>=hardext.maxvattrib) {
@@ -236,6 +235,7 @@ void gl4es_glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolea
     v->size = size;
     v->type = type;
     v->normalized = normalized;
+    v->integer = 0;
     v->stride = stride;
     v->pointer = pointer;
     v->buffer = glstate->vao->vertex;
@@ -247,15 +247,38 @@ void gl4es_glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolea
         v->real_pointer = 0;
     }
 }
-void gl4es_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) {
-	DBG(SHUT_LOGD("glVertexAttribIPointer(%d, %d, %s, %d, %p)\n", index, size, PrintEnum(type), stride, pointer));
-	if(!(type == GL_BYTE || type == GL_UNSIGNED_BYTE || type == GL_SHORT || type == GL_UNSIGNED_SHORT || type == GL_INT || type == GL_UNSIGNED_INT)) {
-		errorShim(GL_INVALID_ENUM);
-		return;
-	}
-	gl4es_glVertexAttribPointer(index,size,type,GL_FALSE,stride,pointer);
+void APIENTRY_GL4ES gl4es_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) {
+    DBG(SHUT_LOGD("glVertexAttribIPointer(%d, %d, %s, %d, %p), vertex buffer = %p\n", index, size, PrintEnum(type), stride, pointer, (glstate->vao->vertex)?glstate->vao->vertex->data:0);)
+    FLUSH_BEGINEND;
+    // sanity test
+    if(index>=hardext.maxvattrib) {
+        errorShim(GL_INVALID_VALUE);
+        return;
+    }
+    if(size<1 || (size>4 && size!=GL_BGRA)) {
+        errorShim(GL_INVALID_VALUE);
+        return;
+    }
+    // TODO: test Type also
+    vertexattrib_t *v = &glstate->vao->vertexattrib[index];
+    noerrorShim();
+    if(stride==0) stride=((size==GL_BGRA)?4:size)*gl_sizeof(type);
+    v->size = size;
+    v->type = type;
+    v->normalized = 0;
+    v->integer = 1;
+    v->stride = stride;
+    v->pointer = pointer;
+    v->buffer = glstate->vao->vertex;
+    if( v->buffer ) {
+		v->real_buffer = v->buffer->real_buffer;
+		v->real_pointer = pointer;
+	} else {
+        v->real_buffer = 0;
+        v->real_pointer = 0;
+    }
 }
-void gl4es_glEnableVertexAttribArray(GLuint index) {
+void APIENTRY_GL4ES gl4es_glEnableVertexAttribArray(GLuint index) {
     DBG(SHUT_LOGD("glEnableVertexAttrib(%d)\n", index);)
     FLUSH_BEGINEND;
     // sanity test
@@ -265,7 +288,7 @@ void gl4es_glEnableVertexAttribArray(GLuint index) {
     }
     glstate->vao->vertexattrib[index].enabled = 1;
 }
-void gl4es_glDisableVertexAttribArray(GLuint index) {
+void APIENTRY_GL4ES gl4es_glDisableVertexAttribArray(GLuint index) {
     DBG(SHUT_LOGD("glDisableVertexAttrib(%d)\n", index);)
     FLUSH_BEGINEND;
     // sanity test
@@ -277,14 +300,14 @@ void gl4es_glDisableVertexAttribArray(GLuint index) {
 }
 
 // TODO: move the sending of the data to the Hardware when drawing, to cache change of state
-void gl4es_glVertexAttrib4f(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) {
+void APIENTRY_GL4ES gl4es_glVertexAttrib4f(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) {
     DBG(SHUT_LOGD("glVertexAttrib4f(%d, %f, %f, %f, %f)\n", index, v0, v1, v2, v3);)
     FLUSH_BEGINEND;
     static GLfloat f[4];
     f[0] = v0; f[1] = v1; f[2] = v2; f[3] = v3;
     gl4es_glVertexAttrib4fv(index, f);
 }
-void gl4es_glVertexAttrib4fv(GLuint index, const GLfloat *v) {
+void APIENTRY_GL4ES gl4es_glVertexAttrib4fv(GLuint index, const GLfloat *v) {
     DBG(SHUT_LOGD("glVertexAttrib4fv(%d, %p)\n", index, v);)
     FLUSH_BEGINEND;
     // sanity test
@@ -301,7 +324,7 @@ void gl4es_glVertexAttrib4fv(GLuint index, const GLfloat *v) {
 }
 
 #define GetVertexAttrib(suffix, Type, factor) \
-void gl4es_glGetVertexAttrib##suffix##v(GLuint index, GLenum pname, Type *params) { \
+void APIENTRY_GL4ES gl4es_glGetVertexAttrib##suffix##v(GLuint index, GLenum pname, Type *params) { \
     FLUSH_BEGINEND; \
     if(index<0 || index>=hardext.maxvattrib) { \
         errorShim(GL_INVALID_VALUE); \
@@ -347,7 +370,7 @@ GetVertexAttrib(f, GLfloat, 1.0f);
 GetVertexAttrib(i, GLint, 2147483647.0f);
 #undef GetVertexAttrib
 
-void gl4es_glGetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointer) {
+void APIENTRY_GL4ES gl4es_glGetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointer) {
     FLUSH_BEGINEND;
     // sanity test
     if(index<0 || index>=hardext.maxvattrib) {
@@ -362,7 +385,7 @@ void gl4es_glGetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointe
     noerrorShim();
 }
 
-void gl4es_glVertexAttribDivisor(GLuint index, GLuint divisor) {
+void APIENTRY_GL4ES gl4es_glVertexAttribDivisor(GLuint index, GLuint divisor) {
     FLUSH_BEGINEND;
     // sanity test
     if(index<0 || index>=hardext.maxvattrib) {
@@ -372,7 +395,8 @@ void gl4es_glVertexAttribDivisor(GLuint index, GLuint divisor) {
     glstate->vao->vertexattrib[index].divisor = divisor;
 }
 
-__attribute__((visibility("default"))) void glVertexAttribI1i(GLuint index, GLint x) {
+
+VISIBLE void glVertexAttribI1i(GLuint index, GLint x) {
     DBG(SHUT_LOGD("glVertexAttribI1i(%d, %d)\n", index, x);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -382,8 +406,7 @@ __attribute__((visibility("default"))) void glVertexAttribI1i(GLuint index, GLin
     glstate->vavalue[index][0] = (GLfloat)x;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI2i(GLuint index, GLint x, GLint y) {
+VISIBLE void glVertexAttribI2i(GLuint index, GLint x, GLint y) {
     DBG(SHUT_LOGD("glVertexAttribI2i(%d, %d, %d)\n", index, x, y);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -394,8 +417,7 @@ __attribute__((visibility("default"))) void glVertexAttribI2i(GLuint index, GLin
     glstate->vavalue[index][1] = (GLfloat)y;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI3i(GLuint index, GLint x, GLint y, GLint z) {
+VISIBLE void glVertexAttribI3i(GLuint index, GLint x, GLint y, GLint z) {
     DBG(SHUT_LOGD("glVertexAttribI3i(%d, %d, %d, %d)\n", index, x, y, z);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -407,8 +429,7 @@ __attribute__((visibility("default"))) void glVertexAttribI3i(GLuint index, GLin
     glstate->vavalue[index][2] = (GLfloat)z;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI4i(GLuint index, GLint x, GLint y, GLint z, GLint w) {
+VISIBLE void glVertexAttribI4i(GLuint index, GLint x, GLint y, GLint z, GLint w) {
     DBG(SHUT_LOGD("glVertexAttribI4i(%d, %d, %d, %d, %d)\n", index, x, y, z, w);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -421,8 +442,7 @@ __attribute__((visibility("default"))) void glVertexAttribI4i(GLuint index, GLin
     glstate->vavalue[index][3] = (GLfloat)w;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI1ui(GLuint index, GLuint x) {
+VISIBLE void glVertexAttribI1ui(GLuint index, GLuint x) {
     DBG(SHUT_LOGD("glVertexAttribI1ui(%d, %u)\n", index, x);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -432,8 +452,7 @@ __attribute__((visibility("default"))) void glVertexAttribI1ui(GLuint index, GLu
     glstate->vavalue[index][0] = (GLfloat)x;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI2ui(GLuint index, GLuint x, GLuint y) {
+VISIBLE void glVertexAttribI2ui(GLuint index, GLuint x, GLuint y) {
     DBG(SHUT_LOGD("glVertexAttribI2ui(%d, %u, %u)\n", index, x, y);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -444,8 +463,7 @@ __attribute__((visibility("default"))) void glVertexAttribI2ui(GLuint index, GLu
     glstate->vavalue[index][1] = (GLfloat)y;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI3ui(GLuint index, GLuint x, GLuint y, GLuint z) {
+VISIBLE void glVertexAttribI3ui(GLuint index, GLuint x, GLuint y, GLuint z) {
     DBG(SHUT_LOGD("glVertexAttribI3ui(%d, %u, %u, %u)\n", index, x, y, z);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -457,8 +475,7 @@ __attribute__((visibility("default"))) void glVertexAttribI3ui(GLuint index, GLu
     glstate->vavalue[index][2] = (GLfloat)z;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI4ui(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w) {
+VISIBLE void glVertexAttribI4ui(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w) {
     DBG(SHUT_LOGD("glVertexAttribI4ui(%d, %u, %u, %u, %u)\n", index, x, y, z, w);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -471,8 +488,7 @@ __attribute__((visibility("default"))) void glVertexAttribI4ui(GLuint index, GLu
     glstate->vavalue[index][3] = (GLfloat)w;
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI1iv(GLuint index, const GLint* v) {
+VISIBLE void glVertexAttribI1iv(GLuint index, const GLint* v) {
     DBG(SHUT_LOGD("glVertexAttribI1iv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -482,8 +498,7 @@ __attribute__((visibility("default"))) void glVertexAttribI1iv(GLuint index, con
     glstate->vavalue[index][0] = (GLfloat)v[0];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI2iv(GLuint index, const GLint* v) {
+VISIBLE void glVertexAttribI2iv(GLuint index, const GLint* v) {
     DBG(SHUT_LOGD("glVertexAttribI2iv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -494,8 +509,7 @@ __attribute__((visibility("default"))) void glVertexAttribI2iv(GLuint index, con
     glstate->vavalue[index][1] = (GLfloat)v[1];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI3iv(GLuint index, const GLint* v) {
+VISIBLE void glVertexAttribI3iv(GLuint index, const GLint* v) {
     DBG(SHUT_LOGD("glVertexAttribI3iv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -507,8 +521,7 @@ __attribute__((visibility("default"))) void glVertexAttribI3iv(GLuint index, con
     glstate->vavalue[index][2] = (GLfloat)v[2];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI4iv(GLuint index, const GLint* v) {
+VISIBLE void glVertexAttribI4iv(GLuint index, const GLint* v) {
     DBG(SHUT_LOGD("glVertexAttribI4iv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -521,8 +534,7 @@ __attribute__((visibility("default"))) void glVertexAttribI4iv(GLuint index, con
     glstate->vavalue[index][3] = (GLfloat)v[3];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI1uiv(GLuint index, const GLuint* v) {
+VISIBLE void glVertexAttribI1uiv(GLuint index, const GLuint* v) {
     DBG(SHUT_LOGD("glVertexAttribI1uiv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -532,8 +544,7 @@ __attribute__((visibility("default"))) void glVertexAttribI1uiv(GLuint index, co
     glstate->vavalue[index][0] = (GLfloat)v[0];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI2uiv(GLuint index, const GLuint* v) {
+VISIBLE void glVertexAttribI2uiv(GLuint index, const GLuint* v) {
     DBG(SHUT_LOGD("glVertexAttribI2uiv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -544,8 +555,7 @@ __attribute__((visibility("default"))) void glVertexAttribI2uiv(GLuint index, co
     glstate->vavalue[index][1] = (GLfloat)v[1];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI3uiv(GLuint index, const GLuint* v) {
+VISIBLE void glVertexAttribI3uiv(GLuint index, const GLuint* v) {
     DBG(SHUT_LOGD("glVertexAttribI3uiv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -557,8 +567,7 @@ __attribute__((visibility("default"))) void glVertexAttribI3uiv(GLuint index, co
     glstate->vavalue[index][2] = (GLfloat)v[2];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribI4uiv(GLuint index, const GLuint* v) {
+VISIBLE void glVertexAttribI4uiv(GLuint index, const GLuint* v) {
     DBG(SHUT_LOGD("glVertexAttribI4uiv(%d, %p)\n", index, v);)
         FLUSH_BEGINEND;
     if (index < 0 || index >= hardext.maxvattrib) {
@@ -571,16 +580,13 @@ __attribute__((visibility("default"))) void glVertexAttribI4uiv(GLuint index, co
     glstate->vavalue[index][3] = (GLfloat)v[3];
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP1ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+VISIBLE void glVertexAttribP1ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
     DBG(SHUT_LOGD("glVertexAttribP1ui(%d, %s, %d, %u)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -590,19 +596,15 @@ __attribute__((visibility("default"))) void glVertexAttribP1ui(GLuint index, GLe
     else {
         errorShim(GL_INVALID_OPERATION);
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP2ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+VISIBLE void glVertexAttribP2ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
     DBG(SHUT_LOGD("glVertexAttribP2ui(%d, %s, %d, %u)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -612,19 +614,15 @@ __attribute__((visibility("default"))) void glVertexAttribP2ui(GLuint index, GLe
     else {
         errorShim(GL_INVALID_OPERATION); 
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP3ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+VISIBLE void glVertexAttribP3ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
     DBG(SHUT_LOGD("glVertexAttribP3ui(%d, %s, %d, %u)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -634,19 +632,15 @@ __attribute__((visibility("default"))) void glVertexAttribP3ui(GLuint index, GLe
     else {
         errorShim(GL_INVALID_OPERATION);
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP4ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+VISIBLE void glVertexAttribP4ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
     DBG(SHUT_LOGD("glVertexAttribP4ui(%d, %s, %d, %u)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -656,19 +650,15 @@ __attribute__((visibility("default"))) void glVertexAttribP4ui(GLuint index, GLe
     else {
         errorShim(GL_INVALID_OPERATION); 
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP1uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
+VISIBLE void glVertexAttribP1uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
     DBG(SHUT_LOGD("glVertexAttribP1uiv(%d, %s, %d, %p)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -678,19 +668,15 @@ __attribute__((visibility("default"))) void glVertexAttribP1uiv(GLuint index, GL
     else {
         errorShim(GL_INVALID_OPERATION);
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP2uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
+VISIBLE void glVertexAttribP2uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
     DBG(SHUT_LOGD("glVertexAttribP2uiv(%d, %s, %d, %p)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -700,19 +686,15 @@ __attribute__((visibility("default"))) void glVertexAttribP2uiv(GLuint index, GL
     else {
         errorShim(GL_INVALID_OPERATION);
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP3uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
+VISIBLE void glVertexAttribP3uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
     DBG(SHUT_LOGD("glVertexAttribP3uiv(%d, %s, %d, %p)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -722,19 +704,15 @@ __attribute__((visibility("default"))) void glVertexAttribP3uiv(GLuint index, GL
     else {
         errorShim(GL_INVALID_OPERATION);
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribP4uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
+VISIBLE void glVertexAttribP4uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint* value) {
     DBG(SHUT_LOGD("glVertexAttribP4uiv(%d, %s, %d, %p)\n", index, PrintEnum(type), normalized, value);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     if (glstate->vao) {
         glstate->vao->vertexattrib[index].type = type;
         glstate->vao->vertexattrib[index].enabled = 1;
@@ -744,19 +722,15 @@ __attribute__((visibility("default"))) void glVertexAttribP4uiv(GLuint index, GL
     else {
         errorShim(GL_INVALID_OPERATION); 
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glVertexAttribLPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer) {
+VISIBLE void glVertexAttribLPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer) {
     DBG(SHUT_LOGD("glVertexAttribLPointer(%d, %d, %s, %d, %p)\n", index, size, PrintEnum(type), stride, pointer);)
         FLUSH_BEGINEND;
-
     if (index >= hardext.maxvattrib) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
     vertexattrib_t* attrib = &glstate->vao->vertexattrib[index];
     attrib->size = size;
     attrib->type = type;
@@ -764,20 +738,15 @@ __attribute__((visibility("default"))) void glVertexAttribLPointer(GLuint index,
     attrib->pointer = pointer;
     attrib->enabled = 1;
     attrib->normalized = 0;
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glGetVertexAttribLdv(GLuint index, GLenum pname, GLdouble* params) {
+VISIBLE void glGetVertexAttribLdv(GLuint index, GLenum pname, GLdouble* params) {
     DBG(SHUT_LOGD("glGetVertexAttribLdv(%d, %s, %p)\n", index, PrintEnum(pname), params);)
-
         if (index >= hardext.maxvattrib) {
             errorShim(GL_INVALID_VALUE);
             return;
         }
-
     vertexattrib_t* attrib = &glstate->vao->vertexattrib[index];
-
     switch (pname) {
     case GL_VERTEX_ATTRIB_ARRAY_SIZE:
         *params = (GLdouble)attrib->size;
@@ -795,20 +764,15 @@ __attribute__((visibility("default"))) void glGetVertexAttribLdv(GLuint index, G
         errorShim(GL_INVALID_ENUM);
         return;
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glGetVertexAttribIiv(GLuint index, GLenum pname, GLint* params) {
+VISIBLE void glGetVertexAttribIiv(GLuint index, GLenum pname, GLint* params) {
     DBG(SHUT_LOGD("glGetVertexAttribIiv(%d, %s, %p)\n", index, PrintEnum(pname), params);)
-
         if (index >= hardext.maxvattrib) {
             errorShim(GL_INVALID_VALUE);
             return;
         }
-
     vertexattrib_t* attrib = &glstate->vao->vertexattrib[index];
-
     switch (pname) {
     case GL_VERTEX_ATTRIB_ARRAY_SIZE:
         *params = (GLint)attrib->size;
@@ -826,20 +790,15 @@ __attribute__((visibility("default"))) void glGetVertexAttribIiv(GLuint index, G
         errorShim(GL_INVALID_ENUM);
         return;
     }
-
     noerrorShim();
 }
-
-__attribute__((visibility("default"))) void glGetVertexAttribIuiv(GLuint index, GLenum pname, GLuint* params) {
+VISIBLE void glGetVertexAttribIuiv(GLuint index, GLenum pname, GLuint* params) {
     DBG(SHUT_LOGD("glGetVertexAttribIuiv(%d, %s, %p)\n", index, PrintEnum(pname), params);)
-
         if (index >= hardext.maxvattrib) {
             errorShim(GL_INVALID_VALUE);
             return;
         }
-
     vertexattrib_t* attrib = &glstate->vao->vertexattrib[index];
-
     switch (pname) {
     case GL_VERTEX_ATTRIB_ARRAY_SIZE:
         *params = (GLuint)attrib->size;
@@ -857,38 +816,34 @@ __attribute__((visibility("default"))) void glGetVertexAttribIuiv(GLuint index, 
         errorShim(GL_INVALID_ENUM);
         return;
     }
-
     noerrorShim();
 }
 
-
-
-void glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer) AliasExport("gl4es_glVertexAttribPointer");
-void glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) AliasExport("gl4es_glVertexAttribIPointer");
-void glVertexAttribIPointerEXT(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) AliasExport("gl4es_glVertexAttribIPointer");
-void glEnableVertexAttribArray(GLuint index) AliasExport("gl4es_glEnableVertexAttribArray");
-void glDisableVertexAttribArray(GLuint index) AliasExport("gl4es_glDisableVertexAttribArray");
-void glVertexAttrib4f(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) AliasExport("gl4es_glVertexAttrib4f");
-void glVertexAttrib4fv(GLuint index, const GLfloat *v) AliasExport("gl4es_glVertexAttrib4fv");
-void glGetVertexAttribdv(GLuint index, GLenum pname, GLdouble *params) AliasExport("gl4es_glGetVertexAttribdv");
-void glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat *params) AliasExport("gl4es_glGetVertexAttribfv");
-void glGetVertexAttribiv(GLuint index, GLenum pname, GLint *params) AliasExport("gl4es_glGetVertexAttribiv");
-void glGetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointer) AliasExport("gl4es_glGetVertexAttribPointerv");
+AliasExport(void,glVertexAttribPointer,,(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer));
+AliasExport(void,glVertexAttribIPointer,,(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer));
+AliasExport(void,glEnableVertexAttribArray,,(GLuint index));
+AliasExport(void,glDisableVertexAttribArray,,(GLuint index));
+AliasExport(void,glVertexAttrib4f,,(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3));
+AliasExport(void,glVertexAttrib4fv,,(GLuint index, const GLfloat *v));
+AliasExport(void,glGetVertexAttribdv,,(GLuint index, GLenum pname, GLdouble *params));
+AliasExport(void,glGetVertexAttribfv,,(GLuint index, GLenum pname, GLfloat *params));
+AliasExport(void,glGetVertexAttribiv,,(GLuint index, GLenum pname, GLint *params));
+AliasExport(void,glGetVertexAttribPointerv,,(GLuint index, GLenum pname, GLvoid **pointer));
 
 // ============= GL_ARB_vertex_shader =================
-GLvoid glVertexAttrib4fARB(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) AliasExport("gl4es_glVertexAttrib4f");
-GLvoid glVertexAttrib4fvARB(GLuint index, const GLfloat *v) AliasExport("gl4es_glVertexAttrib4fv");
+AliasExport(GLvoid,glVertexAttrib4f,ARB,(GLuint index, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3));
+AliasExport(GLvoid,glVertexAttrib4fv,ARB,(GLuint index, const GLfloat *v));
 
-GLvoid glVertexAttribPointerARB(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer) AliasExport("gl4es_glVertexAttribPointer");
+AliasExport(GLvoid,glVertexAttribPointer,ARB,(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer));
 
-GLvoid glEnableVertexAttribArrayARB(GLuint index) AliasExport("gl4es_glEnableVertexAttribArray");
-GLvoid glDisableVertexAttribArrayARB(GLuint index) AliasExport("gl4es_glDisableVertexAttribArray");
+AliasExport(GLvoid,glEnableVertexAttribArray,ARB,(GLuint index));
+AliasExport(GLvoid,glDisableVertexAttribArray,ARB,(GLuint index));
 
-GLvoid glGetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params) AliasExport("gl4es_glGetVertexAttribdv");
-GLvoid glGetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params) AliasExport("gl4es_glGetVertexAttribfv");
-GLvoid glGetVertexAttribivARB(GLuint index, GLenum pname, GLint *params) AliasExport("gl4es_glGetVertexAttribiv");
-GLvoid glGetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer) AliasExport("gl4es_glGetVertexAttribPointerv");
+AliasExport(GLvoid,glGetVertexAttribdv,ARB,(GLuint index, GLenum pname, GLdouble *params));
+AliasExport(GLvoid,glGetVertexAttribfv,ARB,(GLuint index, GLenum pname, GLfloat *params));
+AliasExport(GLvoid,glGetVertexAttribiv,ARB,(GLuint index, GLenum pname, GLint *params));
+AliasExport(GLvoid,glGetVertexAttribPointerv,ARB,(GLuint index, GLenum pname, GLvoid **pointer));
 
 // ============== GL_ARB_instanced_arrays =================
-void glVertexAttribDivisor(GLuint index, GLuint divisor) AliasExport("gl4es_glVertexAttribDivisor");
-void glVertexAttribDivisorARB(GLuint index, GLuint divisor) AliasExport("gl4es_glVertexAttribDivisor");
+AliasExport(void,glVertexAttribDivisor,,(GLuint index, GLuint divisor));
+AliasExport(void,glVertexAttribDivisor,ARB,(GLuint index, GLuint divisor));

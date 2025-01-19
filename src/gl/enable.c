@@ -65,7 +65,7 @@ void change_vao_texcoord(int tmu, bool enable)
 #define GL_TEXTURE_STREAM_IMG                                   0x8C0D     
 #endif
 
-static void proxy_glEnable(GLenum cap, bool enable, void (*next)(GLenum)) {
+static void proxy_glEnable(GLenum cap, bool enable, void (APIENTRY_GLES *next)(GLenum)) {
     #define proxy_GO(constant, name) \
         case constant: if(glstate->enable.name != enable) {FLUSH_BEGINEND; glstate->enable.name = enable; next(cap);} break
     #define proxy_GOFPE(constant, name, fct) \
@@ -87,7 +87,7 @@ static void proxy_glEnable(GLenum cap, bool enable, void (*next)(GLenum)) {
         if (!glstate->texture.bound[glstate->texture.active][ENABLED_TEX2D]->alpha)
             enable = false;
     }
-	noerrorShim();
+    noerrorShim();
 #ifdef TEXSTREAM
     if (cap==GL_TEXTURE_STREAM_IMG) {
         FLUSH_BEGINEND;
@@ -108,7 +108,7 @@ static void proxy_glEnable(GLenum cap, bool enable, void (*next)(GLenum)) {
         GO(GL_AUTO_NORMAL, auto_normal);
         proxy_GOFPE(GL_ALPHA_TEST, alpha_test,glstate->fpe_state->alphatest=enable);
         proxy_GOFPE(GL_FOG, fog, glstate->fpe_state->fog=enable);
-        proxy_GO(GL_BLEND, blend);
+        case GL_BLEND: if(glstate->enable.blend != enable) {FLUSH_BEGINEND; glstate->enable.blend = enable; if(glstate->fpe_state && globals4es.shaderblend) { glstate->fpe_state->blend_enable = enable; } else next(cap);} break;
         proxy_GO(GL_CULL_FACE, cull_face);
         proxy_GO(GL_DEPTH_TEST, depth_test);
         proxy_GO(GL_STENCIL_TEST, stencil_test);
@@ -163,7 +163,7 @@ static void proxy_glEnable(GLenum cap, bool enable, void (*next)(GLenum)) {
         //cannot use clientGO_proxyFPE here, has the ClientArray are really enabled / disabled elsewhere in fact (inside glDraw or list_draw)
         clientGO(GL_SECONDARY_COLOR_ARRAY, vertexattrib[ATT_SECONDARY].enabled);
         clientGO(GL_FOG_COORD_ARRAY, vertexattrib[ATT_FOGCOORD].enabled);
-	
+    
         // for glDrawArrays
         clientGO(GL_VERTEX_ARRAY, vertexattrib[ATT_VERTEX].enabled);
         clientGO(GL_NORMAL_ARRAY, vertexattrib[ATT_NORMAL].enabled);
@@ -267,48 +267,48 @@ static void proxy_glEnable(GLenum cap, bool enable, void (*next)(GLenum)) {
     #undef clientGO
 }
 
-void gl4es_glEnable(GLenum cap) {
+void APIENTRY_GL4ES gl4es_glEnable(GLenum cap) {
     DBG(SHUT_LOGD("glEnable(%s), glstate->list.pending=%d\n", PrintEnum(cap), glstate->list.pending);)
     if(!glstate->list.pending) {
-	    PUSH_IF_COMPILING(glEnable)
+        PUSH_IF_COMPILING(glEnable)
     }
 #ifdef TEXSTREAM00
-	if (globals4es.texstream && (cap==GL_TEXTURE_2D)) {
+    if (globals4es.texstream && (cap==GL_TEXTURE_2D)) {
         if (glstate->texture.bound[glstate->texture.active][ENABLED_TEX2D]->streamed)
             cap = GL_TEXTURE_STREAM_IMG;
-	}
-	if (globals4es.texstream && (cap==GL_TEXTURE_RECTANGLE_ARB)) {
+    }
+    if (globals4es.texstream && (cap==GL_TEXTURE_RECTANGLE_ARB)) {
         if (glstate->texture.bound[glstate->texture.active][ENABLED_TEXTURE_RECTANGLE]->streamed)
             cap = GL_TEXTURE_STREAM_IMG;
-	}
+    }
 #endif
     LOAD_GLES(glEnable);
     proxy_glEnable(cap, true, gles_glEnable);
 }
-void glEnable(GLenum cap) AliasExport("gl4es_glEnable");
+AliasExport(void,glEnable,,(GLenum cap));
 
-void gl4es_glDisable(GLenum cap) {
+void APIENTRY_GL4ES gl4es_glDisable(GLenum cap) {
     DBG(SHUT_LOGD("glDisable(%s), glstate->list.pending=%d\n", PrintEnum(cap), glstate->list.pending);)
     if(!glstate->list.pending) {
-	    PUSH_IF_COMPILING(glDisable)
+        PUSH_IF_COMPILING(glDisable)
     }
         
 #ifdef TEXSTREAM00
-	if (globals4es.texstream && (cap==GL_TEXTURE_2D)) {
+    if (globals4es.texstream && (cap==GL_TEXTURE_2D)) {
         if (glstate->texture.bound[glstate->texture.active][ENABLED_TEX2D]->streamed)
             cap = GL_TEXTURE_STREAM_IMG;
-	}
-	if (globals4es.texstream && (cap==GL_TEXTURE_RECTANGLE_ARB)) {
+    }
+    if (globals4es.texstream && (cap==GL_TEXTURE_RECTANGLE_ARB)) {
         if (glstate->texture.bound[glstate->texture.active][ENABLED_TEXTURE_RECTANGLE]->streamed)
             cap = GL_TEXTURE_STREAM_IMG;
-	}
+    }
 #endif
     LOAD_GLES(glDisable);
     proxy_glEnable(cap, false, gles_glDisable);
 }
-void glDisable(GLenum cap) AliasExport("gl4es_glDisable");
+AliasExport(void,glDisable,,(GLenum cap));
 
-void gl4es_glEnableClientState(GLenum cap) {
+void APIENTRY_GL4ES gl4es_glEnableClientState(GLenum cap) {
     DBG(SHUT_LOGD("glEnableClientState(%s), list.begin=%dn", PrintEnum(cap), glstate->list.begin);)
     ERROR_IN_BEGIN
     // should flush for now... to be optimized later!
@@ -316,9 +316,9 @@ void gl4es_glEnableClientState(GLenum cap) {
         gl4es_flush();*/
     proxy_glEnable(cap, true, fpe_glEnableClientState);
 }
-void glEnableClientState(GLenum cap) AliasExport("gl4es_glEnableClientState");
+AliasExport(void,glEnableClientState,,(GLenum cap));
 
-void gl4es_glDisableClientState(GLenum cap) {
+void APIENTRY_GL4ES gl4es_glDisableClientState(GLenum cap) {
     DBG(SHUT_LOGD("glDisableClientState(%s), list.begin=%d\n", PrintEnum(cap), glstate->list.begin);)
     ERROR_IN_BEGIN
     // should flush for now... to be optimized later!
@@ -326,7 +326,7 @@ void gl4es_glDisableClientState(GLenum cap) {
         gl4es_flush();*/
     proxy_glEnable(cap, false, fpe_glDisableClientState);
 }
-void glDisableClientState(GLenum cap) AliasExport("gl4es_glDisableClientState");
+AliasExport(void,glDisableClientState,,(GLenum cap));
 
 
 #define isenabled(what, where) \
@@ -334,14 +334,14 @@ void glDisableClientState(GLenum cap) AliasExport("gl4es_glDisableClientState");
 #define clientisenabled(what, where) \
     case what: return glstate->vao->where
     
-GLboolean gl4es_glIsEnabled(GLenum cap) {
+GLboolean APIENTRY_GL4ES gl4es_glIsEnabled(GLenum cap) {
     DBG(SHUT_LOGD("glIsEnabed(%s), list.begin=%d, list.compiling=%d, list.pending=%d\n", PrintEnum(cap), glstate->list.begin, glstate->list.compiling, glstate->list.pending);)
     if(glstate->list.begin) {errorShim(GL_INVALID_OPERATION); return GL_FALSE;}
     if(glstate->list.compiling) {errorShim(GL_INVALID_OPERATION); return GL_FALSE;}
     // should flush for now... but no need if it's just a pending list...
     if (glstate->list.active && !glstate->list.pending)
         gl4es_flush();
-    LOAD_GLES(glIsEnabled);
+    GLboolean gles_glIsEnabled(glIsEnabled_ARG_EXPAND); //LOAD_GLES(glIsEnabled);
     noerrorShim();
     switch (cap) {
         isenabled(GL_AUTO_NORMAL, auto_normal);
@@ -357,7 +357,7 @@ GLboolean gl4es_glIsEnabled(GLenum cap) {
         isenabled(GL_TEXTURE_GEN_R, texgen_r[glstate->texture.active]);
         isenabled(GL_TEXTURE_GEN_Q, texgen_q[glstate->texture.active]);
         isenabled(GL_COLOR_MATERIAL, color_material);
-		isenabled(GL_COLOR_SUM, color_sum);
+        isenabled(GL_COLOR_SUM, color_sum);
         isenabled(GL_POINT_SPRITE, pointsprite);
         isenabled(GL_PROGRAM_POINT_SIZE, point_size);
         isenabled(GL_CLIP_PLANE0, plane[0]);
@@ -417,10 +417,10 @@ GLboolean gl4es_glIsEnabled(GLenum cap) {
         isenabled(GL_VERTEX_PROGRAM_ARB, vertex_arb);
         isenabled(GL_VERTEX_PROGRAM_TWO_SIDE_ARB, vertex_two_side_arb);
         default:
-			errorGL();
+            errorGL();
             return gles_glIsEnabled(cap);
     }
 }
 #undef isenabled
 #undef clientisenabled
-GLboolean glIsEnabled(GLenum cap) AliasExport("gl4es_glIsEnabled");
+AliasExport(GLboolean,glIsEnabled,,(GLenum cap));

@@ -3,15 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../envvars.h"
 #include "../attributes.h"
+#include "../logs.h"
+#include "../init.h"
 
 #define STUB(ret, def, args)\
-ret gl4es_ ## def args {\
-    if(IsEnvVarTrue("LIBGL_DEBUG"))\
-        printf("stub: %s;\n", #def);\
+ret APIENTRY_GL4ES gl4es_ ## def args {\
+    if(!globals4es.silentstub)\
+        SHUT_LOGD("stub: %s;\n", #def);\
 } \
-ret def args AliasExport("gl4es_"#def);
+AliasExport(ret,def,,args);
 
 /*STUB(void,glFogCoordd,(GLdouble coord));
 STUB(void,glFogCoordf,(GLfloat coord));

@@ -10,6 +10,8 @@
 #include "texgen.h"
 #include "vertexattrib.h"
 #include "oldprogram.h"
+#include "samplers.h"
+#include "matrix.h"
 
 #include "../glx/hardext.h"
 
@@ -23,12 +25,18 @@
 #define STUB_FCT gl4es_Stub
 #include "gl_lookup.h"
 
+#if (!defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 void gl4es_Stub(void *x, ...) {
     return;
 }
+#else
+//TODO: if need use STUB with different argnum, the macro must be redesigned
+void APIENTRY_GL4ES gl4es_Stub(void *x) {}
+#endif
 
-void *gl4es_GetProcAddress(const char *name) {
-    DBG(SHUT_LOGD("glGetProcAddress(\"%s\")", name);)/*
+void* APIENTRY_GL4ES gl4es_GetProcAddress(const char *name) {
+    DBG(SHUT_LOGD("glGetProcAddress(\"%s\")", name);)
+	/*
     // generated gles wrappers
     #include "glesfuncs.inc"
 
@@ -59,6 +67,8 @@ void *gl4es_GetProcAddress(const char *name) {
     _ARB(glGetBufferParameteriv);
     _EX(glGetBufferSubData);
     _ARB(glGetBufferSubData);
+    _EX(glCopyBufferSubData);
+    _ARB(glCopyBufferSubData);
 
     _EX(glMapBufferRange);
     _EX(glFlushMappedBufferRange);
@@ -152,6 +162,9 @@ void *gl4es_GetProcAddress(const char *name) {
         _EXT(glClearNamedFramebufferuiv)
         _EXT(glClearNamedFramebufferfv)
         _EXT(glClearNamedFramebufferfi)
+
+        // draw_buffer_2 (partial)
+        _EXT(glColorMaskIndexed)
     }
     
     // GL_EXT_vertex_array
@@ -469,8 +482,10 @@ void *gl4es_GetProcAddress(const char *name) {
         _EXT(glFogCoordfv);
         _EXT(glFogCoordPointer);
     }
-    *//*STUB(glEdgeFlagPointerEXT);
-    STUB(glIndexPointerEXT);*//*
+    */
+	/*STUB(glEdgeFlagPointerEXT);
+    STUB(glIndexPointerEXT);*/
+	
     STUB(glClearIndex);
     STUB(glEdgeFlagv);
     STUB(glIndexMask);
@@ -702,7 +717,10 @@ void *gl4es_GetProcAddress(const char *name) {
         _EX(glGetQueryiv);
         _EX(glGetQueryObjectiv);
         _EX(glGetQueryObjectuiv);
-        
+        _EX(glQueryCounter);
+        _EX(glGetQueryObjecti64v);
+        _EX(glGetQueryObjectui64v);
+
         _ARB(glGenQueries);
         _ARB(glIsQuery);
         _ARB(glDeleteQueries);
@@ -711,6 +729,7 @@ void *gl4es_GetProcAddress(const char *name) {
         _ARB(glGetQueryiv);
         _ARB(glGetQueryObjectiv);
         _ARB(glGetQueryObjectuiv);
+        _ARB(glQueryCounter);
     }
 
     // GL_ARB_multisample
@@ -911,6 +930,8 @@ void *gl4es_GetProcAddress(const char *name) {
     _EXT(glValidateProgram);
     _EXT(glVertexAttrib1f);
     _EXT(glVertexAttrib1fv);
+    _EXT(glVertexAttribIPointer);
+    _EX(glVertexAttribIPointer);
     _EXT(glVertexAttrib2f);
     _EXT(glVertexAttrib2fv);
     _EXT(glVertexAttrib3f);
@@ -918,8 +939,6 @@ void *gl4es_GetProcAddress(const char *name) {
     _EXT(glVertexAttrib4f);
     _EXT(glVertexAttrib4fv);
     _EXT(glVertexAttribPointer);
-    _EXT(glVertexAttribIPointer);
-    _EX(glVertexAttribIPointer);
     _EXT(glVertexPointer);
     _EXT(glProgramUniform1f);
     _EXT(glProgramUniform2f);
@@ -1018,15 +1037,35 @@ void *gl4es_GetProcAddress(const char *name) {
         _EX(glProgramEnvParameters4fvEXT)
         _EX(glProgramLocalParameters4fvEXT)
     }
-    DBG(SHUT_LOGD("NULL\n");)*/
-    void* proc = dlsym(RTLD_DEFAULT, (const char*)name);
 
+    // GL 3.0
+
+    //Sampler
+    _EX(glGenSamplers);
+    _EX(glBindSampler);
+    _EX(glDeleteSamplers);
+    _EX(glIsSampler);
+    _EX(glSamplerParameterf);
+    _EX(glSamplerParameteri);
+    _EX(glSamplerParameterfv);
+    _EX(glSamplerParameteriv);
+    _EX(glSamplerParameterIiv);
+    _EX(glSamplerParameterIuiv);
+    _EX(glGetSamplerParameterfv);
+    _EX(glGetSamplerParameteriv);
+    _EX(glGetSamplerParameterIiv);
+    _EX(glGetSamplerParameterIuiv);
+
+    // IPointer
+    //_EX(glVertexAttribIPointer);
+
+    DBG(SHUT_LOGD("NULL\n");)
+    void* proc = dlsym(RTLD_DEFAULT, (const char*)name);
     if (!proc) {
         fprintf(stderr, "Failed to get OpenGL function %s: %s\n", name, dlerror());
         SHUT_LOGD("[ERROR] Failed to get OpenGL function: %s", (const char*)name);
         return NULL;
     }
-
     return proc;
     //if (!globals4es.silentstub) SHUT_LOGD("GL4ES GetProcAddress: %s not found.\n", name);
     //return NULL;

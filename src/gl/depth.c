@@ -4,7 +4,7 @@
 #include "glstate.h"
 #include "loader.h"
 
-void gl4es_glDepthFunc(GLenum func) {
+void APIENTRY_GL4ES gl4es_glDepthFunc(GLenum func) {
     if(glstate->list.compiling) {
         PUSH_IF_COMPILING(glDepthFunc);
     }
@@ -18,7 +18,7 @@ void gl4es_glDepthFunc(GLenum func) {
     gles_glDepthFunc(func);
 }
 
-void gl4es_glDepthMask(GLboolean flag) {
+void APIENTRY_GL4ES gl4es_glDepthMask(GLboolean flag) {
     if(glstate->list.compiling) {
         PUSH_IF_COMPILING(glDepthMask);
     }
@@ -36,24 +36,24 @@ GLfloat clamp(GLfloat a) {
     return (a<0.f)?0.f:((a>1.f)?1.f:a);
 }
 
-void gl4es_glDepthRangef(GLclampf near, GLclampf far) {
-    near = clamp(near);
-    far = clamp(far);
+void APIENTRY_GL4ES gl4es_glDepthRangef(GLclampf Near, GLclampf Far) {
+    Near = clamp(Near);
+    Far = clamp(Far);
     if(glstate->list.compiling) {
         PUSH_IF_COMPILING(glDepthRangef);
     }
     noerrorShim();
-    if ((glstate->depth.near == near) && (glstate->depth.far == far))
+    if ((glstate->depth.Near == Near) && (glstate->depth.Far == Far))
         return;
     FLUSH_BEGINEND;
-    glstate->depth.near = near;
-    glstate->depth.far = far;
+    glstate->depth.Near = Near;
+    glstate->depth.Far = Far;
     LOAD_GLES(glDepthRangef);
     errorGL();
-    gles_glDepthRangef(near, far);
+    gles_glDepthRangef(Near, Far);
 }
 
-void gl4es_glClearDepthf(GLclampf depth) {
+void APIENTRY_GL4ES gl4es_glClearDepthf(GLclampf depth) {
     depth = clamp(depth);
     if(glstate->list.compiling) {
         PUSH_IF_COMPILING(glClearDepthf);
@@ -64,9 +64,9 @@ void gl4es_glClearDepthf(GLclampf depth) {
     errorGL();
     gles_glClearDepthf(depth);
 }
-void glClearDepthf(GLuint factor, GLushort pattern) AliasExport("gl4es_glClearDepthf");
 
-void glDepthFunc(GLenum func) AliasExport("gl4es_glDepthFunc");
-void glDepthMask(GLboolean flag) AliasExport("gl4es_glDepthMask");
-void glDepthRangef(GLclampf nearVal, GLclampf farVal) AliasExport("gl4es_glDepthRangef");
+AliasExport(void,glDepthFunc,,(GLenum func));
+AliasExport(void,glDepthMask,,(GLboolean flag));
+AliasExport(void,glDepthRangef,,(GLclampf nearVal, GLclampf farVal));
+AliasExport(void,glClearDepthf,,(GLclampf depth));
 

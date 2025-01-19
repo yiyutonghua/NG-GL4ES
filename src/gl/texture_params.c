@@ -88,7 +88,7 @@ void tex_coord_matrix(GLfloat *tex, GLsizei len, const GLfloat* mat) {
  * Apply texture matrix if not identity 
  * Or some NPOT texture used
  */
-int inline tex_setup_needchange(GLuint itarget) {
+int tex_setup_needchange(GLuint itarget) {
     if(hardext.esversion>1) return 0; // no text ajustement on ES2
 
     GLuint texunit = glstate->texture.client;
@@ -160,13 +160,11 @@ gltexture_t* gl4es_getTexture(GLenum target, GLuint texture) {
         tex->adjustxy[0] = tex->adjustxy[1] = 1.f;
         tex->mipmap_auto = (globals4es.automipmap==1);
         tex->mipmap_need = (globals4es.automipmap==1)?1:0;
-        tex->streamingID = -1;
         tex->base_level = -1;
         tex->max_level = -1;
+        tex->streamingID = -1;
+        init_sampler(&tex->sampler);
         tex->alpha = true;
-        tex->min_filter = GL_NEAREST_MIPMAP_LINEAR; //(globals4es.automipmap==1)?GL_NEAREST_MIPMAP_LINEAR:GL_LINEAR;
-        tex->mag_filter = GL_LINEAR;
-        tex->wrap_s = tex->wrap_t = (globals4es.defaultwrap?0:GL_REPEAT);
         tex->fpe_format = FPE_TEX_RGBA;
         tex->format = GL_RGBA;
         tex->type = GL_UNSIGNED_BYTE;
@@ -177,7 +175,7 @@ gltexture_t* gl4es_getTexture(GLenum target, GLuint texture) {
     }
     return tex;
 }
-void gl4es_glBindTexture(GLenum target, GLuint texture) {
+void APIENTRY_GL4ES gl4es_glBindTexture(GLenum target, GLuint texture) {
     noerrorShim();
     DBG(SHUT_LOGD("glBindTexture(%s, %u), active=%i, client=%i, list.active=%p (compiling=%d, pending=%d)\n", PrintEnum(target), texture, glstate->texture.active, glstate->texture.client, glstate->list.active, glstate->list.compiling, glstate->list.pending);)
     if ((target!=GL_PROXY_TEXTURE_2D) && glstate->list.compiling && glstate->list.active && !glstate->list.pending) {
@@ -199,7 +197,7 @@ void gl4es_glBindTexture(GLenum target, GLuint texture) {
 
         LOAD_GLES(glBindTexture);
         switch(target) {
-            // cube map are bounded immediatly, other are defered and will be applied with realize_bound or realize_textures
+            // cube map are immediately bound, other are defered and will be applied with realize_bound or realize_textures
             case GL_TEXTURE_CUBE_MAP:
             case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
@@ -221,200 +219,153 @@ void gl4es_glBindTexture(GLenum target, GLuint texture) {
         }
     }
 }
-
-// TODO: also glTexParameterf(v)?
-void gl4es_glTexParameteri(GLenum target, GLenum pname, GLint param) {
-    DBG(SHUT_LOGD("glTexParameteri(%s, %s, %d(%s))\n", PrintEnum(target), PrintEnum(pname), param, PrintEnum(param));)
-    if(!glstate->list.pending) {
-        PUSH_IF_COMPILING(glTexParameteri);
-    }
-    LOAD_GLES(glTexParameteri);
-    noerrorShim();
-    const GLint itarget = what_target(target);
-    const GLuint rtarget = map_tex_target(target);
-    gltexture_t *texture = glstate->texture.bound[glstate->texture.active][itarget];
-    switch (pname) {
-    case GL_TEXTURE_MIN_FILTER:
-    case GL_TEXTURE_MAG_FILTER:
-        if (pname==GL_TEXTURE_MIN_FILTER) { texture->wanted_min = param; }
-        if (pname==GL_TEXTURE_MAG_FILTER) { texture->wanted_mag = param; }
-        switch (param) {
+int is_mipmap_needed(glsampler_t* sampler)
+{
+    switch(sampler->min_filter) {
         case GL_NEAREST_MIPMAP_NEAREST:
         case GL_NEAREST_MIPMAP_LINEAR:
         case GL_LINEAR_MIPMAP_NEAREST:
         case GL_LINEAR_MIPMAP_LINEAR:
-            texture->mipmap_need = true;
-            if ((globals4es.automipmap==3) || ((globals4es.automipmap==1) && (texture->mipmap_auto==0)) || (texture->compressed && (texture->mipmap_auto==0)))
-            switch (param) {
-                case GL_NEAREST_MIPMAP_NEAREST:
-                case GL_NEAREST_MIPMAP_LINEAR:
-                    texture->mipmap_need = false;
-                    param = GL_NEAREST;
-                    break;
-                case GL_LINEAR_MIPMAP_NEAREST:
-                case GL_LINEAR_MIPMAP_LINEAR:
-                    texture->mipmap_need = false;
-                    param = GL_LINEAR;
-                    break;
-            }
-        }
-        if(texture->valid && (texture->type==GL_FLOAT || texture->type==GL_HALF_FLOAT_OES)) {
-            // FLOAT textures have limited mipmap support in GLES2
-            param = minmag_float(param);
-        }
-        if(texture->valid && (texture->npot && globals4es.forcenpot)) {
-            // need to remove MIPMAP for npot if not supported in hardware
-            param = minmag_forcenpot(param);
-        }
-        if (pname==GL_TEXTURE_MIN_FILTER) { if(texture->min_filter == param) return; texture->min_filter = param; }
-        if (pname==GL_TEXTURE_MAG_FILTER) { if(texture->mag_filter == param) return; texture->mag_filter = param; }
-        break;
-    case GL_TEXTURE_WRAP_S:
-    case GL_TEXTURE_WRAP_T:
-        switch (param) {
-        case GL_CLAMP:
-        case GL_CLAMP_TO_BORDER:
-            param = GL_CLAMP_TO_EDGE;
-            break;
-        case GL_REPEAT:
-        case GL_MIRRORED_REPEAT_OES:
-            if(globals4es.defaultwrap==2 && hardext.npot<3 && !texture->valid)
-                param = GL_CLAMP_TO_EDGE;
-            else if(hardext.esversion>1 && hardext.npot<3 && texture->valid 
-            && texture->npot) {
-                // should "upgrade" the texture to POT size...
-        //printf("Warning, REPEAT / MIRRORED_REPEAT on NPOT texture\n");
-                param = GL_CLAMP_TO_EDGE;   // repeat is not support on NPOT with limited_npot
-            }
-            break;
-        }
-
-        if (pname==GL_TEXTURE_WRAP_S) {if (texture->wrap_s == param) return; texture->wrap_s = param; }
-        if (pname==GL_TEXTURE_WRAP_T) {if (texture->wrap_t == param) return; texture->wrap_t = param; }
-        break;
-    case GL_TEXTURE_WRAP_R:
-        // ignore it on GLES...
-        return;
-    case GL_TEXTURE_COMPARE_MODE:
-        texture->compare = param;   // TODO, better traking...
-        return;
-    case GL_TEXTURE_MAX_LEVEL:
-        if (texture)
-            texture->max_level = param;
-        return;			// not on GLES
-    case GL_TEXTURE_BASE_LEVEL:
-        texture->base_level = param;
-        return;			// not on GLES
-    case GL_TEXTURE_MIN_LOD:
-    case GL_TEXTURE_MAX_LOD:
-    case GL_TEXTURE_LOD_BIAS:
-        return;			// not on GLES
-    case GL_GENERATE_MIPMAP:
-        if(globals4es.automipmap==3)
-            return; // no mipmap, so no need to generate any
-        if(texture->mipmap_auto == ((param)?1:0))
-            return; // same value...
-        texture->mipmap_auto = (param)?1:0;
-        if(hardext.esversion>1 && param) {
-            if(texture->valid) {
-                // force regeneration, if possible
-                FLUSH_BEGINEND;
-                realize_bound(glstate->texture.active, target);
-                LOAD_GLES2_OR_OES(glGenerateMipmap);
-                gl4es_glGenerateMipmap(rtarget);
-                if(texture->wanted_min != texture->min_filter)
-                    gl4es_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, texture->wanted_min);
-            }
-            return;
-        }
-        break;  // fallback to calling actual glTexParameteri
-    case GL_TEXTURE_MAX_ANISOTROPY:
-        if(!hardext.aniso) {
-            errorShim(GL_INVALID_ENUM);
-            return;
-        }
-        if(param<0){
-            errorShim(GL_INVALID_VALUE);
-            return;
-        }
-        if(param>hardext.aniso) param=hardext.aniso;
-        texture->aniso = param;
-        break;
+            return 1;
+        default:
+            return 0;        
     }
-    FLUSH_BEGINEND;
-    realize_bound(glstate->texture.active, target);
-    gles_glTexParameteri(rtarget, pname, param);
-    errorGL();
 }
 
-void gl4es_glTexParameterf(GLenum target, GLenum pname, GLfloat param) {
-    gl4es_glTexParameteri(target, pname, param);
-}
-
-void gl4es_glTexParameterfv(GLenum target, GLenum pname, const GLfloat * params) {
-    DBG(SHUT_LOGD("glTexParameterfv(%s, %s, %p {%f...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
-    switch (pname) {
-    case GL_TEXTURE_MIN_FILTER:
-    case GL_TEXTURE_MAG_FILTER:
-    case GL_TEXTURE_WRAP_S:
-    case GL_TEXTURE_WRAP_T:
-    case GL_TEXTURE_WRAP_R:
-    case GL_TEXTURE_COMPARE_MODE:
-    case GL_TEXTURE_MAX_LEVEL:
-    case GL_TEXTURE_BASE_LEVEL:
-    case GL_TEXTURE_MIN_LOD:
-    case GL_TEXTURE_MAX_LOD:
-    case GL_TEXTURE_LOD_BIAS:
-    case GL_GENERATE_MIPMAP:
-    case GL_TEXTURE_MAX_ANISOTROPY:
-        gl4es_glTexParameteri(target, pname, params[0]);
-        return;
-    case GL_TEXTURE_BORDER_COLOR:
-        // not supported on GLES,
-        noerrorShim();
-        return;
+GLenum get_texture_min_filter(gltexture_t* texture, glsampler_t* sampler)
+{
+    GLenum ret = sampler->min_filter;
+    if ((globals4es.automipmap==3) 
+    || ((globals4es.automipmap==1) && (texture->mipmap_auto==0)) 
+    || (texture->compressed && (texture->mipmap_auto==0))) {
+        switch (ret) {
+            case GL_NEAREST_MIPMAP_NEAREST:
+            case GL_NEAREST_MIPMAP_LINEAR:
+                ret = GL_NEAREST;
+                break;
+            case GL_LINEAR_MIPMAP_NEAREST:
+            case GL_LINEAR_MIPMAP_LINEAR:
+                ret = GL_LINEAR;
+                break;
+        }
     }
-    PUSH_IF_COMPILING(glTexParameterfv);
-    realize_bound(glstate->texture.active, target);
-    LOAD_GLES(glTexParameterfv);
-    errorGL();
+    if(texture->valid && (texture->type==GL_FLOAT || texture->type==GL_HALF_FLOAT_OES)) {
+        // FLOAT textures have limited mipmap support in GLES2
+        ret = minmag_float(ret);
+    }
+    if(texture->valid && (texture->npot && globals4es.forcenpot)) {
+        // need to remove MIPMAP for npot if not supported in hardware
+        ret = minmag_forcenpot(ret);
+    }
+    return ret;
+}
+GLenum get_texture_wrap(GLenum wrap, gltexture_t* texture)
+{
+    switch (wrap) {
+    case GL_CLAMP:
+    case GL_CLAMP_TO_BORDER:
+        wrap = GL_CLAMP_TO_EDGE;
+        break;
+    case GL_REPEAT:
+    case GL_MIRRORED_REPEAT_OES:
+        if(globals4es.defaultwrap==2 && hardext.npot<3 && !texture->valid)
+            wrap = GL_CLAMP_TO_EDGE;
+        else if(hardext.esversion>1 && hardext.npot<3 && texture->valid 
+        && texture->npot) {
+            // should "upgrade" the texture to POT size...
+    //printf("Warning, REPEAT / MIRRORED_REPEAT on NPOT texture\n");
+            wrap = GL_CLAMP_TO_EDGE;   // repeat is not support on NPOT with limited_npot
+        }
+        break;
+    }
+    return wrap;
+}
+GLenum get_texture_wrap_s(gltexture_t* texture, glsampler_t *sampler)
+{
+    return get_texture_wrap(sampler->wrap_s, texture);
+}
+GLenum get_texture_wrap_t(gltexture_t* texture, glsampler_t *sampler)
+{
+    return get_texture_wrap(sampler->wrap_t, texture);
+}
+// TODO: also glTexParameterf(v)?
+void APIENTRY_GL4ES gl4es_glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params) {
+    DBG(SHUT_LOGD("glTexParameterfv(%s, %s, [%f(%s)...])\n", PrintEnum(target), PrintEnum(pname), params[0], PrintEnum(params[0]));)
+    if(!glstate->list.pending) {
+        PUSH_IF_COMPILING(glTexParameterfv);
+    }
+    noerrorShim();
+    const GLint itarget = what_target(target);
     const GLuint rtarget = map_tex_target(target);
-    gles_glTexParameterfv(rtarget, pname, params);
-
-}
-
-void gl4es_glTexParameteriv(GLenum target, GLenum pname, const GLint * params) {
-    DBG(SHUT_LOGD("glTexParameteriv(%s, %s, %p {%d...})\n", PrintEnum(target), PrintEnum(pname), params, params[0]);)
-    switch (pname) {
-    case GL_TEXTURE_MIN_FILTER:
-    case GL_TEXTURE_MAG_FILTER:
-    case GL_TEXTURE_WRAP_S:
-    case GL_TEXTURE_WRAP_T:
-    case GL_TEXTURE_WRAP_R:
-    case GL_TEXTURE_COMPARE_MODE:
-    case GL_TEXTURE_MAX_LEVEL:
-    case GL_TEXTURE_BASE_LEVEL:
-    case GL_TEXTURE_MIN_LOD:
-    case GL_TEXTURE_MAX_LOD:
-    case GL_TEXTURE_LOD_BIAS:
-    case GL_GENERATE_MIPMAP:
-    case GL_TEXTURE_MAX_ANISOTROPY:
-        gl4es_glTexParameteri(target, pname, params[0]);
-        return;
-    case GL_TEXTURE_BORDER_COLOR:
-        // not supported on GLES,
-        noerrorShim();
-        return;
+    gltexture_t *texture = glstate->texture.bound[glstate->texture.active][itarget];
+    if(!samplerParameterfv(&texture->sampler, pname, params)) {
+        LOAD_GLES(glTexParameterfv);
+        GLint param = params[0];
+        switch (pname) {
+            case GL_TEXTURE_MAX_LEVEL:
+                if (texture)
+                    texture->max_level = param;
+                return;            // not on GLES
+            case GL_TEXTURE_BASE_LEVEL:
+                texture->base_level = param;
+                return;            // not on GLES
+            case GL_TEXTURE_LOD_BIAS:
+                return;            // not on GLES
+            case GL_GENERATE_MIPMAP:
+                if(globals4es.automipmap==3)
+                    return; // no mipmap, so no need to generate any
+                if(texture->mipmap_auto == ((param)?1:0))
+                    return; // same value...
+                texture->mipmap_auto = (param)?1:0;
+                if(hardext.esversion>1) {
+                    /*if(texture->valid) {
+                        // force regeneration, if possible
+                        FLUSH_BEGINEND;
+                        realize_bound(glstate->texture.active, target);
+                        LOAD_GLES2_OR_OES(glGenerateMipmap);
+                        gl4es_glGenerateMipmap(rtarget);
+                    }*/
+                    return;
+                }
+                break;  // fallback to calling actual glTexParameteri
+            case GL_TEXTURE_MAX_ANISOTROPY:
+                if(!hardext.aniso) {
+                    errorShim(GL_INVALID_ENUM);
+                    return;
+                }
+                if(param<0){
+                    errorShim(GL_INVALID_VALUE);
+                    return;
+                }
+                if(param>hardext.aniso) param=hardext.aniso;
+                texture->aniso = param;
+                break;
+        }
+        FLUSH_BEGINEND;
+        realize_bound(glstate->texture.active, target);
+        gles_glTexParameterfv(rtarget, pname, params);
+        errorGL();
     }
-    PUSH_IF_COMPILING(glTexParameteriv);
-    realize_bound(glstate->texture.active, target);
-    LOAD_GLES(glTexParameteriv);
-    errorGL();
-    const GLuint rtarget = map_tex_target(target);
-    gles_glTexParameteriv(rtarget, pname, params);
 }
 
-void gl4es_glDeleteTextures(GLsizei n, const GLuint *textures) {
+void APIENTRY_GL4ES gl4es_glTexParameterf(GLenum target, GLenum pname, GLfloat param) {
+    gl4es_glTexParameterfv(target, pname, &param);
+}
+void APIENTRY_GL4ES gl4es_glTexParameteri(GLenum target, GLenum pname, GLint param) {
+    GLfloat fparam = param;
+    gl4es_glTexParameterfv(target, pname, &fparam);
+}
+
+void APIENTRY_GL4ES gl4es_glTexParameteriv(GLenum target, GLenum pname, const GLint * params) {
+    GLfloat fparams[4];
+    fparams[0] = *params;
+    if(pname==GL_TEXTURE_BORDER_COLOR)
+        for(int i=1; i<4; ++i)
+            fparams[i] = params[i];
+    gl4es_glTexParameterfv(target, pname, fparams);
+}
+
+void APIENTRY_GL4ES gl4es_glDeleteTextures(GLsizei n, const GLuint *textures) {
     DBG(SHUT_LOGD("glDeleteTextures(%d, %p {%d...})\n", n, textures, n?textures[0]:-1);)
     if(!glstate) return;
     FLUSH_BEGINEND;
@@ -475,7 +426,7 @@ void gl4es_glDeleteTextures(GLsizei n, const GLuint *textures) {
     }
 }
 
-void gl4es_glGenTextures(GLsizei n, GLuint * textures) {
+void APIENTRY_GL4ES gl4es_glGenTextures(GLsizei n, GLuint * textures) {
     DBG(SHUT_LOGD("glGenTextures(%d, %p)\n", n, textures);)
     if (n<=0) 
         return;
@@ -505,9 +456,7 @@ void gl4es_glGenTextures(GLsizei n, GLuint * textures) {
             tex->base_level = -1;
             tex->max_level = -1;
             tex->alpha = true;
-            tex->wanted_min = tex->min_filter = GL_NEAREST_MIPMAP_LINEAR; //(globals4es.automipmap==1)?GL_NEAREST_MIPMAP_LINEAR:GL_LINEAR;
-            tex->wanted_mag = tex->mag_filter = GL_LINEAR;
-            tex->wrap_s = tex->wrap_t = (globals4es.defaultwrap?0:GL_REPEAT);
+            init_sampler(&tex->sampler);
             tex->fpe_format = FPE_TEX_RGBA;
             tex->format = GL_RGBA;
             tex->type = GL_UNSIGNED_BYTE;
@@ -522,12 +471,12 @@ void gl4es_glGenTextures(GLsizei n, GLuint * textures) {
     }
 }
 
-GLboolean gl4es_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences) {
+GLboolean APIENTRY_GL4ES gl4es_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences) {
     noerrorShim();
     return true;
 }
 
-void gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params) {
+void APIENTRY_GL4ES gl4es_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params) {
     DBG(SHUT_LOGD("glGetTexLevelParameteriv(%s, %d, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);)
     // simplification: (mostly) not taking "target" into account here
     FLUSH_BEGINEND;
@@ -536,138 +485,120 @@ void gl4es_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GL
     const GLuint itarget = what_target(target);
     const GLuint rtarget = map_tex_target(target);
     gltexture_t* bound = glstate->texture.bound[glstate->texture.active][itarget];
-    switch (pname) {
-        case GL_TEXTURE_WIDTH:
-            if (rtarget==GL_PROXY_TEXTURE_2D)
-                (*params) = nlevel(glstate->proxy_width,level);
-            else {
-                (*params) = nlevel((bound)?bound->width:hardext.maxsize,level);
-                if(level && !(bound->mipmap_auto || bound->mipmap_need))
-                    (*params) = 0;   // Mipmap level not loaded
-            }
-            break;
-        case GL_TEXTURE_HEIGHT: 
-            if (rtarget==GL_PROXY_TEXTURE_2D)
-                (*params) = nlevel(glstate->proxy_height,level);
-            else {
-                (*params) = nlevel((bound)?bound->height:hardext.maxsize,level); 
-                if(level && !(bound->mipmap_auto || bound->mipmap_need))
-                    (*params) = 0;   // Mipmap level not loaded
-            }
-            break;
-        case GL_TEXTURE_INTERNAL_FORMAT:
-            if (rtarget==GL_PROXY_TEXTURE_2D)
-                (*params) = glstate->proxy_intformat;
-            else {
-                if (bound->compressed)
-                    (*params) = bound->internalformat;
+    if(!getSamplerParameterfv(&bound->sampler, pname, params)) {
+        switch (pname) {
+            case GL_TEXTURE_WIDTH:
+                if (rtarget==GL_PROXY_TEXTURE_2D)
+                    (*params) = nlevel(glstate->proxy_width,level);
                 else {
-                    if(bound->wanted_internal==GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
-                        *params = bound->wanted_internal;
-                    else
-                    if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA)) {
-                        if(bound->orig_internal==GL_COMPRESSED_RGB)
-                            *(params) = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-                        else
-                            *(params) = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-                    } else
-                        (*params) = bound->internalformat;
+                    (*params) = nlevel((bound)?bound->width:hardext.maxsize,level);
+                    if(level && !(bound->mipmap_auto || bound->mipmap_need))
+                        (*params) = 0;   // Mipmap level not loaded
                 }
-            }
-            break;
-        case GL_TEXTURE_DEPTH:
-            (*params) = 0;
-            break;
-        case GL_TEXTURE_RED_TYPE:
-        case GL_TEXTURE_GREEN_TYPE:
-        case GL_TEXTURE_BLUE_TYPE:
-        case GL_TEXTURE_ALPHA_TYPE:
-        case GL_TEXTURE_DEPTH_TYPE:
-            (*params) = GL_FLOAT;
-            break;
-        case GL_TEXTURE_RED_SIZE:
-        case GL_TEXTURE_GREEN_SIZE:
-        case GL_TEXTURE_BLUE_SIZE:
-        case GL_TEXTURE_ALPHA_SIZE:
-            (*params) = 8;
-            break;
-        case GL_TEXTURE_DEPTH_SIZE:
-            (*params) = 0;
-            break;
-        case GL_TEXTURE_COMPRESSED:
-            if (bound->compressed)
-                (*params) = GL_TRUE;
-            else {
-                if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA))
-                    (*params) = GL_TRUE;
-                else
-                    (*params) = GL_FALSE;
-            }
-            break;
-        case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
-            if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA)) {
-                int w = nlevel((bound->width>>level),2); //DXT works on 4x4 blocks...
-                int h = nlevel((bound->height>>level),2);
-                w<<=2; h<<=2;
-                if (bound->orig_internal==GL_COMPRESSED_RGB || bound->wanted_internal==GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) //DXT1, 64bits (i.e. size=8) for a 4x4 block
-                    (*params) = (w*h)/2;
-                else    //DXT5, 64+64 (i.e. size = 16) for a 4x4 block
-                    (*params) = w*h;
-            } else
-             (*params) = bound->width*bound->height*4;
-            break;
-        case GL_TEXTURE_BORDER:
-            (*params) = 0;
-            break;
-        case GL_TEXTURE_INTENSITY_SIZE:
-            if(bound)
-                (*params) = 32;  // is it correct ? GLES doesn't store Intensity... Shall I return 0 instead? Or fake it and return 8?
-            else
+                break;
+            case GL_TEXTURE_HEIGHT: 
+                if (rtarget==GL_PROXY_TEXTURE_2D)
+                    (*params) = nlevel(glstate->proxy_height,level);
+                else {
+                    (*params) = nlevel((bound)?bound->height:hardext.maxsize,level); 
+                    if(level && !(bound->mipmap_auto || bound->mipmap_need))
+                        (*params) = 0;   // Mipmap level not loaded
+                }
+                break;
+            case GL_TEXTURE_INTERNAL_FORMAT:
+                if (rtarget==GL_PROXY_TEXTURE_2D)
+                    (*params) = glstate->proxy_intformat;
+                else {
+                    if (bound->compressed)
+                        (*params) = bound->internalformat;
+                    else {
+                        if(bound->wanted_internal==GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
+                            *params = bound->wanted_internal;
+                        else
+                        if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA)) {
+                            if(bound->orig_internal==GL_COMPRESSED_RGB)
+                                *(params) = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+                            else
+                                *(params) = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+                        } else
+                            (*params) = bound->internalformat;
+                    }
+                }
+                break;
+            case GL_TEXTURE_DEPTH:
                 (*params) = 0;
-            break;
-        case GL_TEXTURE_LUMINANCE_SIZE:
-            (*params) = (bound->orig_internal==GL_LUMINANCE || bound->orig_internal==GL_LUMINANCE_ALPHA)?8:0;
-            break;
-        case GL_TEXTURE_MAX_ANISOTROPY:
-            if(!hardext.aniso)
-                errorShim(GL_INVALID_ENUM);
-            else
-                (*params) = bound->aniso;
-            break;
-        case GL_TEXTURE_MAX_LEVEL:
-            if(!bound->valid || bound->max_level==-1)
-                (*params) = 1000;
-            else
-                (*params) = bound->max_level;
-            break;
-        case GL_TEXTURE_WRAP_S:
-            if(!bound->valid)
-                (*params) = GL_REPEAT;
-            else
-                (*params) = bound->wrap_s?bound->wrap_s:GL_REPEAT;
-            break;
-        case GL_TEXTURE_WRAP_T:
-            if(!bound->valid)
-                (*params) = GL_REPEAT;
-            else
-                (*params) = bound->wrap_t?bound->wrap_t:GL_REPEAT;
-            break;
-        case GL_TEXTURE_MIN_FILTER:
-            *params = bound->wanted_min;
-            break;
-        case GL_TEXTURE_MAG_FILTER:
-            *params = bound->wanted_mag;
-            break;
-        case GL_TEXTURE_COMPARE_MODE:
-                (*params) = bound->compare;  // GL_NONE is 0x0
-            break;
-        default:
-            errorShim(GL_INVALID_ENUM);	//Wrong here...
-            printf("Stubbed glGetTexLevelParameteriv(%s, %i, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);
+                break;
+            case GL_TEXTURE_RED_TYPE:
+            case GL_TEXTURE_GREEN_TYPE:
+            case GL_TEXTURE_BLUE_TYPE:
+            case GL_TEXTURE_ALPHA_TYPE:
+            case GL_TEXTURE_DEPTH_TYPE:
+                (*params) = GL_FLOAT;
+                break;
+            case GL_TEXTURE_RED_SIZE:
+            case GL_TEXTURE_GREEN_SIZE:
+            case GL_TEXTURE_BLUE_SIZE:
+            case GL_TEXTURE_ALPHA_SIZE:
+                (*params) = 8;
+                break;
+            case GL_TEXTURE_DEPTH_SIZE:
+                (*params) = 0;
+                break;
+            case GL_TEXTURE_COMPRESSED:
+                if (bound->compressed)
+                    (*params) = GL_TRUE;
+                else {
+                    if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA))
+                        (*params) = GL_TRUE;
+                    else
+                        (*params) = GL_FALSE;
+                }
+                break;
+            case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
+                if((bound->orig_internal==GL_COMPRESSED_RGB) || (bound->orig_internal==GL_COMPRESSED_RGBA)) {
+                    int w = nlevel((bound->width>>level),2); //DXT works on 4x4 blocks...
+                    int h = nlevel((bound->height>>level),2);
+                    w<<=2; h<<=2;
+                    if (bound->orig_internal==GL_COMPRESSED_RGB || bound->wanted_internal==GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) //DXT1, 64bits (i.e. size=8) for a 4x4 block
+                        (*params) = (w*h)/2;
+                    else    //DXT5, 64+64 (i.e. size = 16) for a 4x4 block
+                        (*params) = w*h;
+                } else
+                (*params) = bound->width*bound->height*4;
+                break;
+            case GL_TEXTURE_BORDER:
+                (*params) = 0;
+                break;
+            case GL_TEXTURE_INTENSITY_SIZE:
+                if(bound)
+                    (*params) = 32;  // is it correct ? GLES doesn't store Intensity... Shall I return 0 instead? Or fake it and return 8?
+                else
+                    (*params) = 0;
+                break;
+            case GL_TEXTURE_LUMINANCE_SIZE:
+                (*params) = (bound->orig_internal==GL_LUMINANCE || bound->orig_internal==GL_LUMINANCE_ALPHA)?8:0;
+                break;
+            case GL_TEXTURE_MAX_ANISOTROPY:
+                if(!hardext.aniso)
+                    errorShim(GL_INVALID_ENUM);
+                else
+                    (*params) = bound->aniso;
+                break;
+            case GL_TEXTURE_MAX_LEVEL:
+                if(!bound->valid || bound->max_level==-1)
+                    (*params) = 1000;
+                else
+                    (*params) = bound->max_level;
+                break;
+
+            default:
+                errorShim(GL_INVALID_ENUM);    //Wrong here...
+                SHUT_LOGD("Stubbed glGetTexLevelParameteriv(%s, %i, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);
+        }
     }
 }
 
-void gl4es_glActiveTexture( GLenum texture ) {
+void APIENTRY_GL4ES gl4es_glActiveTexture( GLenum texture ) {
     DBG(SHUT_LOGD("glActiveTexture(%s)\n", PrintEnum(texture));)
     int tmu = texture - GL_TEXTURE0;
     if (glstate->list.pending) {
@@ -694,7 +625,7 @@ void gl4es_glActiveTexture( GLenum texture ) {
     noerrorShim();
 }
 
-void gl4es_glClientActiveTexture( GLenum texture ) {
+void APIENTRY_GL4ES gl4es_glClientActiveTexture( GLenum texture ) {
     DBG(SHUT_LOGD("glClientActiveTexture(%s)\n", PrintEnum(texture));)
     int tmu = texture - GL_TEXTURE0;
     if ((tmu<0) || (tmu >= hardext.maxtex)) {
@@ -711,7 +642,7 @@ void gl4es_glClientActiveTexture( GLenum texture ) {
     errorGL();
 }
 
-void gl4es_glPixelStorei(GLenum pname, GLint param) {
+void APIENTRY_GL4ES gl4es_glPixelStorei(GLenum pname, GLint param) {
     DBG(SHUT_LOGD("glPixelStorei(%s, %d)\n", PrintEnum(pname), param);)
     // TODO: add to glGetIntegerv?
 
@@ -820,6 +751,7 @@ void realize_bound(int TMU, GLenum target) {
             }
             break;
     }
+    // all done
     if (glstate->fpe_state && glstate->fpe_bound_changed < TMU+1)
     glstate->fpe_bound_changed = TMU+1;
 }
@@ -832,67 +764,11 @@ void realize_active() {
     gles_glActiveTexture(GL_TEXTURE0 + glstate->gleshard->active);
 }
 
-GLenum get_texture_min_filter(gltexture_t* texture, glsampler_t* sampler)
+void realize_1texture(GLenum target, int wantedTMU, gltexture_t* tex, glsampler_t* sampler)
 {
-    GLenum ret = sampler->min_filter;
-    if ((globals4es.automipmap==3)
-        || ((globals4es.automipmap==1) && (texture->mipmap_auto==0))
-        || (texture->compressed && (texture->mipmap_auto==0))) {
-        switch (ret) {
-            case GL_NEAREST_MIPMAP_NEAREST:
-            case GL_NEAREST_MIPMAP_LINEAR:
-                ret = GL_NEAREST;
-                break;
-            case GL_LINEAR_MIPMAP_NEAREST:
-            case GL_LINEAR_MIPMAP_LINEAR:
-                ret = GL_LINEAR;
-                break;
-        }
-    }
-    if(texture->valid && (texture->type==GL_FLOAT || texture->type==GL_HALF_FLOAT_OES)) {
-        // FLOAT textures have limited mipmap support in GLES2
-        ret = minmag_float(ret);
-    }
-    if(texture->valid && (texture->npot && globals4es.forcenpot)) {
-        // need to remove MIPMAP for npot if not supported in hardware
-        ret = minmag_forcenpot(ret);
-    }
-    return ret;
-}
-GLenum get_texture_wrap(GLenum wrap, gltexture_t* texture) {
-    switch (wrap) {
-        case GL_CLAMP:
-        case GL_CLAMP_TO_BORDER:
-            wrap = GL_CLAMP_TO_EDGE;
-            break;
-        case GL_REPEAT:
-        case GL_MIRRORED_REPEAT_OES:
-            if(globals4es.defaultwrap==2 && hardext.npot<3 && !texture->valid)
-                wrap = GL_CLAMP_TO_EDGE;
-            else if(hardext.esversion>1 && hardext.npot<3 && texture->valid
-                    && texture->npot) {
-                // should "upgrade" the texture to POT size...
-                //printf("Warning, REPEAT / MIRRORED_REPEAT on NPOT texture\n");
-                wrap = GL_CLAMP_TO_EDGE;   // repeat is not support on NPOT with limited_npot
-            }
-            break;
-    }
-    return wrap;
-}
-
-GLenum get_texture_wrap_s(gltexture_t* texture, glsampler_t *sampler) {
-    return get_texture_wrap(sampler->wrap_s, texture);
-}
-
-GLenum get_texture_wrap_t(gltexture_t* texture, glsampler_t *sampler) {
-    return get_texture_wrap(sampler->wrap_t, texture);
-}
-
-void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler_t* sampler)
-{
-    DBG(printf("realize_1texture(%s, %d, %p[%u], %p)\n", PrintEnum(target), wantedTMU, tex, tex->glname, sampler);)
+    DBG(SHUT_LOGD("realize_1texture(%s, %d, %p[%u], %p)\n", PrintEnum(target), wantedTMU, tex, tex->glname, sampler);)
     LOAD_GLES(glActiveTexture);
-    LOAD_GLES(glTexParameteri);
+    void gles_glTexParameteri(glTexParameteri_ARG_EXPAND); //LOAD_GLES(glTexParameteri);
     LOAD_GLES(glBindTexture);
     // check sampler stuff
     if(!sampler) sampler = &tex->sampler;
@@ -908,7 +784,7 @@ void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler
             if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
             wantedTMU=-2;
         }
-        DBG(printf("Adjusting %s[%d]:Texture[%u].min_filter = %s (binded=%u)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), glstate->actual_tex2d[TMU]);)
+        DBG(SHUT_LOGD("Adjusting %s[%d]:Texture[%u].min_filter = %s (binded=%u)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), glstate->actual_tex2d[TMU]);)
         if(glstate->gleshard->active!=TMU) {
             glstate->gleshard->active = TMU;
             gles_glActiveTexture(GL_TEXTURE0+TMU);
@@ -925,7 +801,7 @@ void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler
             if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
             wantedTMU=-2;
         }
-        DBG(printf("Adjusting %s[%d]:Texture[%u].mag_filter = %s (min=%s/%s)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), PrintEnum(sampler->min_filter), PrintEnum(tex->actual.min_filter));)
+        DBG(SHUT_LOGD("Adjusting %s[%d]:Texture[%u].mag_filter = %s (min=%s/%s)\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param), PrintEnum(sampler->min_filter), PrintEnum(tex->actual.min_filter));)
         if(glstate->gleshard->active!=TMU) {
             glstate->gleshard->active = TMU;
             gles_glActiveTexture(GL_TEXTURE0+TMU);
@@ -942,7 +818,7 @@ void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler
             if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
             wantedTMU=-2;
         }
-        DBG(printf("Adjusting %s[%d]:Texture[%u].wrap_s = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
+        DBG(SHUT_LOGD("Adjusting %s[%d]:Texture[%u].wrap_s = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
         if(glstate->gleshard->active!=TMU) {
             glstate->gleshard->active = TMU;
             gles_glActiveTexture(GL_TEXTURE0+TMU);
@@ -959,7 +835,7 @@ void realize_texture_2(GLenum target, int wantedTMU, gltexture_t* tex, glsampler
             if (oldtex!=tex->glname) gles_glBindTexture(GL_TEXTURE_2D, tex->glname);
             wantedTMU=-2;
         }
-        DBG(printf("Adjusting %s[%d]:Texture[%u].wrap_t = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
+        DBG(SHUT_LOGD("Adjusting %s[%d]:Texture[%u].wrap_t = %s\n", PrintEnum(target), TMU, tex->glname, PrintEnum(param));)
         if(glstate->gleshard->active!=TMU) {
             glstate->gleshard->active = TMU;
             gles_glActiveTexture(GL_TEXTURE0+TMU);
@@ -977,10 +853,11 @@ void realize_textures(int drawing) {
     LOAD_GLES(glDisable);
     LOAD_GLES(glBindTexture);
     LOAD_GLES(glActiveTexture);
+    void gles_glTexParameteri(glTexParameteri_ARG_EXPAND); //LOAD_GLES(glTexParameteri);
 #ifdef TEXSTREAM
-    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
+    DBG(SHUT_LOGD("realize_textures(%d), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u / glstate->bound_stream[0]=%u\n", drawing, glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0], glstate->bound_stream[0]);)
 #else
-    DBG(SHUT_LOGD("realize_textures(), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
+    DBG(SHUT_LOGD("realize_textures(%d), glstate->bound_changed=%d, glstate->enable.texture[0]=%X glsate->actual_tex2d[0]=%u\n", drawing, glstate->bound_changed, glstate->enable.texture[0], glstate->actual_tex2d[0]);)
 #endif
     for (int i=0; i<glstate->bound_changed; i++) {
         // get highest priority texture unit
@@ -995,76 +872,91 @@ void realize_textures(int drawing) {
         else if(IS_TEX1D(tmp))
             tgt = ENABLED_TEX1D;
         else if(IS_CUBE_MAP(tmp))
-            continue;   // CUBE MAP are immediatly bound
-#ifdef TEXSTREAM
-        if(glstate->bound_stream[i]) {
-            realize_active();
-            if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
-            DeactivateStreaming();
-            glstate->bound_stream[i] = 0;
-        }
-#endif
+            tgt = ENABLED_CUBE_MAP;
+
+        GLenum target = map_tex_target(to_target(tgt));
         gltexture_t *tex = glstate->texture.bound[i][tgt];
         GLuint t = tex->glname;
-        if (t!=glstate->actual_tex2d[i]
+        if(tgt!=ENABLED_CUBE_MAP) {// CUBE MAP are immediately bound
 #ifdef TEXSTREAM
-            || (glstate->bound_stream[i] != tex->streamed)
-#endif
-        ) {
-            if(glstate->gleshard->active!=i) {
-                glstate->gleshard->active = i;
-                gles_glActiveTexture(GL_TEXTURE0+i);
-            }
-#ifdef TEXSTREAM
-            int streamed = tex->streamed;
-            int streamingID = tex->streamingID;
             if(glstate->bound_stream[i]) {
+                realize_active();
                 if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
                 DeactivateStreaming();
-                if(hardext.esversion<2) gles_glEnable(GL_TEXTURE_2D);
                 glstate->bound_stream[i] = 0;
             }
-            if (globals4es.texstream && (streamingID>-1)) {
-                if (IS_ANYTEX(tmp) && hardext.esversion<2)
-                    gles_glDisable(GL_TEXTURE_2D);
-                ActivateStreaming(streamingID);
-                glstate->bound_stream[i] = 1;
-                glstate->actual_tex2d[i] = t;
-                if (IS_ANYTEX(tmp))
-                    gles_glEnable(GL_TEXTURE_STREAM_IMG);
-                continue;
-            }
+#endif
+            if (t!=glstate->actual_tex2d[i]
+#ifdef TEXSTREAM
+                || (glstate->bound_stream[i] != tex->streamed)
+#endif
+            ) {
+                if(glstate->gleshard->active!=i) {
+                    glstate->gleshard->active = i;
+                    gles_glActiveTexture(GL_TEXTURE0+i);
+                }
+#ifdef TEXSTREAM
+                int streamed = tex->streamed;
+                int streamingID = tex->streamingID;
+                if(glstate->bound_stream[i]) {
+                    if(hardext.esversion<2) gles_glDisable(GL_TEXTURE_STREAM_IMG);
+                    DeactivateStreaming();
+                    if(hardext.esversion<2) gles_glEnable(GL_TEXTURE_2D);
+                    glstate->bound_stream[i] = 0;
+                }
+                if (globals4es.texstream && (streamingID>-1)) {
+                    if (IS_ANYTEX(tmp) && hardext.esversion<2)
+                        gles_glDisable(GL_TEXTURE_2D);
+                    target = GL_TEXTURE_STREAM_IMG;
+                    ActivateStreaming(streamingID);
+                    glstate->bound_stream[i] = 1;
+                    glstate->actual_tex2d[i] = t;
+                    if (IS_ANYTEX(tmp))
+                        gles_glEnable(GL_TEXTURE_STREAM_IMG);
+                    continue;
+                }
 #endif
 
-            // bound...
-            gles_glBindTexture(GL_TEXTURE_2D, t);
-            glstate->actual_tex2d[i] = t;
-            // check, if drawing, if mipmap needs some special care...
-            if(drawing && tex->mipmap_need && !tex->mipmap_done) {
-                LOAD_GLES2_OR_OES(glGenerateMipmap);
-                gles_glGenerateMipmap(GL_TEXTURE_2D);
-                tex->mipmap_done = 1;
-                tex->mipmap_auto = 1;
+                // bound...
+                DBG(SHUT_LOGD("Binding %s/%s[%d]:Texture[%u] (sampler[%d]=%p)\n", PrintEnum(to_target(tgt)), PrintEnum(target), i, t, i, glstate->samplers.sampler[i]);)
+                gles_glBindTexture(GL_TEXTURE_2D, t);
+                glstate->actual_tex2d[i] = t;
             }
         }
+        // check, if drawing, if mipmap needs some special care...
+        if(drawing) {
+            if((globals4es.automipmap==3) || ((globals4es.automipmap==1) && (tex->mipmap_auto==0)) || (tex->compressed && (tex->mipmap_auto==0)))
+                tex->mipmap_need = 0;
+            else
+                tex->mipmap_need = (is_mipmap_needed(&tex->sampler) && (hardext.esversion!=1) && !tex->npot)?1:0;
+            if(tex->mipmap_need && !tex->mipmap_done) {
+                if(!tex->mipmap_auto) {
+                    // should check if glGenerateMipmap exist, and fall back to no mipmap if not
+                    LOAD_GLES2_OR_OES(glGenerateMipmap);
+                    gles_glGenerateMipmap(GL_TEXTURE_2D);
+                }
+                tex->mipmap_done = 1;
+            }
+        }
+        realize_1texture(target, i, tex, glstate->samplers.sampler[i]);
     }
     glstate->bound_changed = 0;
 }
 
 //Direct wrapper
-void glBindTexture(GLenum target, GLuint texture) AliasExport("gl4es_glBindTexture");
-void glGenTextures(GLsizei n, GLuint * textures) AliasExport("gl4es_glGenTextures");
-void glDeleteTextures(GLsizei n, const GLuint * textures) AliasExport("gl4es_glDeleteTextures");
-void glTexParameteri(GLenum target, GLenum pname, GLint param) AliasExport("gl4es_glTexParameteri");
-void glTexParameterf(GLenum target, GLenum pname, GLfloat param) AliasExport("gl4es_glTexParameterf");
-void glTexParameterfv(GLenum target, GLenum pname, const GLfloat * params) AliasExport("gl4es_glTexParameterfv");
-void glTexParameteriv(GLenum target, GLenum pname, const GLint * params) AliasExport("gl4es_glTexParameteriv");
-void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params) AliasExport("gl4es_glGetTexLevelParameteriv");
-GLboolean glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences) AliasExport("gl4es_glAreTexturesResident");
-void glActiveTexture( GLenum texture ) AliasExport("gl4es_glActiveTexture");
-void glClientActiveTexture( GLenum texture ) AliasExport("gl4es_glClientActiveTexture");
-void glPixelStorei(GLenum pname, GLint param) AliasExport("gl4es_glPixelStorei");
+AliasExport(void,glBindTexture,,(GLenum target, GLuint texture));
+AliasExport(void,glGenTextures,,(GLsizei n, GLuint * textures));
+AliasExport(void,glDeleteTextures,,(GLsizei n, const GLuint * textures));
+AliasExport(void,glTexParameteri,,(GLenum target, GLenum pname, GLint param));
+AliasExport(void,glTexParameterf,,(GLenum target, GLenum pname, GLfloat param));
+AliasExport(void,glTexParameterfv,,(GLenum target, GLenum pname, const GLfloat * params));
+AliasExport(void,glTexParameteriv,,(GLenum target, GLenum pname, const GLint * params));
+AliasExport(void,glGetTexLevelParameterfv,,(GLenum target, GLint level, GLenum pname, GLint *params));
+AliasExport(GLboolean,glAreTexturesResident,,(GLsizei n, const GLuint *textures, GLboolean *residences));
+AliasExport(void,glActiveTexture,,( GLenum texture ));
+AliasExport(void,glClientActiveTexture,,( GLenum texture ));
+AliasExport(void,glPixelStorei,,(GLenum pname, GLint param));
 
 //ARB mapper
-void glActiveTextureARB(GLenum texture) AliasExport("gl4es_glActiveTexture");
-void glClientActiveTextureARB(GLenum texture) AliasExport("gl4es_glClientActiveTexture");
+AliasExport(void,glActiveTexture,ARB,(GLenum texture));
+AliasExport(void,glClientActiveTexture,ARB,(GLenum texture));

@@ -1,6 +1,8 @@
 #include "list.h"
 
+#include "../glx/hardext.h"
 #include "gl4es.h"
+#include "glstate.h"
 #include "init.h"
 #include "matrix.h"
 
@@ -23,6 +25,54 @@ static inline void rlVertexCommon(renderlist_t *list, int idx, int l) {
     if (list->tex[1])   memcpy(list->tex[1] + idx, glstate->texcoord[1], sizeof(GLfloat) * 4);
     for (int a=2; a<list->maxtex; a++)
         if (list->tex[a])   memcpy(list->tex[a] + (l * 4), glstate->texcoord[a], sizeof(GLfloat) * 4);
+}
+
+void FASTMATH rlVertexP4uiv(renderlist_t* list, GLuint* p) {
+    const int idx = (list->use_glstate) ? (list->len * 4 * 4) : (list->len * 4);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p[0]; vert[1] = p[1]; vert[2] = p[2]; vert[3] = p[3];
+}
+
+void FASTMATH rlVertexP3uiv(renderlist_t* list, GLuint* p) {
+    const int idx = (list->use_glstate) ? (list->len * 3 * 4) : (list->len * 3);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p[0]; vert[1] = p[1]; vert[2] = p[2];
+}
+
+void FASTMATH rlVertexP2uiv(renderlist_t* list, GLuint* p) {
+    const int idx = (list->use_glstate) ? (list->len * 2 * 4) : (list->len * 2);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p[0]; vert[1] = p[1];
+}
+
+void FASTMATH rlVertexP4ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3, GLuint p4) {
+    const int idx = (list->use_glstate) ? (list->len * 4 * 4) : (list->len * 4);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p1; vert[1] = p2; vert[2] = p3; vert[3] = p4;
+}
+
+void FASTMATH rlVertexP3ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3) {
+    const int idx = (list->use_glstate) ? (list->len * 3 * 4) : (list->len * 3);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p1; vert[1] = p2; vert[2] = p3;
+}
+
+void FASTMATH rlVertexP2ui(renderlist_t* list, GLuint p1, GLuint p2) {
+    const int idx = (list->use_glstate) ? (list->len * 2 * 4) : (list->len * 2);
+    rlVertexCommon(list, idx, list->len);
+    ++list->len;
+    GLuint* const vert = (GLuint*)list->vert + idx;
+    vert[0] = p1; vert[1] = p2;
 }
 
 void FASTMATH rlVertex4f(renderlist_t *list, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
@@ -51,55 +101,6 @@ void FASTMATH rlVertex4fv(renderlist_t *list, GLfloat* v) {
     memcpy(vert, v, 4*sizeof(GLfloat));
 }
 
-void FASTMATH rlVertexP4uiv(renderlist_t* list, GLuint* p) {
-    const int idx = (list->use_glstate) ? (list->len * 4 * 4) : (list->len * 4);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p[0]; vert[1] = p[1]; vert[2] = p[2]; vert[3] = p[3];
-}
-
-void FASTMATH rlVertexP3uiv(renderlist_t* list, GLuint* p) {
-    const int idx = (list->use_glstate) ? (list->len * 3 * 4) : (list->len * 3);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p[0]; vert[1] = p[1]; vert[2] = p[2];
-}
-void FASTMATH rlVertexP2uiv(renderlist_t* list, GLuint* p) {
-    const int idx = (list->use_glstate) ? (list->len * 2 * 4) : (list->len * 2);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p[0]; vert[1] = p[1];
-}
-void FASTMATH rlVertexP4ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3, GLuint p4) {
-    const int idx = (list->use_glstate) ? (list->len * 4 * 4) : (list->len * 4);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p1; vert[1] = p2; vert[2] = p3; vert[3] = p4;
-}
-void FASTMATH rlVertexP3ui(renderlist_t* list, GLuint p1, GLuint p2, GLuint p3) {
-    const int idx = (list->use_glstate) ? (list->len * 3 * 4) : (list->len * 3);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p1; vert[1] = p2; vert[2] = p3;
-}
-void FASTMATH rlVertexP2ui(renderlist_t* list, GLuint p1, GLuint p2) {
-    const int idx = (list->use_glstate) ? (list->len * 2 * 4) : (list->len * 2);
-    rlVertexCommon(list, idx, list->len);
-    ++list->len;
-
-    GLuint* const vert = (GLuint*)list->vert + idx;
-    vert[0] = p1; vert[1] = p2;
-}
 void rlEnd(renderlist_t *list) {
     // adjust number of vertex, to remove extra vertex
     int adj = list->len - list->cur_istart;

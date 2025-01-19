@@ -1,6 +1,8 @@
 #ifndef _GL_LOOKUP_H_
 #define _GL_LOOKUP_H_
 
+#include "attributes.h"
+
 #ifdef DEBUG
 #define MAP(func_name, func) \
     if (strcmp(name, func_name) == 0) {printf("%p (%s)\n", (void*)func, #func) ;return (void *)func;}
@@ -28,7 +30,7 @@
 #ifdef DEBUG
 #define STUB(func_name)                       \
     if (strcmp(name, #func_name) == 0) {      \
-        printf("=> STUB\n");                  \
+        SHUT_LOGD("=> STUB\n");                  \
         if(!globals4es.silentstub) LOGD("GL4ES stub: %s\n", #func_name); \
         return (void *)STUB_FCT;              \
     }
@@ -40,6 +42,6 @@
     }
 #endif
 
-void *gl4es_GetProcAddress(const char *name);
+NonAliasExportDecl(void*,gl4es_GetProcAddress,(const char *name));
 
 #endif //_GL_LOOKUP_H_

@@ -104,7 +104,7 @@ typedef struct {
     gltexture_t *bound[MAX_TEX][ENABLED_TEXTURE_LAST];  //TODO: this should be shared
     gltexture_t *zero;  // this is texture 0...
     GLboolean pscoordreplace[MAX_TEX];
-    khash_t(tex) *list;     // this is shared amoung glstate
+    khash_t(tex) *list;     // this is shared among glstate
     GLuint active;	// active texture
 	GLuint client;	// client active texture
 } texture_state_t;
@@ -330,7 +330,7 @@ typedef struct {
 typedef struct {
     GLenum      func;
     GLboolean   mask;
-    GLfloat     near, far;
+    GLfloat     Near, Far;
     GLfloat     clear;
 } depth_state_t;
 
@@ -344,10 +344,12 @@ typedef struct {
 KHASH_MAP_DECLARE_INT(samplerlist_t, glsampler_t *);
 
 typedef struct {
-	khash_t(samplerlist_t) *samplerlist;
-	glsampler_t*    sampler[MAX_TEX];
-	GLuint          last_sampler;
+    khash_t(samplerlist_t) *samplerlist;
+    glsampler_t*    sampler[MAX_TEX];
+    GLuint          last_sampler;
 } samplers_t;
+
+// queries
 
 typedef struct {
     GLuint id;
@@ -373,5 +375,6 @@ typedef struct {
     GLuint copy_write;
 	GLuint copy_read;
 } bind_buffers_t;
+
 
 #endif // _GL4ES_STATE_H_

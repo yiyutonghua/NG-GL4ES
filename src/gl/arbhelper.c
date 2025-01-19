@@ -360,7 +360,7 @@ int appendString(sCurStatus *curStatusPtr, const char *str, size_t strLen) {
 	}
 	
 	ARBCONV_DBG_HEAVY(ARBCONV_DBG(
-	char *dup = malloc((strLen + 1) * sizeof(char)); memcpy(dup, str, strLen); dup[strLen] = '\0'; printf(
+	char *dup = malloc((strLen + 1) * sizeof(char)); memcpy(dup, str, strLen); dup[strLen] = '\0'; SHUT_LOGD(
 		"Appending '%s' to %p (%p + %ld = %p)\n",
 		dup,
 		curStatusPtr->outputEnd,

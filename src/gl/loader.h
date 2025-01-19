@@ -52,6 +52,12 @@ typedef EGLBoolean (*eglUnlockSurfaceKHR_PTR)(EGLDisplay display, EGLSurface sur
 typedef EGLBoolean (*eglWaitClient_PTR)();
 typedef EGLBoolean (*eglWaitGL_PTR)();
 typedef EGLBoolean (*eglWaitNative_PTR)(EGLint engine);
+typedef EGLSyncKHR (*eglCreateSyncKHR_PTR)(EGLDisplay dpy, EGLenum type, const EGLint * attrib_list);
+typedef EGLSyncKHR (*eglDestroySyncKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync);
+typedef EGLint (*eglClientWaitSyncKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout);
+
+typedef NativePixmapType (*egl_create_pixmap_ID_mapping_PTR)(void *pixmap);
+typedef NativePixmapType (*egl_destroy_pixmap_ID_mapping_PTR)(int id);
 #ifdef TEXSTREAM
 typedef EGLSurface (*eglCreatePixmapSurfaceHI_PTR)(EGLDisplay dpy, EGLConfig config, struct EGLClientPixmapHI * pixmap);
 typedef EGLBoolean (*eglDestroyImageKHR_PTR)(EGLDisplay dpy, EGLImageKHR image);
@@ -59,8 +65,7 @@ typedef EGLBoolean (*eglDestroyStreamKHR_PTR)(EGLDisplay dpy, EGLStreamKHR strea
 typedef EGLImageKHR (*eglCreateImageKHR_PTR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint * attrib_list);
 typedef EGLStreamKHR (*eglCreateStreamFromFileDescriptorKHR_PTR)(EGLDisplay dpy, EGLNativeFileDescriptorKHR file_descriptor);
 typedef EGLStreamKHR (*eglCreateStreamKHR_PTR)(EGLDisplay dpy, const EGLint * attrib_list);
-typedef EGLSyncKHR (*eglCreateSyncKHR_PTR)(EGLDisplay dpy, EGLenum type, const EGLint * attrib_list);
-typedef EGLBoolean (*eglDestroySyncKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync);
+typedef EGLSyncKHR (*eglDestroySyncKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync);
 typedef EGLBoolean (*eglSignalSyncKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync, EGLenum mode);
 typedef EGLBoolean (*eglGetSyncAttribKHR_PTR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint attribute, EGLint * value);
 typedef EGLBoolean (*eglStreamAttribKHR_PTR)(EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLint value);
@@ -78,30 +83,47 @@ typedef EGLSurface (*eglCreateStreamProducerSurfaceKHR_PTR)(EGLDisplay dpy, EGLC
 
 #ifdef AMIGAOS4
 #include "../agl/amigaos.h"
-#else
+#elif !defined(_WIN32)
 #include <dlfcn.h>
+#else
+#ifndef _WINBASE_
+typedef struct HISTANCE__* HISTANCE;
+typedef intptr_t (__stdcall* FPROC)();
+__declspec(dllimport)
+FPROC __stdcall GetProcAddress(HISTANCE, const char*);
+#endif
+#ifdef _MSC_VER
+__forceinline
+#elif defined(__GNUC__)
+__attribute__((always_inline)) __inline
+#endif
+static void* dlsym(void* __restrict handle, const char* __restrict symbol)
+{ return (void*)GetProcAddress(handle, symbol); }
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../glx/hardext.h"
-extern void *(*gles_getProcAddress)(const char *name);
-extern void (*gl4es_getMainFBSize)(GLint* width, GLint* height);
-void *proc_address(void *lib, const char *name);
+extern void* (APIENTRY_GL4ES *gles_getProcAddress)(const char *name);
+extern void (APIENTRY_GL4ES *gl4es_getMainFBSize)(GLint* width, GLint* height);
+NonAliasExportDecl(void*,proc_address,(void *lib, const char *name));
 // will become references to dlopen'd gles and egl
-extern void *gles, *egl, *bcm_host, *vcos, *gbm, *drm;
+extern void *gles, *bcm_host, *vcos, *gbm, *drm;
+EXPORT extern void *egl;
 #if defined __APPLE__ || defined __EMSCRIPTEN__
 #define NO_LOADER
 #endif
 
-#define WARN_NULL(name) if (name == NULL) { LOGD("warning, %s line %d function %s: " #name " is NULL\n", __FILE__, __LINE__, __func__); }
+#define WARN_NULL(name) if (name == NULL) LOGD("warning, %s line %d function %s: " #name " is NULL\n", __FILE__, __LINE__, __func__);
+
+#define MSVC_SPC(MACRO, ARGS) MACRO ARGS
 
 #define PUSH_IF_COMPILING_EXT(nam, ...)             \
     if (glstate->list.active) {                     \
         if (!glstate->list.pending) { \
             NewStage(glstate->list.active, STAGE_GLCALL);   \
-            push_##nam(__VA_ARGS__);                \
+            MSVC_SPC(push_##nam, (__VA_ARGS__));            \
             noerrorShim();							\
             return (nam##_RETURN)0;                 \
         }                                           \
@@ -168,8 +190,8 @@ extern void *gles, *egl, *bcm_host, *vcos, *gbm, *drm;
 #define LOAD_LIB_ALT(lib, alt, name) DEFINE_RAW(lib, name); LOAD_RAW_ALT(lib, alt, name, proc_address(lib, #name))
 
 #define LOAD_GLES(name)         LOAD_LIB(gles, name)
-#define LOAD_GLES2(name)        LOAD_LIB_SILENT(gles, name)
-#define LOAD_GLES3(name)        LOAD_GLES2(name)
+#define LOAD_GLES2(name)        LOAD_LIB(gles, name)
+#define LOAD_GLES3(name)        LOAD_LIB(gles, name)
 #define LOAD_GLES_OR_FPE(name)  LOAD_LIB_ALT(gles, fpe, name)
 
 #define LOAD_GLES_FPE(name) \
@@ -232,7 +254,6 @@ extern void *gles, *egl, *bcm_host, *vcos, *gbm, *drm;
 #endif // defined(AMIGAOS4) || defined(NOEGL)
 
 #endif // _GL4ES_LOADER_H_
-
 #ifdef __cplusplus
 }
 #endif

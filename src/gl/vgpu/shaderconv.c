@@ -18,6 +18,7 @@ int NO_OPERATOR_VALUE = 9999;
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 // 辅助函数：解析并提取浮点数数组（用于 mat2, mat3, mat4, vec2, vec3, vec4 类型的处理）
 int parse_floats_from_string(const char* str, GLfloat* outValues, int maxCount) {
@@ -65,7 +66,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
         GLint location = glGetUniformLocation(program, uniform->variable);
 
         if (location == -1) {
-            printf("Uniform variable %s not found in shader program.\n", uniform->variable);
+            SHUT_LOGD("Uniform variable %s not found in shader program.\n", uniform->variable);
             continue;
         }
 
@@ -77,7 +78,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniformMatrix4fv(location, 1, GL_FALSE, matValues);
             }
             else {
-                printf("Invalid mat4 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid mat4 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "mat3") != NULL) {
@@ -88,7 +89,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniformMatrix3fv(location, 1, GL_FALSE, matValues);
             }
             else {
-                printf("Invalid mat3 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid mat3 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "mat2") != NULL) {
@@ -99,7 +100,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniformMatrix2fv(location, 1, GL_FALSE, matValues);
             }
             else {
-                printf("Invalid mat2 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid mat2 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "vec4") != NULL) {
@@ -110,7 +111,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniform4fv(location, 1, vecValues);
             }
             else {
-                printf("Invalid vec4 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid vec4 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "vec3") != NULL) {
@@ -122,7 +123,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniform3fv(location, 1, vecValues);
             }
             else {
-                printf("Invalid vec3 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid vec3 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "vec2") != NULL) {
@@ -133,7 +134,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniform2fv(location, 1, vecValues);
             }
             else {
-                printf("Invalid vec2 initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid vec2 initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "float") != NULL) {
@@ -150,7 +151,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
                 glUniform1i(location, value);
             }
             else {
-                printf("Invalid bool initial value for uniform %s\n", uniform->variable);
+                SHUT_LOGD("Invalid bool initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "sampler2D") != NULL) {
@@ -296,7 +297,7 @@ char * ConvertShaderConditionally(struct shader_s * shader_source){
 char * ConvertShaderVgpu(struct shader_s * shader_source){
 
     if (globals4es.vgpu_dump){
-        printf("New VGPU Shader source:\n%s\n", shader_source->converted);
+        SHUT_LOGD("New VGPU Shader source:\n%s\n", shader_source->converted);
     }
 
     // Get the shader source
@@ -326,7 +327,7 @@ char * ConvertShaderVgpu(struct shader_s * shader_source){
             source = ReplaceModOperator(source, &sourceLength);
 
             if (globals4es.vgpu_dump){
-                printf("New VGPU Shader conversion:\n%s\n", source);
+                SHUT_LOGD("New VGPU Shader conversion:\n%s\n", source);
             }
 
             return source;
@@ -334,7 +335,7 @@ char * ConvertShaderVgpu(struct shader_s * shader_source){
 
         // Else, skip the conversion
         if (globals4es.vgpu_dump){
-            printf("SKIPPING OLD SHADER CONVERSION \n%s\n", source);
+            SHUT_LOGD("SKIPPING OLD SHADER CONVERSION \n%s\n", source);
         }
         return source;
     }
@@ -414,7 +415,7 @@ char * ConvertShaderVgpu(struct shader_s * shader_source){
     source = ProcessSwitchCases(source, &sourceLength);
 
     if (globals4es.vgpu_dump){
-        printf("New VGPU Shader conversion:\n%s\n", source);
+        SHUT_LOGD("New VGPU Shader conversion:\n%s\n", source);
     }
 
     return source;
@@ -464,7 +465,7 @@ char* FindAndCorrect(char* source, int* length, int mode) {
             char   decltemplate_formatted[VARIABLE_SIZE];
             float  declared_value = 99;
             snprintf(decltemplate_formatted, VARIABLE_SIZE, declaration_template, template_string, "%f");
-            printf("Scanning with template %s\n", decltemplate_formatted);
+            SHUT_LOGD("Scanning with template %s\n", decltemplate_formatted);
             char* scanbase = source;
             while(1) {
                int result = sscanf(scanbase, decltemplate_formatted, &declared_value);
@@ -472,7 +473,7 @@ char* FindAndCorrect(char* source, int* length, int mode) {
                   scanbase++;
                   continue;
                }else if(result == EOF) {
-                  printf("Scanned the whole shader and didn't find declaration for %s with template \"%s\"\n", template_string, decltemplate_formatted);
+                  SHUT_LOGD("Scanned the whole shader and didn't find declaration for %s with template \"%s\"\n", template_string, decltemplate_formatted);
                   abort();
                }
               break;
@@ -1323,7 +1324,7 @@ char * ReplacePrecisionQualifiers(char * source, int * sourceLength, int isVerte
 
     if(!doesShaderVersionContainsES(source)){
         if (globals4es.vgpu_dump) {
-            printf("\nSKIPPING the replacement qualifiers step\n");
+            SHUT_LOGD("\nSKIPPING the replacement qualifiers step\n");
         }
         return source;
     }
@@ -1424,9 +1425,9 @@ int GetClosingTokenPositionTokenOverride(const char * source, int initialTokenPo
     // Step 1: Determine the closing token
     char openingToken = initialToken;
     char * closingTokens = GetClosingTokens(openingToken);
-    printf("Closing tokens: %s", closingTokens);
+    SHUT_LOGD("Closing tokens: %s", closingTokens);
     if (strlen(closingTokens) == 0){
-        printf("No closing tokens, somehow \n");
+        SHUT_LOGD("No closing tokens, somehow \n");
         return initialTokenPosition;
     }
 
@@ -1444,7 +1445,7 @@ int GetClosingTokenPositionTokenOverride(const char * source, int initialTokenPo
             continue;
         }
     }
-    printf("No closing tokens 2 , somehow \n");
+    SHUT_LOGD("No closing tokens 2 , somehow \n");
     return initialTokenPosition; // Nothing found
 }
 

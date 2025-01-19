@@ -49,6 +49,7 @@ typedef struct _globals4es {
     int minbatch;
     int maxbatch;
     int es;
+    unsigned int esversion;
     int gl;
     int usevbo;
     int comments;
@@ -56,6 +57,7 @@ typedef struct _globals4es {
     int fbomakecurrent;    // hack to bind/unbind FBO when doing glXMakeCurrent
     int fbounbind;         // hack to bind/unbind fbo if a bind texture is used for drawing
     int fboforcetex;       // force texture attachment for Color0
+    int blitfullscreen;    // a "fullscreen" blit to FB0 means SwapBuffers
     int notexarray;
     int nodepthtex;
     int logshader;
@@ -64,24 +66,29 @@ typedef struct _globals4es {
     int glxrecycle;
     int noclean;
     int dbgshaderconv;
-    int vgpu_dump;         // Whether vgpu dumps the shader input and output.
-    int vgpu_force_conv;   // Whether vgpu is forced to convert all shaders
-    int vgpu_precision;    // The level of precision used by vgpu
-    int vgpu_backport;     // Whether we try hard to backport shaders to #version 100
     int nopsa;
     int noes2;
     int nointovlhack;
     int noshaderlod;
     int fbo_noalpha;
+    int noarbprogram;      // to disable ARB Program
     int glxnative;
+    int normalize;         // force normal normalization (workaround a bug)
+    int blitfb0;
+    int skiptexcopies;
+    int shaderblend;
+    int deepbind;
+    float fbtexscale;
     #ifndef NO_GBM
     char drmcard[50];
     #endif
     char version[50];
     int use_mc_color;
-    int skiptexcopies;
-    float fbtexscale;
-    uint esversion;
+    int vgpu_dump;         // Whether vgpu dumps the shader input and output.
+    int vgpu_force_conv;   // Whether vgpu is forced to convert all shaders
+    int vgpu_precision;    // The level of precision used by vgpu
+    int vgpu_backport;     // Whether we try hard to backport shaders to #version 100
+
 } globals4es_t;
 
 extern globals4es_t globals4es;

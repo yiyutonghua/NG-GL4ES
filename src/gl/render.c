@@ -39,7 +39,7 @@ void push_hit() {
 }
 
 
-GLint gl4es_glRenderMode(GLenum mode) {
+GLint APIENTRY_GL4ES gl4es_glRenderMode(GLenum mode) {
 	if(glstate->list.compiling) {errorShim(GL_INVALID_OPERATION); return 0;}
 	FLUSH_BEGINEND;
 
@@ -73,7 +73,7 @@ GLint gl4es_glRenderMode(GLenum mode) {
 	return ret;
 }
 
-void gl4es_glInitNames() {
+void APIENTRY_GL4ES gl4es_glInitNames(void) {
 	if(glstate->list.active) {
 		NewStage(glstate->list.active, STAGE_RENDER);
 		glstate->list.active->render_op = 1;
@@ -87,7 +87,7 @@ void gl4es_glInitNames() {
     noerrorShim();
 }
 
-void gl4es_glPopName() {
+void APIENTRY_GL4ES gl4es_glPopName(void) {
 	FLUSH_BEGINEND;
 	if(glstate->list.active) {
 		NewStage(glstate->list.active, STAGE_RENDER);
@@ -104,7 +104,7 @@ void gl4es_glPopName() {
         errorShim(GL_STACK_UNDERFLOW);
 }
 
-void gl4es_glPushName(GLuint name) {
+void APIENTRY_GL4ES gl4es_glPushName(GLuint name) {
 	FLUSH_BEGINEND;
 	if(glstate->list.active) {
 		NewStage(glstate->list.active, STAGE_RENDER);
@@ -123,7 +123,7 @@ void gl4es_glPushName(GLuint name) {
 	}
 }
 
-void gl4es_glLoadName(GLuint name) {
+void APIENTRY_GL4ES gl4es_glLoadName(GLuint name) {
 	FLUSH_BEGINEND;
 	if(glstate->list.active) {
 		NewStage(glstate->list.active, STAGE_RENDER);
@@ -139,10 +139,10 @@ void gl4es_glLoadName(GLuint name) {
     push_hit();
     if (glstate->namestack.top == 0)
         return;
-	glstate->namestack.names[glstate->namestack.top-1] = name;
+    glstate->namestack.names[glstate->namestack.top-1] = name;
 }
 
-void gl4es_glSelectBuffer(GLsizei size, GLuint *buffer) {
+void APIENTRY_GL4ES gl4es_glSelectBuffer(GLsizei size, GLuint *buffer) {
     FLUSH_BEGINEND;
 		
     noerrorShim();
@@ -415,11 +415,12 @@ void select_glDrawElements(const vertexattrib_t* vtx, GLenum mode, GLuint count,
 					break;
 				case GL_TRIANGLE_FAN:
 					if (i>1) {
-						if (select_triangle_in_viewscreen(vert+sind[0]*4, vert+sind[(i-1)]*4, vert+sind[i]*4))
+						if (select_triangle_in_viewscreen(vert+sind[0]*4, vert+sind[(i-1)]*4, vert+sind[i]*4)) {
 							ZMinMax(&zmin, &zmax, vert+sind[0]*4);
 							ZMinMax(&zmin, &zmax, vert+sind[i-1]*4);
 							ZMinMax(&zmin, &zmax, vert+sind[i]*4);
 							FOUND();
+						}	
 					}
 					break;
 				default:
@@ -476,11 +477,12 @@ void select_glDrawElements(const vertexattrib_t* vtx, GLenum mode, GLuint count,
 					break;
 				case GL_TRIANGLE_FAN:
 					if (i>1) {
-						if (select_triangle_in_viewscreen(vert+iind[0]*4, vert+iind[(i-1)]*4, vert+iind[i]*4))
+						if (select_triangle_in_viewscreen(vert+iind[0]*4, vert+iind[(i-1)]*4, vert+iind[i]*4)) {
 							ZMinMax(&zmin, &zmax, vert+iind[0]*4);
 							ZMinMax(&zmin, &zmax, vert+iind[i-1]*4);
 							ZMinMax(&zmin, &zmax, vert+iind[i]*4);
 							FOUND();
+						}
 					}
 					break;
 				default:
@@ -498,9 +500,9 @@ void select_glDrawElements(const vertexattrib_t* vtx, GLenum mode, GLuint count,
 }
 
 //Direct wrapper
-GLint glRenderMode(GLenum mode) AliasExport("gl4es_glRenderMode");
-void glInitNames() AliasExport("gl4es_glInitNames");
-void glPopName() AliasExport("gl4es_glPopName");
-void glPushName(GLuint name) AliasExport("gl4es_glPushName");
-void glLoadName(GLuint name) AliasExport("gl4es_glLoadName");
-void glSelectBuffer(GLsizei size, GLuint *buffer) AliasExport("gl4es_glSelectBuffer");
+AliasExport(GLint,glRenderMode,,(GLenum mode));
+AliasExport_V(void,glInitNames);
+AliasExport_V(void,glPopName);
+AliasExport(void,glPushName,,(GLuint name));
+AliasExport(void,glLoadName,,(GLuint name));
+AliasExport(void,glSelectBuffer,,(GLsizei size, GLuint *buffer));

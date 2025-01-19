@@ -255,6 +255,193 @@ static const hack_t gl4es_hacks[] = {
 {"vec2 offset = direction * j;",
 1,{"vec2 offset = direction * float(j);"}},
 
+// for Silver
+{"#version 140\r\n"
+"\r\n"
+"out vec2 var_uv;\r\n"
+"in vec4 sg3d_position0;\r\n"
+"void main()\r\n"
+"{\r\n"
+"\tgl_Position = sg3d_position0;\r\n"
+"\tvar_uv=sg3d_position0.xy*0.5+0.5;\r\n"
+"}\r\n",
+1, {
+"#version 120\n"
+"\n"
+"varying vec2 var_uv;\n"
+"attribute vec4 sg3d_position0;\n"
+"void main()\n"
+"{\n"
+"\tgl_Position = sg3d_position0;\n"
+"\tvar_uv=sg3d_position0.xy*0.5+0.5;\n"
+"}\n"
+}},
+
+{"#version 140\r\n"
+"\r\n"
+"in vec2 var_uv;\r\n"
+"out vec4 var_out;\r\n"
+"uniform vec4 var_param;\r\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE;\r\n"
+"void main()\r\n"
+"{\r\n"
+"\tvar_out = texture(SG3D_TEXTURE_DIFFUSE, var_uv)*var_param;\r\n"
+"}\r\n",
+1, {"#version 120\n"
+"\n"
+"varying vec2 var_uv;\n"
+"#define var_out gl_FragColor\n"
+"uniform vec4 var_param;\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE;\n"
+"void main()\n"
+"{\n"
+"\tvar_out = texture2D(SG3D_TEXTURE_DIFFUSE, var_uv)*var_param;\n"
+"}\n"
+}},
+
+{"#version 140\r\n"
+"\r\n"
+"in vec2 var_uv;\r\n"
+"out vec4 var_out;\r\n"
+"uniform vec4 var_param;\r\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE;\r\n"
+"void main()\r\n"
+"{\r\n"
+"\tvar_out = (texture(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy*-7.0)*55.0+\r\n"
+"\t\t\ttexture(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy*-3.0)*330.0+\r\n"
+"\t\t\ttexture(SG3D_TEXTURE_DIFFUSE, var_uv)*252.0+\r\n"
+"\t\t\ttexture(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy* 3.0)*330.0+\r\n"
+"\t\t\ttexture(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy* 7.0)*55.0)/1022.0;\r\n"
+"}\r\n",
+1, {"#version 120\n"
+"\n"
+"varying vec2 var_uv;\n"
+"#define var_out gl_FragColor\n"
+"uniform vec4 var_param;\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE;\n"
+"void main()\n"
+"{\n"
+"\tvar_out = (texture2D(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy*-7.0)*55.0+\n"
+"\t\t\ttexture2D(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy*-3.0)*330.0+\n"
+"\t\t\ttexture2D(SG3D_TEXTURE_DIFFUSE, var_uv)*252.0+\n"
+"\t\t\ttexture2D(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy* 3.0)*330.0+\n"
+"\t\t\ttexture2D(SG3D_TEXTURE_DIFFUSE, var_uv+var_param.xy* 7.0)*55.0)/1022.0;\n"
+"}\n"
+}},
+
+{"#version 140\r\n"
+"\r\n"
+"in vec2 var_uv;\r\n"
+"out vec4 var_out;\r\n"
+"uniform vec4 var_param;\r\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE0;\r\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE1;\r\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE2;\r\n"
+"\r\n"
+"const mat3 yuv2rgb =   mat3(1,0,1.596,1,-0.391,-0.813,1,2.018,0);\r\n"
+"\r\n"
+"void main()\r\n"
+"{\r\n"
+"\tfloat y=texture(SG3D_TEXTURE_DIFFUSE0, var_uv).x;\r\n"
+"\tfloat u=texture(SG3D_TEXTURE_DIFFUSE1, var_uv).x;\r\n"
+"\tfloat v=texture(SG3D_TEXTURE_DIFFUSE2, var_uv).x;\r\n"
+"\r\n"
+"\tvec3 rgb=vec3(1.1643*(y-0.0625), u-0.5, v-0.5)*yuv2rgb;\r\n"
+"\tvar_out = vec4(rgb, 1.0)*var_param;\r\n"
+"}\r\n",
+1, {"#version 120\n"
+"\n"
+"varying vec2 var_uv;\n"
+"#define var_out gl_FragColor\n"
+"uniform vec4 var_param;\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE0;\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE1;\n"
+"uniform sampler2D SG3D_TEXTURE_DIFFUSE2;\n"
+"\n"
+"const mat3 yuv2rgb =   mat3(1.0,0.0,1.596,1.0,-0.391,-0.813,1.0,2.018,0.0);\n"
+"\n"
+"void main()\n"
+"{\n"
+"\tfloat y=texture2D(SG3D_TEXTURE_DIFFUSE0, var_uv).x;\n"
+"\tfloat u=texture2D(SG3D_TEXTURE_DIFFUSE1, var_uv).x;\n"
+"\tfloat v=texture2D(SG3D_TEXTURE_DIFFUSE2, var_uv).x;\n"
+"\n"
+"\tvec3 rgb=vec3(1.1643*(y-0.0625), u-0.5, v-0.5)*yuv2rgb;\n"
+"\tvar_out = vec4(rgb, 1.0)*var_param;\n"
+"}\n"
+}},
+
+// for Eldritch
+{"float\tFogOffsetU\t= 0.5f / FogTexSize;\r\n"
+"float\tFogScaleU\t= ( FogTexSize - 1.0f ) / FogTexSize;\r\n",
+3, {"float   FogOffsetU;\r\n"
+"float   FogScaleU;\r\n",
+"void main()\r\n"
+"{\r\n",
+"void main()\r\n"
+"{\r\n"
+"\tFogOffsetU = 0.5 / FogTexSize;\r\n"
+"\tFogScaleU  = ( FogTexSize - 1.0 ) / FogTexSize;\r\n"
+}},
+// for KiCAD
+{"        float derivative   = length( dFdx( tex ) ) * u_fontTextureWidth / 4;\n",
+1, {"        float derivative   = length( dFdx( tex ) ) * float(u_fontTextureWidth) / 4.0;\n"}},
+{"        delta = vec4( 0, 2 * pixelR, 0, 0 );\n",
+1, {"        delta = vec4( 0, 2.0 * pixelR, 0, 0 );\n"}},
+// for Iconoclasts
+// Disable hotspot shaders 1
+#ifdef GOA_CLONE
+{
+    "void main()\n"
+    "{\n"
+    "    vec4 p = texture2D(texture, texture_coordinate0);\n"
+    "    float factor = (0.5 - p.r) * magnification;\n"
+    "    vec2 t = texture_coordinate1;\n"
+    "    t.x += (t.x - hotspotX) * factor;\n"
+    "    t.y += (t.y - hotspotY) * factor;\n"
+    "    gl_FragColor = sample_backtex(background_texture, t) * gl_Color;\n"
+    "}",
+    1,
+    {
+    "void main() { discard; }"
+    }
+},
+// Disable hotspot shaders 2
+{
+    "void main()\n"
+    "{\n"
+    "    vec4 p = texture2D(texture, texture_coordinate0) * gl_Color;\n"
+    "    if (p.a != 0.0) {\n"
+    "        float zoomFactor = (0.0 - (p.r + p.g + p.b) / 3.0) * magnification;\n"
+    "        vec2 t = texture_coordinate1;\n"
+    "        t.x += (t.x - hotspotX + offx / texture_size.x) * zoomFactor;\n"
+    "        t.y += (t.y - hotspotY + offy / texture_size.y) * zoomFactor;\n"
+    "        gl_FragColor = sample_backtex(background_texture, t);\n"
+    "        return;\n"
+    "    }\n"
+    "    gl_FragColor = p;\n"
+    "}",
+    1,
+    {
+    "void main() { discard; }"
+    }
+},
+// Disable hotspot shaders 3
+{
+    "void main()\n"
+    "{\n"
+    "    vec4 p = texture2D(texture, texture_coordinate0) * gl_Color;\n"
+    "    float factor = (0.0 - (p.r + p.g + p.b) / 3.0) * magnification;\n"
+    "    vec2 t = background_offset.xy - texture_coordinate1 * \n"
+    "                                    (background_offset.xy * 2.0 - vec2(1.0));\n"
+    "    t.x += (t.x - hotspotX) * factor;\n"
+    "    t.y += (t.y - hotspotY) * factor;\n"
+    "    gl_FragColor = sample_backtex(background_texture, t);\n"
+    "}",
+    1,
+    {"void main() { discard; }"}
+}
+#endif
 };
 
 // For Stellaris
@@ -327,8 +514,8 @@ static char* ShaderHacks_1(char* shader, char* Tmp, int* tmpsize)
     // Do the replace
     for (int i=0; i<sizeof(gl4es_hacks_1)/sizeof(gl4es_hacks_1[0]); i+=2)
         if(strstr(Tmp, gl4es_hacks_1[i])) {
-            if(Tmp==shader) {Tmp = malloc(*tmpsize); strcpy(Tmp, shader);}   // hacking!
-            Tmp = InplaceReplaceSimple(Tmp, tmpsize, gl4es_hacks_1[i], gl4es_hacks_1[i+1]);
+            if(Tmp==shader) {Tmp = (char*)malloc(*tmpsize); strcpy(Tmp, shader);}   // hacking!
+            Tmp = gl4es_inplace_replace_simple(Tmp, tmpsize, gl4es_hacks_1[i], gl4es_hacks_1[i+1]);
         }
     return Tmp;
 }
@@ -341,10 +528,10 @@ static char* ShaderHacks_2_1(char* shader, char* Tmp, int* tmpsize, int i)
     if(!m) return Tmp;  // main signature not found
     if((uintptr_t)p > (uintptr_t)m) return Tmp; // main is before, aborting...
     // ok, instance found, insert main line...
-    if(Tmp==shader) {Tmp = malloc(*tmpsize); strcpy(Tmp, shader); m = strstr(Tmp, gl4es_sign_2_main);}   // hacking!
+    if(Tmp==shader) {Tmp = (char*)malloc(*tmpsize); strcpy(Tmp, shader); m = strstr(Tmp, gl4es_sign_2_main);}   // hacking!
     m += strlen(gl4es_sign_2_main);
-    Tmp = InplaceInsert(m, gl4es_hacks_2_2[i], Tmp, tmpsize);
-    Tmp = InplaceReplaceSimple(Tmp, tmpsize, gl4es_sign_2[i], gl4es_hacks_2_1[i]);
+    Tmp = gl4es_inplace_insert(m, gl4es_hacks_2_2[i], Tmp, tmpsize);
+    Tmp = gl4es_inplace_replace_simple(Tmp, tmpsize, gl4es_sign_2[i], gl4es_hacks_2_1[i]);
     return Tmp;
 }
 
@@ -368,10 +555,10 @@ char* ShaderHacks(char* shader)
         char* f = gl4es_hacks[i].sign;
         int n = gl4es_hacks[i].n;
         if(strstr(Tmp, f)) {
-            if(Tmp==shader) {Tmp = malloc(tmpsize); strcpy(Tmp, shader);}   // hacking!
+            if(Tmp==shader) {Tmp = (char*)malloc(tmpsize); strcpy(Tmp, shader);}   // hacking!
             for (int j=0; j<n; j+=2) {
                 if(j) f = gl4es_hacks[i].next[j-1];
-                Tmp = InplaceReplaceSimple(Tmp, &tmpsize, f, gl4es_hacks[i].next[j]);
+                Tmp = gl4es_inplace_replace_simple(Tmp, &tmpsize, f, gl4es_hacks[i].next[j]);
             }
         }
     }

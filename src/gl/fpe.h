@@ -111,6 +111,28 @@
 #define FPE_TG_REFLECMAP       4
 #define FPE_TG_NONE            5  // dummy, to help fpe
 
+#define FPE_BLEND_ZERO                      0
+#define FPE_BLEND_ONE                       1
+#define FPE_BLEND_SRC_COLOR                 2
+#define FPE_BLEND_ONE_MINUS_SRC_COLOR       3
+#define FPE_BLEND_DST_COLOR                 4
+#define FPE_BLEND_ONE_MINUS_DST_COLOR       5
+#define FPE_BLEND_SRC_ALPHA                 6
+#define FPE_BLEND_ONE_MINUS_SRC_ALPHA       7
+#define FPE_BLEND_DST_ALPHA                 8
+#define FPE_BLEND_ONE_MINUS_DST_ALPHA       9
+#define FPE_BLEND_CONSTANT_COLOR            10
+#define FPE_BLEND_ONE_MINUS_CONSTANT_COLOR  11
+#define FPE_BLEND_CONSTANT_ALPHA            12
+#define FPE_BLEND_ONE_MINUS_CONSTANT_ALPHA  13
+#define FPE_BLEND_SRC_ALPHA_SATURATE        14
+
+#define FPE_BLENDEQ_FUNC_ADD                0
+#define FPE_BLENDEQ_FUNC_SUBTRACT           1
+#define FPE_BLENDEQ_FUNC_REVERSE_SUBTRACT   2
+#define FPE_BLENDEQ_MIN                     3
+#define FPE_BLENDEQ_MAX                     4
+
 typedef struct fpe_texgen_s {
   unsigned int texgen_s:1;              // texgen S enabled on 1 bit
   unsigned int texgen_s_mode:3;         // texgen S on 3 bits
@@ -152,6 +174,7 @@ typedef struct fpe_texenv_s {
   unsigned int dummy:6;                 // align sturture to 64bits...
 } fpe_texenv_t;
 
+#pragma pack(1)
 typedef struct fpe_state_s {
     fpe_texture_t texture[MAX_TEX];      // 16 texture flags
     fpe_texgen_t texgen[MAX_TEX];        // 16 texgen flags
@@ -185,17 +208,27 @@ typedef struct fpe_state_s {
     unsigned int pointsprite_upper:1;    // if coord is upper left and not lower left
     unsigned int vertex_prg_enable:1;    // if vertex program is enabled
     unsigned int fragment_prg_enable:1;  // if fragment program is enabled
+    unsigned int blend_enable:1;
+    unsigned int blendsrcrgb:4;
+    unsigned int blendsrcalpha:4;
+    unsigned int blenddstrgb:4;
+    unsigned int blenddstalpha:4;
+    unsigned int blendeqrgb:3;
+    unsigned int blendeqalpha:3;
     uint16_t     vertex_prg_id;          // Id of vertex program currently binded (0 most of the time), 16bits is more than enough...
     uint16_t     fragment_prg_id;        // Id of fragment program currently binded (0 most of the time)
-}__attribute__((packed)) fpe_state_t;
+} fpe_state_t;
+#pragma pack()
 
 typedef struct fpe_fpe_s {
   GLuint  frag, vert, prog;   // shader info
-  fpe_state_t state;          // state relevent to the current fpe program
+  fpe_state_t state;          // state relevant to the current fpe program
   program_t *glprogram;
 } fpe_fpe_t;
 
+#ifndef kh_fpecachelist_t
 typedef struct kh_fpecachelist_s kh_fpecachelist_t;
+#endif
 #define fpe_cache_t kh_fpecachelist_t
 
 typedef struct scratch_s {
@@ -204,43 +237,43 @@ typedef struct scratch_s {
 } scratch_t;
 void free_scratch(scratch_t* scratch);
 
-
-fpe_fpe_t *fpe_GetCache();
+fpe_fpe_t *fpe_GetCache(fpe_cache_t *cur, fpe_state_t *state, int fixed);
 void fpe_disposeCache(fpe_cache_t* cache, int freeprog);
 
-void fpe_glEnableClientState(GLenum cap);
-void fpe_glDisableClientState(GLenum cap);
-void fpe_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-void fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer, int TMU);
-void fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
-void fpe_glEnable(GLenum cap);
-void fpe_glDisable(GLenum cap);
-void fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count);
-void fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
-void fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
-void fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-void fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount);
-void fpe_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-void fpe_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
-void fpe_glClientActiveTexture(GLenum texture);
-void fpe_glFogfv(GLenum pname, const GLfloat* params);
-void fpe_glAlphaFunc(GLenum func, GLclampf ref);
+// fpe is gles export replacement, so should use same caling conversion
+void APIENTRY_GLES fpe_glEnableClientState(GLenum cap);
+void APIENTRY_GLES fpe_glDisableClientState(GLenum cap);
+void APIENTRY_GLES fpe_glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+void APIENTRY_GLES fpe_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glTexCoordPointerTMU(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer, int TMU);
+void APIENTRY_GLES fpe_glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
+void APIENTRY_GLES fpe_glEnable(GLenum cap);
+void APIENTRY_GLES fpe_glDisable(GLenum cap);
+void APIENTRY_GLES fpe_glDrawArrays(GLenum mode, GLint first, GLsizei count);
+void APIENTRY_GLES fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+void APIENTRY_GLES fpe_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+void APIENTRY_GLES fpe_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+void APIENTRY_GLES fpe_glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount);
+void APIENTRY_GLES fpe_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+void APIENTRY_GLES fpe_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
+void APIENTRY_GLES fpe_glClientActiveTexture(GLenum texture);
+void APIENTRY_GLES fpe_glFogfv(GLenum pname, const GLfloat* params);
+void APIENTRY_GLES fpe_glAlphaFunc(GLenum func, GLclampf ref);
 
-void fpe_glMatrixMode(GLenum mode);
+void APIENTRY_GLES fpe_glMatrixMode(GLenum mode);
 
-void fpe_glLightModelf(GLenum pname, GLfloat param);
-void fpe_glLightModelfv(GLenum pname, const GLfloat* params);
-void fpe_glLightfv(GLenum light, GLenum pname, const GLfloat* params);
-void fpe_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
-void fpe_glMaterialf(GLenum face, GLenum pname, const GLfloat param);
+void APIENTRY_GLES fpe_glLightModelf(GLenum pname, GLfloat param);
+void APIENTRY_GLES fpe_glLightModelfv(GLenum pname, const GLfloat* params);
+void APIENTRY_GLES fpe_glLightfv(GLenum light, GLenum pname, const GLfloat* params);
+void APIENTRY_GLES fpe_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
+void APIENTRY_GLES fpe_glMaterialf(GLenum face, GLenum pname, const GLfloat param);
 
-void fpe_glPointParameterfv(GLenum pname, const GLfloat * params);
-void fpe_glPointSize(GLfloat size);
+void APIENTRY_GLES fpe_glPointParameterfv(GLenum pname, const GLfloat * params);
+void APIENTRY_GLES fpe_glPointSize(GLfloat size);
 
 void builtin_Init(program_t *glprogram);
 int builtin_CheckUniform(program_t *glprogram, char* name, GLint id, int size);

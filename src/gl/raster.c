@@ -11,36 +11,40 @@
 #include "matvec.h"
 #include "pixel.h"
 
+#undef min
+#undef max
 #define min(a, b)	((a)<b)?(a):(b)
 #define max(a, b)	((a)>(b))?(a):(b)
 
-void gl4es_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) {
+void APIENTRY_GL4ES gl4es_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) {
     if (glstate->list.active)
         if (glstate->list.compiling) {
-			NewStage(glstate->list.active, STAGE_RASTER);
-			rlRasterOp(glstate->list.active, 1, x, y, z);
-			noerrorShim();
-			return;
-		} else gl4es_flush();
+		NewStage(glstate->list.active, STAGE_RASTER);
+		rlRasterOp(glstate->list.active, 1, x, y, z);
+		noerrorShim();
+		return;
+	} else gl4es_flush();
 
-	// Transform xyz coordinates with current modelview and projection matrix...
-	GLfloat glmatrix[16], projection[16], modelview[16];
-	GLfloat t[4], transl[4] = {x, y, z, 1.0f};
-	gl4es_glGetFloatv(GL_PROJECTION_MATRIX, glmatrix);
-	matrix_transpose(glmatrix, projection);
-	gl4es_glGetFloatv(GL_MODELVIEW_MATRIX, glmatrix);
-	matrix_transpose(glmatrix, modelview);
-	matrix_vector(modelview, transl, t);
-	matrix_vector(projection, t, transl);
-	GLfloat w2, h2;
-	w2=glstate->raster.viewport.width/2.0f;
-	h2=glstate->raster.viewport.height/2.0f;
-	glstate->raster.rPos.x = transl[0]*w2+w2;
-	glstate->raster.rPos.y = transl[1]*h2+h2;
-	glstate->raster.rPos.z = transl[2];
+    // Transform xyz coordinates with current modelview and projection matrix...
+    GLfloat glmatrix[16], projection[16], modelview[16];
+    GLfloat t[4], transl[4] = {x, y, z, 1.0f};
+    gl4es_glGetFloatv(GL_PROJECTION_MATRIX, glmatrix);
+    matrix_transpose(glmatrix, projection);
+    gl4es_glGetFloatv(GL_MODELVIEW_MATRIX, glmatrix);
+    matrix_transpose(glmatrix, modelview);
+    matrix_vector(modelview, transl, t);
+    matrix_vector(projection, t, transl);
+    GLfloat w2, h2;
+    w2=glstate->raster.viewport.width/2.0f;
+    h2=glstate->raster.viewport.height/2.0f;
+    glstate->raster.rPos.x = transl[0]*w2+w2;
+    glstate->raster.rPos.y = transl[1]*h2+h2;
+    glstate->raster.rPos.z = transl[2];
 }
-
-void gl4es_glWindowPos3f(GLfloat x, GLfloat y, GLfloat z) {
+#if !defined(NO_EGL) && !defined(NOX11)
+void refreshMainFBO();
+#endif
+void APIENTRY_GL4ES gl4es_glWindowPos3f(GLfloat x, GLfloat y, GLfloat z) {
     if (glstate->list.active)
         if (glstate->list.compiling) {
 			NewStage(glstate->list.active, STAGE_RASTER);
@@ -54,7 +58,17 @@ void gl4es_glWindowPos3f(GLfloat x, GLfloat y, GLfloat z) {
     glstate->raster.rPos.z = z;	
 }
 
-void gl4es_glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
+void APIENTRY_GL4ES gl4es_glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
+	if (glstate->fbo.current_fb->id != 0) {
+    	gltexture_t *tex = gl4es_getTexture(glstate->fbo.current_fb->t_color[0], glstate->fbo.current_fb->color[0]);
+		if (tex->fbtex_ratio > 0.0f) {
+			width *= tex->fbtex_ratio;
+			height *= tex->fbtex_ratio;
+			x *= tex->fbtex_ratio;
+			y *= tex->fbtex_ratio;
+		}
+	}
+
 	if(!glstate->list.pending) 
 		PUSH_IF_COMPILING(glViewport);
 	if(	glstate->raster.viewport.x!=x || 
@@ -70,10 +84,26 @@ void gl4es_glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
 		glstate->raster.viewport.y = y;
 		glstate->raster.viewport.width = width;
 		glstate->raster.viewport.height = height;
+#if !defined(NO_EGL) && !defined(NOX11)
+		if(!globals4es.usefbo && !globals4es.usefb && glstate->fbo.fbo_draw->id==0) {
+			// check if underlying EGL surface change dimension, and reflect that to main fbo size
+			refreshMainFBO();
+		}
+#endif
 	}
 }
 
-void gl4es_glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
+void APIENTRY_GL4ES gl4es_glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
+	if (glstate->fbo.current_fb->id != 0) {
+    	gltexture_t *tex = gl4es_getTexture(glstate->fbo.current_fb->t_color[0], glstate->fbo.current_fb->color[0]);
+		if (tex->fbtex_ratio > 0.0f) {
+			width *= tex->fbtex_ratio;
+			height *= tex->fbtex_ratio;
+			x *= tex->fbtex_ratio;
+			y *= tex->fbtex_ratio;
+		}
+	}
+
 	if(!glstate->list.pending) 
 	    PUSH_IF_COMPILING(glScissor);
 #ifdef AMIGAOS4
@@ -109,60 +139,60 @@ void popViewport() {
 }
 
 
-void gl4es_glPixelZoom(GLfloat xfactor, GLfloat yfactor) {
+void APIENTRY_GL4ES gl4es_glPixelZoom(GLfloat xfactor, GLfloat yfactor) {
     if (glstate->list.active)
         if (glstate->list.compiling) {
-			NewStage(glstate->list.active, STAGE_RASTER);
-			rlRasterOp(glstate->list.active, 3, xfactor, yfactor, 0.0f);
-			noerrorShim();
-			return;
-		} else gl4es_flush();
+		NewStage(glstate->list.active, STAGE_RASTER);
+		rlRasterOp(glstate->list.active, 3, xfactor, yfactor, 0.0f);
+		noerrorShim();
+		return;
+	} else gl4es_flush();
 
-	glstate->raster.raster_zoomx = xfactor;
-	glstate->raster.raster_zoomy = yfactor;
+    glstate->raster.raster_zoomx = xfactor;
+    glstate->raster.raster_zoomy = yfactor;
 //printf("LIBGL: glPixelZoom(%f, %f)\n", xfactor, yfactor);
 }
 
-void gl4es_glPixelTransferf(GLenum pname, GLfloat param) {
+void APIENTRY_GL4ES gl4es_glPixelTransferf(GLenum pname, GLfloat param) {
     if (glstate->list.active)
         if (glstate->list.compiling) {
-			NewStage(glstate->list.active, STAGE_RASTER);
-			rlRasterOp(glstate->list.active, pname|0x10000, param, 0.0f, 0.0f);
-			noerrorShim();
-			return;
-		} else gl4es_flush();
+		NewStage(glstate->list.active, STAGE_RASTER);
+		rlRasterOp(glstate->list.active, pname|0x10000, param, 0.0f, 0.0f);
+		noerrorShim();
+		return;
+	} else gl4es_flush();
 
 //printf("LIBGL: glPixelTransferf(%04x, %f)\n", pname, param);
-	switch(pname) {
-		case GL_RED_SCALE:
-			glstate->raster.raster_scale[0]=param;
-			break;
-		case GL_RED_BIAS:
-			glstate->raster.raster_bias[0]=param;
-			break;
-		case GL_GREEN_SCALE:
-		case GL_BLUE_SCALE:
-		case GL_ALPHA_SCALE:
-			glstate->raster.raster_scale[(pname-GL_GREEN_SCALE)/2+1]=param;
-			break;
-		case GL_GREEN_BIAS:
-		case GL_BLUE_BIAS:
-		case GL_ALPHA_BIAS:
-			glstate->raster.raster_bias[(pname-GL_GREEN_BIAS)/2+1]=param;
-			break;
-		case GL_INDEX_SHIFT:
-			glstate->raster.index_shift=param;
-			break;
-		case GL_INDEX_OFFSET:
-			glstate->raster.index_offset=param;
-			break;
-		case GL_MAP_COLOR:
-			glstate->raster.map_color=param?1:0;
-			break;
-		/*default:
-			printf("LIBGL: stubbed glPixelTransferf(%04x, %f)\n", pname, param);*/
+    switch(pname) {
+	case GL_RED_SCALE:
+		glstate->raster.raster_scale[0]=param;
+		break;
+	case GL_RED_BIAS:
+		glstate->raster.raster_bias[0]=param;
+		break;
+	case GL_GREEN_SCALE:
+	case GL_BLUE_SCALE:
+	case GL_ALPHA_SCALE:
+		glstate->raster.raster_scale[(pname-GL_GREEN_SCALE)/2+1]=param;
+		break;
+	case GL_GREEN_BIAS:
+	case GL_BLUE_BIAS:
+	case GL_ALPHA_BIAS:
+		glstate->raster.raster_bias[(pname-GL_GREEN_BIAS)/2+1]=param;
+		break;
+	case GL_INDEX_SHIFT:
+		glstate->raster.index_shift=param;
+		break;
+	case GL_INDEX_OFFSET:
+		glstate->raster.index_offset=param;
+		break;
+	case GL_MAP_COLOR:
+		glstate->raster.map_color=param?1:0;
+		break;
+	/*default:
+		printf("LIBGL: stubbed glPixelTransferf(%04x, %f)\n", pname, param);*/
 	// the other...
-	}
+    }
 }
 
 
@@ -300,7 +330,7 @@ void bitmap_flush() {
 		int alloc = 4*ex*ey;
 		gl4es_scratch(alloc);
 		for (int i=0; i<ey; i++)
-			memcpy(glstate->scratch+4*i*ex, glstate->raster.bitmap+4*(sx+(sy+i)*glstate->raster.bm_width), ex*4);
+			memcpy((char*)glstate->scratch+4*i*ex, (char*)glstate->raster.bitmap+4*(sx+(sy+i)*glstate->raster.bm_width), ex*4);
 		gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, ex, ey, GL_RGBA, GL_UNSIGNED_BYTE, glstate->scratch);
 	}
 
@@ -331,7 +361,7 @@ void bitmap_flush() {
 }
 
 
-void gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
+void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
               GLfloat xmove, GLfloat ymove, const GLubyte *bitmap) {
 /*printf("glBitmap, xy={%f, %f}, xyorig={%f, %f}, size={%u, %u}, zoom={%f, %f}, viewport={%i, %i, %i, %i}\n", 	
 	glstate->raster.rPos.x, glstate->raster.rPos.y, xorig, yorig, width, height, glstate->raster.raster_zoomx, glstate->raster.raster_zoomy, glstate->raster.viewport.x, glstate->raster.viewport.y, glstate->raster.viewport.width, glstate->raster.viewport.height);*/
@@ -466,7 +496,7 @@ void gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
 	glstate->raster.bm_drawing = 1;
 }
 
-void gl4es_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
+void APIENTRY_GL4ES gl4es_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
                   GLenum type, const GLvoid *data) {
     GLubyte *pixels, *from, *to;
     GLvoid *dst = NULL;
@@ -499,7 +529,6 @@ void gl4es_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
     }
 					  
     pixels = (GLubyte *)dst;
-	GLint vx, vy;
 	int pixtrans=raster_need_transform();
 
     if (pixtrans) {
@@ -613,7 +642,7 @@ int map_pixelmap(GLenum map, int* wf, int** size, void** array) {
 	return 1;
 }
 
-void gl4es_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values) {
+void APIENTRY_GL4ES gl4es_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values) {
 	if(mapsize>MAX_MAP_SIZE) {
 		errorShim(GL_INVALID_VALUE);
 		return;
@@ -644,7 +673,7 @@ void gl4es_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values) {
 	}
 	*size = mapsize;
 }
-void gl4es_glPixelMapuiv(GLenum map,GLsizei mapsize, const GLuint *values) {
+void APIENTRY_GL4ES gl4es_glPixelMapuiv(GLenum map,GLsizei mapsize, const GLuint *values) {
 	if(mapsize>MAX_MAP_SIZE) {
 		errorShim(GL_INVALID_VALUE);
 		return;
@@ -676,7 +705,7 @@ void gl4es_glPixelMapuiv(GLenum map,GLsizei mapsize, const GLuint *values) {
 	*size = mapsize;
 }
 
-void gl4es_glPixelMapusv(GLenum map,GLsizei mapsize, const GLushort *values) {
+void APIENTRY_GL4ES gl4es_glPixelMapusv(GLenum map,GLsizei mapsize, const GLushort *values) {
 	if(mapsize>MAX_MAP_SIZE) {
 		errorShim(GL_INVALID_VALUE);
 		return;
@@ -707,7 +736,7 @@ void gl4es_glPixelMapusv(GLenum map,GLsizei mapsize, const GLushort *values) {
 	}
 	*size = mapsize;
 }
-void gl4es_glGetPixelMapfv(GLenum map, GLfloat *data) {
+void APIENTRY_GL4ES gl4es_glGetPixelMapfv(GLenum map, GLfloat *data) {
 	int wf = 1;
 	void* array = NULL;
 	int* size = NULL;
@@ -724,7 +753,7 @@ void gl4es_glGetPixelMapfv(GLenum map, GLfloat *data) {
 			data[i] = p[i];
 	}
 }
-void gl4es_glGetPixelMapuiv(GLenum map, GLuint *data) {
+void APIENTRY_GL4ES gl4es_glGetPixelMapuiv(GLenum map, GLuint *data) {
 	int wf = 1;
 	void* array = NULL;
 	int* size = NULL;
@@ -741,7 +770,7 @@ void gl4es_glGetPixelMapuiv(GLenum map, GLuint *data) {
 			data[i] = p[i];
 	}
 }
-void gl4es_glGetPixelMapusv(GLenum map, GLushort *data) {
+void APIENTRY_GL4ES gl4es_glGetPixelMapusv(GLenum map, GLushort *data) {
 	int wf = 1;
 	void* array = NULL;
 	int* size = NULL;
@@ -761,17 +790,17 @@ void gl4es_glGetPixelMapusv(GLenum map, GLushort *data) {
 
 
 //Direct wrapper
-void glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap) AliasExport("gl4es_glBitmap");
-void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) AliasExport("gl4es_glDrawPixels");
-void glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) AliasExport("gl4es_glRasterPos3f");
-void glWindowPos3f(GLfloat x, GLfloat y, GLfloat z) AliasExport("gl4es_glWindowPos3f");
-void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) AliasExport("gl4es_glViewport");
-void glScissor(GLint x, GLint y, GLsizei width, GLsizei height) AliasExport("gl4es_glScissor");
-void glPixelZoom(GLfloat xfactor, GLfloat yfactor) AliasExport("gl4es_glPixelZoom");
-void glPixelTransferf(GLenum pname, GLfloat param) AliasExport("gl4es_glPixelTransferf");
-void glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values) AliasExport("gl4es_glPixelMapfv");
-void glPixelMapuiv(GLenum map,GLsizei mapsize, const GLuint *values) AliasExport("gl4es_glPixelMapuiv");
-void glPixelMapusv(GLenum map,GLsizei mapsize, const GLushort *values) AliasExport("gl4es_glPixelMapusv");
-void glGetPixelMapfv(GLenum map, GLfloat *data) AliasExport("gl4es_glGetPixelMapfv");
-void glGetPixelMapuiv(GLenum map, GLuint *data) AliasExport("gl4es_glGetPixelMapuiv");
-void glGetPixelMapusv(GLenum map, GLushort *data) AliasExport("gl4es_glGetPixelMapusv");
+AliasExport(void,glBitmap,,(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap));
+AliasExport(void,glDrawPixels,,(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data));
+AliasExport(void,glRasterPos3f,,(GLfloat x, GLfloat y, GLfloat z));
+AliasExport(void,glWindowPos3f,,(GLfloat x, GLfloat y, GLfloat z));
+AliasExport(void,glViewport,,(GLint x, GLint y, GLsizei width, GLsizei height));
+AliasExport(void,glScissor,,(GLint x, GLint y, GLsizei width, GLsizei height));
+AliasExport(void,glPixelZoom,,(GLfloat xfactor, GLfloat yfactor));
+AliasExport(void,glPixelTransferf,,(GLenum pname, GLfloat param));
+AliasExport(void,glPixelMapfv,,(GLenum map, GLsizei mapsize, const GLfloat *values));
+AliasExport(void,glPixelMapuiv,,(GLenum map,GLsizei mapsize, const GLuint *values));
+AliasExport(void,glPixelMapusv,,(GLenum map,GLsizei mapsize, const GLushort *values));
+AliasExport(void,glGetPixelMapfv,,(GLenum map, GLfloat *data));
+AliasExport(void,glGetPixelMapuiv,,(GLenum map, GLuint *data));
+AliasExport(void,glGetPixelMapusv,,(GLenum map, GLushort *data));

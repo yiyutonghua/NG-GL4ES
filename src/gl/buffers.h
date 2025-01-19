@@ -1,8 +1,3 @@
-#define GL_CLIENT_STORAGE_BIT 0x200
-#define GL_MAP_COHERENT_BIT 0x80
-#define GL_DYNAMIC_STORAGE_BIT 0x100
-#define GL_MAP_PERSISTENT_BIT 0x40
-
 #ifndef _GL4ES_BUFFERS_H_
 #define _GL4ES_BUFFERS_H_
 
@@ -12,74 +7,89 @@
 
 // VBO *****************
 typedef struct {
-    GLuint      buffer;              // 缓冲区对象的 ID
-    GLuint      real_buffer;         // 实际的缓冲区 ID (用于某些优化或多缓冲区使用场景)
-    GLenum      type;                // 缓冲区的类型，如 GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER 等
-    GLsizeiptr  size;                // 缓冲区的大小
-    GLenum      usage;               // 缓冲区的使用方式 (如 GL_STATIC_DRAW, GL_DYNAMIC_DRAW)
-    GLint       access;              // 缓冲区访问类型（映射方式，见 GL_MAP_* 标志）
-    int         mapped;              // 表示缓冲区是否已被映射
-    int         ranged;              // 标识是否支持范围映射 (用于 glMapBufferRange)
-    GLintptr    offset;              // 如果是范围映射，指定偏移量
-    GLsizeiptr  length;              // 如果是范围映射，指定长度
-    GLvoid*     data;                // 直接映射的内存指针，如果使用了持久化映射或其他映射
-    int         persistent_mapping;  // 标识该缓冲区是否启用了持久化映射
-    int         coherent_mapping;    // 标识该缓冲区是否启用了一致性映射
-    GLbitfield  flags;               // 缓冲区的额外标志，如 GL_MAP_PERSISTENT_BIT, GL_MAP_COHERENT_BIT
-    int         is_mapped;           // 缓冲区是否已经被映射，作为一种锁定的标志
-    GLvoid*     persistent_ptr;      // 指向持久化映射内存的指针
-    GLsizeiptr  mapped_size;         // 映射区域的大小，避免多次映射时产生冲突
-    GLintptr    mapped_offset;       // 映射区域的起始偏移
-    int         mapping_flags;       // 映射时使用的标志，例如 GL_MAP_READ_BIT, GL_MAP_WRITE_BIT 等
-    GLvoid*     original_data;       // 缓冲区原始数据的备份，用于调试或其他需要
-} glbuffer_t;
+    GLuint      buffer;
+    GLuint      real_buffer;
+    GLenum      type;
+    GLsizeiptr  size;
+    GLenum      usage;
+    GLint		access;
+    int			mapped;
+    int         ranged;
+    GLintptr    offset;
+    GLsizeiptr  length;
+    GLvoid     *data;
+    int         persistent_mapping;
+    int         coherent_mapping;
+    GLbitfield  flags;
+    int         is_mapped;
+    GLvoid*     persistent_ptr;
+    GLsizeiptr  mapped_size;
+    GLintptr    mapped_offset;
+    int         mapping_flags;
+    GLvoid*     original_data;
 
+} glbuffer_t;
 
 KHASH_MAP_DECLARE_INT(buff, glbuffer_t *);
 
-void gl4es_glGenBuffers(GLsizei n, GLuint * buffers);
-void gl4es_glBindBuffer(GLenum target, GLuint buffer);
-void gl4es_glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
-void gl4es_glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
-void gl4es_glDeleteBuffers(GLsizei n, const GLuint * buffers);
-GLboolean gl4es_glIsBuffer(GLuint buffer);
-void gl4es_glGetBufferParameteriv(GLenum target, GLenum value, GLint * data);
-
-void *gl4es_glMapBuffer(GLenum target, GLenum access);
-GLboolean gl4es_glUnmapBuffer(GLenum target);
-void gl4es_glGetBufferPointerv(GLenum target, GLenum pname, GLvoid ** params);
-void gl4es_glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
-
-void *gl4es_glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
-void gl4es_glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
-
 void bindBuffer(GLenum target, GLuint buffer);
-void glGenBuffers(GLsizei n, GLuint * buffers);
-void glBindBuffer(GLenum target, GLuint buffer);
-void glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
-void glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
-void glDeleteBuffers(GLsizei n, const GLuint * buffers);
-GLboolean glIsBuffer(GLuint buffer);
-void glGetBufferParameteriv(GLenum target, GLenum value, GLint * data);
-void *glMapBuffer(GLenum target, GLenum access);
-GLboolean glUnmapBuffer(GLenum target);
-void glGetBufferPointerv(GLenum target, GLenum pname, GLvoid ** params);
-void glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
 
-void *glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
-void glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
+void APIENTRY_GL4ES gl4es_glGenBuffers(GLsizei n, GLuint * buffers);
+void APIENTRY_GL4ES gl4es_glBindBuffer(GLenum target, GLuint buffer);
+void APIENTRY_GL4ES gl4es_glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+void APIENTRY_GL4ES gl4es_glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
+void APIENTRY_GL4ES gl4es_glDeleteBuffers(GLsizei n, const GLuint * buffers);
+GLboolean APIENTRY_GL4ES gl4es_glIsBuffer(GLuint buffer);
+void APIENTRY_GL4ES gl4es_glGetBufferParameteriv(GLenum target, GLenum value, GLint * data);
 
-void glGenBuffersARB(GLsizei n, GLuint * buffers);
-void glBindBufferARB(GLenum target, GLuint buffer);
-void glBufferDataARB(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
-void glBufferSubDataARB(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
-void glDeleteBuffersARB(GLsizei n, const GLuint * buffers);
-GLboolean glIsBufferARB(GLuint buffer);
-void glGetBufferParameterivARB(GLenum target, GLenum value, GLint * data);
-void *glMapBufferARB(GLenum target, GLenum access);
-GLboolean glUnmapBufferARB(GLenum target);
-void glGetBufferSubDataARB(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
-void glGetBufferPointervARB(GLenum target, GLenum pname, GLvoid ** params);
+void* APIENTRY_GL4ES gl4es_glMapBuffer(GLenum target, GLenum access);
+GLboolean APIENTRY_GL4ES gl4es_glUnmapBuffer(GLenum target);
+void APIENTRY_GL4ES gl4es_glGetBufferPointerv(GLenum target, GLenum pname, GLvoid ** params);
+void APIENTRY_GL4ES gl4es_glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
+
+void* APIENTRY_GLES gl4es_glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+void APIENTRY_GL4ES gl4es_glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
+
+void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+
+void APIENTRY_GL4ES glGenBuffers(GLsizei n, GLuint * buffers);
+void APIENTRY_GL4ES glBindBuffer(GLenum target, GLuint buffer);
+void APIENTRY_GL4ES glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+void APIENTRY_GL4ES glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
+void APIENTRY_GL4ES glDeleteBuffers(GLsizei n, const GLuint * buffers);
+GLboolean APIENTRY_GL4ES glIsBuffer(GLuint buffer);
+void APIENTRY_GL4ES glGetBufferParameteriv(GLenum target, GLenum value, GLint * data);
+void* APIENTRY_GL4ES glMapBuffer(GLenum target, GLenum access);
+GLboolean APIENTRY_GL4ES glUnmapBuffer(GLenum target);
+void APIENTRY_GL4ES glGetBufferPointerv(GLenum target, GLenum pname, GLvoid ** params);
+void APIENTRY_GL4ES glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
+
+void* APIENTRY_GL4ES glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+void APIENTRY_GL4ES glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
+
+void APIENTRY_GL4ES glGenBuffersARB(GLsizei n, GLuint * buffers);
+void APIENTRY_GL4ES glBindBufferARB(GLenum target, GLuint buffer);
+void APIENTRY_GL4ES glBufferDataARB(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+void APIENTRY_GL4ES glBufferSubDataARB(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
+void APIENTRY_GL4ES glDeleteBuffersARB(GLsizei n, const GLuint * buffers);
+GLboolean APIENTRY_GL4ES glIsBufferARB(GLuint buffer);
+void APIENTRY_GL4ES glGetBufferParameterivARB(GLenum target, GLenum value, GLint * data);
+void* APIENTRY_GL4ES glMapBufferARB(GLenum target, GLenum access);
+GLboolean APIENTRY_GL4ES glUnmapBufferARB(GLenum target);
+void APIENTRY_GL4ES glGetBufferSubDataARB(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data);
+void APIENTRY_GL4ES glGetBufferPointervARB(GLenum target, GLenum pname, GLvoid ** params);
+
+// internal actual BindBuffer with cache
+void bindBuffer(GLenum target, GLuint buffer);
+// delete a single buffer (and erase it from the cache)
+void deleteSingleBuffer(GLuint buffer);
+// unbound all buffer
+void unboundBuffers();
+// update wanted Index Buffer
+GLuint wantBufferIndex(GLuint buffer);
+// Bind the wanted index buffer if needed
+void realize_bufferIndex();
+
 
 // Pointer..... ****** => map them in vertexattrib (even with GLES1.1). So no more pointer_state_t, use vertexattrib_t
 // and map .enabled to .vaarray
@@ -181,6 +191,7 @@ typedef struct {
     GLint           divisor;
     GLuint          real_buffer;    // If there is a real VBO binded
     const GLvoid*   real_pointer;   // the pointer related to real VBO
+    int             integer;
 } vertexattrib_t;
 
 typedef struct {
@@ -225,22 +236,22 @@ void VaoInit(glvao_t *vao);
 
 KHASH_MAP_DECLARE_INT(glvao, glvao_t*);
 
-void gl4es_glGenVertexArrays(GLsizei n, GLuint *arrays);
-void gl4es_glBindVertexArray(GLuint array);
-void gl4es_glDeleteVertexArrays(GLsizei n, const GLuint *arrays);
-GLboolean gl4es_glIsVertexArray(GLuint array);
+void APIENTRY_GL4ES gl4es_glGenVertexArrays(GLsizei n, GLuint *arrays);
+void APIENTRY_GL4ES gl4es_glBindVertexArray(GLuint array);
+void APIENTRY_GL4ES gl4es_glDeleteVertexArrays(GLsizei n, const GLuint *arrays);
+GLboolean APIENTRY_GL4ES gl4es_glIsVertexArray(GLuint array);
 
-void glGenVertexArrays(GLsizei n, GLuint *arrays);
-void glBindVertexArray(GLuint array);
-void glDeleteVertexArrays(GLsizei n, const GLuint *arrays);
-GLboolean glIsVertexArray(GLuint array);
+void APIENTRY_GL4ES glGenVertexArrays(GLsizei n, GLuint *arrays);
+void APIENTRY_GL4ES glBindVertexArray(GLuint array);
+void APIENTRY_GL4ES glDeleteVertexArrays(GLsizei n, const GLuint *arrays);
+GLboolean APIENTRY_GL4ES glIsVertexArray(GLuint array);
 
-void gl4es_glNamedBufferData(GLuint buffer, GLsizeiptr size, const GLvoid * data, GLenum usage);
-void gl4es_glNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid * data);
-void gl4es_glGetNamedBufferParameteriv(GLuint buffer, GLenum value, GLint * data);
-void* gl4es_glMapNamedBuffer(GLuint buffer, GLenum access);
-GLboolean gl4es_glUnmapNamedBuffer(GLuint buffer);
-void gl4es_glGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, GLvoid * data);
-void gl4es_glGetNamedBufferPointerv(GLuint buffer, GLenum pname, GLvoid ** params);
+void APIENTRY_GL4ES gl4es_glNamedBufferData(GLuint buffer, GLsizeiptr size, const GLvoid * data, GLenum usage);
+void APIENTRY_GL4ES gl4es_glNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid * data);
+void APIENTRY_GL4ES gl4es_glGetNamedBufferParameteriv(GLuint buffer, GLenum value, GLint * data);
+void* APIENTRY_GL4ES gl4es_glMapNamedBuffer(GLuint buffer, GLenum access);
+GLboolean APIENTRY_GL4ES gl4es_glUnmapNamedBuffer(GLuint buffer);
+void APIENTRY_GL4ES gl4es_glGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, GLvoid * data);
+void APIENTRY_GL4ES gl4es_glGetNamedBufferPointerv(GLuint buffer, GLenum pname, GLvoid ** params);
 
 #endif // _GL4ES_BUFFERS_H_

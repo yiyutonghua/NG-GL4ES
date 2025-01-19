@@ -27,21 +27,21 @@ std::mutex barrierMutex;
 void* handle;
 
 extern "C" {
-    VISITABLE void threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
-    VISITABLE void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-    VISITABLE void reportUnsupportedFunction(const char* funcName);
-    VISITABLE void glMemoryBarrier(GLbitfield barriers);
-    VISITABLE void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-    VISITABLE void glBindProgramPipeline(GLuint pipeline);
-    VISITABLE void APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
-    VISITABLE void glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
-    VISITABLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-    VISITABLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
-    VISITABLE void glDeleteSync(GLsync sync);
-    VISITABLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-    VISITABLE GLboolean glIsSync(GLsync sync);
-    VISITABLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
-    VISITABLE void glDispatchComputeIndirect(GLuint indirectBuffer);
+    VISIBLE void threadComputeTask(GLuint startX, GLuint endX, GLuint num_groups_y, GLuint num_groups_z, ComputeShaderCallback computeShader, std::vector<float>& results, int width, int height);
+    VISIBLE void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+    VISIBLE void reportUnsupportedFunction(const char* funcName);
+    VISIBLE void glMemoryBarrier(GLbitfield barriers);
+    VISIBLE void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+    VISIBLE void glBindProgramPipeline(GLuint pipeline);
+    VISIBLE void APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
+    VISIBLE void glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
+    VISIBLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    VISIBLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
+    VISIBLE void glDeleteSync(GLsync sync);
+    VISIBLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    VISIBLE GLboolean glIsSync(GLsync sync);
+    VISIBLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
+    VISIBLE void glDispatchComputeIndirect(GLuint indirectBuffer);
     //NEEDTOBEDONE
     //void glUseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
     //void glCreateTextures(GLenum target, GLsizei n, GLuint* textures);
