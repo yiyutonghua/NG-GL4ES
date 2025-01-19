@@ -139,6 +139,51 @@ int getGLSLVersion(const char* glsl_code) {
     return -1;
 }
 
+std::string removeSecondLine(std::string code) {
+    size_t firstLineEnd = code.find('\n');
+    if (firstLineEnd == std::string::npos) {
+        return code;
+    }
+    size_t secondLineEnd = code.find('\n', firstLineEnd + 1);
+    if (secondLineEnd == std::string::npos) {
+        return code;
+    }
+    code.erase(firstLineEnd + 1, secondLineEnd - firstLineEnd);
+    return code;
+}
+
+char* disable_GL_ARB_derivative_control(char* glslCode) {
+    SHUT_LOGD("a:\n%s",glslCode);
+    std::string code(glslCode);
+    std::string target = "GL_ARB_derivative_control";
+    size_t pos = code.find(target);
+
+    if (pos != std::string::npos) {
+        size_t ifdefPos = 0;
+        while ((ifdefPos = code.find("#ifdef GL_ARB_derivative_control", ifdefPos)) != std::string::npos) {
+            code.replace(ifdefPos, 32, "#if 0");
+            ifdefPos += 4;
+        }
+
+        size_t ifndefPos = 0;
+        while ((ifndefPos = code.find("#ifndef GL_ARB_derivative_control", ifndefPos)) != std::string::npos) {
+            code.replace(ifndefPos, 33, "#if 1");
+            ifndefPos += 4;
+        }
+
+        code = removeSecondLine(code);
+
+        char* result = new char[code.length() + 1];
+        std::strcpy(result, code.c_str());
+        SHUT_LOGD("b:\n%s",result);
+        return result;
+    }
+
+    char* result = new char[code.length() + 1];
+    std::strcpy(result, code.c_str());
+    return result;
+}
+
 std::string forceSupporter(const std::string& glslCode) {
 
     std::regex precisionFloatRegex(R"(\n\s*precision\s*\w+\s*float\s*;\s*)");
@@ -287,7 +332,11 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     }
 
     glslang::TShader shader(shader_language);
-    char *shader_source = strdup(removeLineDirective(glsl_code));
+
+    char* correct_glsl = glsl_code;
+    correct_glsl = removeLineDirective(correct_glsl);
+    correct_glsl = disable_GL_ARB_derivative_control(correct_glsl);
+    char *shader_source = correct_glsl;
     int glsl_version = getGLSLVersion(shader_source);
     if (glsl_version == -1) {
         glsl_version = 140;
@@ -306,10 +355,11 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     shader.setEnvTarget(EShTargetSpv, EShTargetSpv_1_6);
     shader.setAutoMapLocations(true);
     shader.setAutoMapBindings(true);
+
     TBuiltInResource TBuiltInResource_resources = InitResources();
 
     if (!shader.parse(&TBuiltInResource_resources, glsl_version, true, EShMsgDefault)) {
-        DBG(SHUT_LOGD("GLSL Compiling ERROR: \n%s",shader.getInfoLog());)
+        SHUT_LOGD("GLSL Compiling ERROR: \n%s",shader.getInfoLog());
         return NULL;
     }
     DBG(SHUT_LOGD("GLSL Compiled.");)
@@ -318,7 +368,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     program.addShader(&shader);
 
     if (!program.link(EShMsgDefault)) {
-        DBG(SHUT_LOGD("Shader Linking ERROR: %s",program.getInfoLog());)
+        SHUT_LOGD("Shader Linking ERROR: %s",program.getInfoLog());
         return nullptr;
     }
     DBG(SHUT_LOGD("Shader Linked." );)
@@ -369,6 +419,8 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     essl = forceSupporter(essl);
     char* result_essl = new char[essl.length() + 1];
     std::strcpy(result_essl, essl.c_str());
+
+    DBG(SHUT_LOGD("GLSL to GLSL ES Complete: \n%s",result_essl))
 
     free(shader_source);
     glslang::FinalizeProcess();

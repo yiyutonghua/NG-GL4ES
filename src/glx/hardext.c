@@ -51,18 +51,16 @@ static int testGLSL(const char* version, int uniformLoc) {
     LOAD_GLES2(glCompileShader);
     LOAD_GLES2(glGetShaderiv);
     LOAD_GLES2(glDeleteShader);
-    LOAD_GLES(glGetError);
 
     GLuint shad = gles_glCreateShader(GL_VERTEX_SHADER);
     const char* shadTest[4] = {
-        version,
-        "#extension require GL_IMG_uniform_buffer_object"
-        "\n"
-        "layout(location = 0) in vec4 vecPos;\n",
-        uniformLoc?"layout(location = 0) uniform mat4 matMVP;\n":"uniform mat4 matMVP;\n",
-        "void main() {\n"
-        " gl_Position = matMVP * vecPos;\n"
-        "}\n"
+            version,
+            "\n"
+            "layout(location = 0) in vec4 vecPos;\n",
+            uniformLoc?"layout(location = 0) uniform mat4 matMVP;\n":"uniform mat4 matMVP;\n",
+            "void main() {\n"
+            " gl_Position = matMVP * vecPos;\n"
+            "}\n"
     };
     gles_glShaderSource(shad, 4, shadTest, NULL);
     gles_glCompileShader(shad);
@@ -73,11 +71,10 @@ static int testGLSL(const char* version, int uniformLoc) {
         LOAD_GLES2(glGetShaderInfoLog)
         char buff[500];
         gles_glGetShaderInfoLog(shad, 500, NULL, buff);
-        SHUT_LOGD("LIBGL: \"%s\" failed, message:\n%s\n", version, buff);
+        printf("LIBGL: \"%s\" failed, message:\n%s\n", version, buff);
     }
     */
     gles_glDeleteShader(shad);
-    gles_glGetError();	// reset GL Error
 
     return compiled;
 }
@@ -128,7 +125,7 @@ void GetHardwareExtensions(int notest)
 #ifndef AMIGAOS4
         SHUT_LOGD("Hardware test disabled, nothing activated...\n");
 #endif
-        if(hardext.esversion==2) {
+        if(hardext.esversion>=2) {
             hardext.maxteximage = 4;
             hardext.maxvarying = 8;
             hardext.maxtex = 8;
@@ -454,12 +451,12 @@ void GetHardwareExtensions(int notest)
         SHUT_LOGD("GLSL 300 es supported%s\n", (hardext.glsl120||hardext.glsl310es)?"":" and used");
     }
     if(hardext.glsl310es) {
-        SHUT_LOGD("GLSL 310 es supported%s\n", hardext.glsl120?"":" and used");
+        SHUT_LOGD("GLSL 310 es supported%s\n", hardext.glsl310es?"":" and used");
     }
     if(hardext.glsl320es) {
         SHUT_LOGD("GLSL 320 es supported%s\n", hardext.glsl320es?"":" and used");
     }
-	    if(!hardext.glsl300es){
+    if(!hardext.glsl300es){
         // We can't use the vgpu forward conversion
         globals4es.vgpu_backport = 1;
     }

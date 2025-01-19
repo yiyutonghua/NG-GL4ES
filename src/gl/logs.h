@@ -14,12 +14,12 @@ EXPORT void LogPrintf(const char *fmt,...);
 	#define SHUT_LOGD_NOPREFIX(...)
 	#define SHUT_LOGE(...)
 #else
-	#define SHUT_LOGD(...) {if(!globals4es.nobanner) {printf(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}}
+	#define SHUT_LOGD(...) {printf(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}
 	#define SHUT_LOGD_NOPREFIX(...) {if(!globals4es.nobanner) LogPrintf_NoPrefix(__VA_ARGS__);}
-	#define SHUT_LOGE(...) {if(!globals4es.nobanner) {printf(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}}
+	#define SHUT_LOGE(...) {printf(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}
 #endif
 //----------------------------------------------------------------------------
-#define LOGD(...) {SHUT_LOGD(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}
-#define LOGE(...) {SHUT_LOGD(__VA_ARGS__);printf("\n");write_log(__VA_ARGS__);}
+#define LOGD(...) SHUT_LOGD(__VA_ARGS__);
+#define LOGE(...) SHUT_LOGD(__VA_ARGS__);
 //----------------------------------------------------------------------------
 #endif // _GL4ES_LOGS_H_

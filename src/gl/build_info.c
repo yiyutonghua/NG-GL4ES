@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "gl4es.h"
 #include "build_info.h"
 #include "logs.h"
 #include "../../version.h"

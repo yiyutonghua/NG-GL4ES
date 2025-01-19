@@ -319,7 +319,7 @@ char* gl4es_inplace_replace_simple(char* pBuffer, int* size, const char* S, cons
 
 // for vgpu/shaderconv.c
 const char* FindString(const char* pBuffer, const char* S) __attribute__((alias("gl4es_find_string")));
-char* FindStringNc(char* pBuffer, const char* S) __attribute__((alias("gl4es_find_string_nc")));
+char* FindStringNC(char* pBuffer, const char* S) __attribute__((alias("gl4es_find_string_nc")));
 int CountString(const char* pBuffer, const char* S) __attribute__((alias("gl4es_count_string")));
 char* ResizeIfNeeded(char* pBuffer, int *size, int addsize) __attribute__((alias("gl4es_resize_if_needed")));
 char* InplaceReplace(char* pBuffer, int* size, const char* S, const char* D) __attribute__((alias("gl4es_inplace_replace")));

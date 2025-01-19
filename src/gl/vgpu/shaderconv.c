@@ -10,8 +10,10 @@
 #include "../const.h"
 #include "../../glx/hardext.h"
 #include "../shaderconv.h"
+#include "../gl4es.h"
 
 int NO_OPERATOR_VALUE = 9999;
+
 
 #include <GL/gl.h>
 #include <stdio.h>
@@ -63,7 +65,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
         {
             break;
         }
-        GLint location = glGetUniformLocation(program, uniform->variable);
+        GLint location = gl4es_glGetUniformLocation(program, uniform->variable);
 
         if (location == -1) {
             SHUT_LOGD("Uniform variable %s not found in shader program.\n", uniform->variable);
@@ -75,7 +77,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, matValues, 16);
 
             if (count == 16) {
-                glUniformMatrix4fv(location, 1, GL_FALSE, matValues);
+                gl4es_glUniformMatrix4fv(location, 1, GL_FALSE, matValues);
             }
             else {
                 SHUT_LOGD("Invalid mat4 initial value for uniform %s\n", uniform->variable);
@@ -86,7 +88,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, matValues, 9);
 
             if (count == 9) {
-                glUniformMatrix3fv(location, 1, GL_FALSE, matValues);
+                gl4es_glUniformMatrix3fv(location, 1, GL_FALSE, matValues);
             }
             else {
                 SHUT_LOGD("Invalid mat3 initial value for uniform %s\n", uniform->variable);
@@ -97,7 +99,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, matValues, 4);
 
             if (count == 4) {
-                glUniformMatrix2fv(location, 1, GL_FALSE, matValues);
+                gl4es_glUniformMatrix2fv(location, 1, GL_FALSE, matValues);
             }
             else {
                 SHUT_LOGD("Invalid mat2 initial value for uniform %s\n", uniform->variable);
@@ -108,7 +110,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, vecValues, 4);
 
             if (count == 4) {
-                glUniform4fv(location, 1, vecValues);
+                gl4es_glUniform4fv(location, 1, vecValues);
             }
             else {
                 SHUT_LOGD("Invalid vec4 initial value for uniform %s\n", uniform->variable);
@@ -120,7 +122,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, vecValues, 3);
 
             if (count == 3) {
-                glUniform3fv(location, 1, vecValues);
+                gl4es_glUniform3fv(location, 1, vecValues);
             }
             else {
                 SHUT_LOGD("Invalid vec3 initial value for uniform %s\n", uniform->variable);
@@ -131,7 +133,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
             int count = parse_floats_from_string(uniform->initial_value, vecValues, 2);
 
             if (count == 2) {
-                glUniform2fv(location, 1, vecValues);
+                gl4es_glUniform2fv(location, 1, vecValues);
             }
             else {
                 SHUT_LOGD("Invalid vec2 initial value for uniform %s\n", uniform->variable);
@@ -139,23 +141,23 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
         }
         else if (strstr(uniform->initial_value, "float") != NULL) {
             GLfloat value = strtof(uniform->initial_value, NULL);
-            glUniform1f(location, value);
+            gl4es_glUniform1f(location, value);
         }
         else if (strstr(uniform->initial_value, "int") != NULL) {
             GLint value = strtol(uniform->initial_value, NULL, 10);
-            glUniform1i(location, value);
+            gl4es_glUniform1i(location, value);
         }
         else if (strstr(uniform->initial_value, "bool") != NULL) {
             GLint value = parse_bool_from_string(uniform->initial_value);
             if (value != -1) {
-                glUniform1i(location, value);
+                gl4es_glUniform1i(location, value);
             }
             else {
                 SHUT_LOGD("Invalid bool initial value for uniform %s\n", uniform->variable);
             }
         }
         else if (strstr(uniform->initial_value, "sampler2D") != NULL) {
-            glUniform1i(location, 0);
+            gl4es_glUniform1i(location, 0);
         }
         else {
             SHUT_LOGE("[ERROR] Unsupported uniform type or invalid initial value for uniform %s\n", uniform->variable);
