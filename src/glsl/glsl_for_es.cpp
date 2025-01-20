@@ -1,4 +1,5 @@
 
+
 #include "glsl_for_es.h"
 
 #include <glslang/Public/ShaderLang.h>
@@ -153,7 +154,6 @@ std::string removeSecondLine(std::string code) {
 }
 
 char* disable_GL_ARB_derivative_control(char* glslCode) {
-    SHUT_LOGD("a:\n%s",glslCode);
     std::string code(glslCode);
     std::string target = "GL_ARB_derivative_control";
     size_t pos = code.find(target);
@@ -175,7 +175,6 @@ char* disable_GL_ARB_derivative_control(char* glslCode) {
 
         char* result = new char[code.length() + 1];
         std::strcpy(result, code.c_str());
-        SHUT_LOGD("b:\n%s",result);
         return result;
     }
 
@@ -417,6 +416,7 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     //essl = removeLocationBinding(essl);
     //essl = addPrecisionToSampler2DShadow(essl);
     essl = forceSupporter(essl);
+
     char* result_essl = new char[essl.length() + 1];
     std::strcpy(result_essl, essl.c_str());
 
@@ -426,4 +426,3 @@ char* GLSLtoGLSLES(char* glsl_code, GLenum glsl_type, uint essl_version) {
     glslang::FinalizeProcess();
     return result_essl;
 }
-

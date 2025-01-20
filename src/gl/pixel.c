@@ -150,6 +150,7 @@ bool remap_pixel(const GLvoid *src, GLvoid *dst,
     if (src_color->blue>max_a) max_a=src_color->blue;
     if (src_color->alpha>max_a) max_a=src_color->alpha;
     switch (src_type) {
+        type_case(GL_UNSIGNED_INT, GLuint, read_each(, / 4294967295.0f,))
         type_case(GL_DOUBLE, GLdouble, read_each(,,))
         type_case(GL_FLOAT, GLfloat, read_each(,,))
         type_case(GL_HALF_FLOAT_OES, halffloat_t, read_each(,,float_h2f))
@@ -337,6 +338,7 @@ bool transform_pixel(const GLvoid *src, GLvoid *dst,
     if (src_color->blue>max_a) max_a=src_color->blue;
     if (src_color->alpha>max_a) max_a=src_color->alpha;
     switch (src_type) {
+        type_case(GL_UNSIGNED_INT, GLuint, read_each(, / 4294967295.0f,))
         type_case(GL_DOUBLE, GLdouble, read_each(,,))
         type_case(GL_FLOAT, GLfloat, read_each(,,))
         type_case(GL_HALF_FLOAT_OES, halffloat_t, read_each(,,float_h2f))
@@ -491,6 +493,7 @@ bool half_pixel(const GLvoid *src0, const GLvoid *src1,
     if (src_color->blue>max_a) max_a=src_color->blue;
     if (src_color->alpha>max_a) max_a=src_color->alpha;
     switch (src_type) {
+        type_case(GL_UNSIGNED_INT, GLuint, read_each(, / 4294967295.0f,))
         type_case(GL_DOUBLE, GLdouble, read_each(,,))
         type_case(GL_FLOAT, GLfloat, read_each(,,))
         type_case(GL_HALF_FLOAT_OES, halffloat_t, read_each(,,float_h2f))
@@ -659,6 +662,7 @@ bool quarter_pixel(const GLvoid *src[16],
     if (src_color->blue>max_a) max_a=src_color->blue;
     if (src_color->alpha>max_a) max_a=src_color->alpha;
     switch (src_type) {
+        type_case(GL_UNSIGNED_INT, GLuint, read_each(, / 4294967295.0f,))
         type_case(GL_DOUBLE, GLdouble, read_each(,,))
         type_case(GL_FLOAT, GLfloat, read_each(,,))
         type_case(GL_HALF_FLOAT_OES, halffloat_t, read_each(,,float_h2f))
