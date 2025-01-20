@@ -824,6 +824,14 @@ GLenum swizzle_internalformat(GLenum* internalformat, GLenum format, GLenum type
         sret = GL_R11F_G11F_B10F;
         break;
     default:
+        if(hardext.depthstencil && format == GL_DEPTH_STENCIL) {
+            sret = ret = GL_DEPTH_STENCIL;
+            break;
+        }
+        if(hardext.depthtex && format == GL_DEPTH_COMPONENT) {
+            sret = ret = GL_DEPTH_COMPONENT;
+            break;
+        }
         ret = GL_RGBA;
         sret = GL_RGBA;
         break;
