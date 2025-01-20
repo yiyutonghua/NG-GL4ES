@@ -63,6 +63,21 @@ void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum 
         gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, (GLint *) &glstate->fbo.current_fb->read_format);
         gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE_OES, (GLint *) &glstate->fbo.current_fb->read_type);
     }
+
+    // process GL_DEPTH_COMPONENT by using glTexImage2D
+    if (target == GL_TEXTURE_2D && internalformat == GL_DEPTH_COMPONENT) {
+        LOAD_GLES(glTexImage2D);
+        LOAD_GLES(glReadPixels);
+        GLfloat* depthData = (GLfloat*)malloc(width * height * sizeof(GLfloat));
+        if (!depthData) {
+            return;
+        }
+        gl4es_glReadPixels(x, y, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
+        gl4es_glTexImage2D(target, level, GL_DEPTH_COMPONENT, width, height, border, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
+        free(depthData);
+        return;
+    }
+
     int copytex = ((bound->format==GL_RGBA && bound->type==GL_UNSIGNED_BYTE) 
         || (bound->format==glstate->fbo.current_fb->read_format && bound->type==glstate->fbo.current_fb->read_type));
 
@@ -198,7 +213,7 @@ void APIENTRY_GL4ES gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei 
 
     if ((format == GL_RGBA && type == GL_UNSIGNED_BYTE) ||
         (format == glstate->readf && type == glstate->readt) ||
-        (format == GL_DEPTH_COMPONENT && (type == GL_FLOAT || type == GL_HALF_FLOAT))) {
+        (format == GL_DEPTH_COMPONENT && (type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_INT))) {
         gles_glReadPixels(x, y, width, height, format, type, dst);
         readfboEnd();
         return;
