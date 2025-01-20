@@ -34,6 +34,7 @@ static int inline nlevel(int size, int level) {
 void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
                                 GLsizei width,  GLsizei height,  GLint border) {
     DBG(SHUT_LOGD("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%p\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);)
+    SHUT_LOGD("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%p\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);
      //PUSH_IF_COMPILING(glCopyTexImage2D);
     FLUSH_BEGINEND;
     const GLuint itarget = what_target(target);
@@ -175,43 +176,53 @@ void APIENTRY_GL4ES gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint 
     glstate->vao->unpack = unpack;
 }
 
-void APIENTRY_GL4ES gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * data) {
+void APIENTRY_GL4ES gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *data) {
     DBG(SHUT_LOGD("glReadPixels(%i, %i, %i, %i, %s, %s, 0x%p)\n", x, y, width, height, PrintEnum(format), PrintEnum(type), data);)
+    SHUT_LOGD("glReadPixels(%i, %i, %i, %i, %s, %s, 0x%p)\n", x, y, width, height, PrintEnum(format), PrintEnum(type), data);
     FLUSH_BEGINEND;
+
     if (glstate->list.compiling && glstate->list.active) {
         errorShim(GL_INVALID_OPERATION);
-        return;	// never in list
+        return;
     }
+
     LOAD_GLES(glReadPixels);
     errorGL();
-    GLvoid* dst = data;
-    if (glstate->vao->pack)
-        dst = (char*)dst + (uintptr_t)glstate->vao->pack->data;
-        
+
+    GLvoid *dst = data;
+    if (glstate->vao->pack) {
+        dst = (char *)dst + (uintptr_t)glstate->vao->pack->data;
+    }
+
     readfboBegin();
-    if ((format == GL_RGBA && type == GL_UNSIGNED_BYTE)     // should not use default GL_RGBA on Pandora as it's very slow...
-       || (format == glstate->readf && type == glstate->readt)    // use the IMPLEMENTATION_READ too...
-       || (format == GL_DEPTH_COMPONENT && (type == GL_FLOAT || type==GL_HALF_FLOAT)))   // this one will probably fail, as DEPTH is not readable on most GLES hardware 
-    {
-        // easy passthru
+
+    if ((format == GL_RGBA && type == GL_UNSIGNED_BYTE) ||
+        (format == glstate->readf && type == glstate->readt) ||
+        (format == GL_DEPTH_COMPONENT && (type == GL_FLOAT || type == GL_HALF_FLOAT))) {
         gles_glReadPixels(x, y, width, height, format, type, dst);
         readfboEnd();
         return;
     }
-    // grab data in GL_RGBA format
-    int use_bgra = 0;
-    if(glstate->readf==GL_BGRA && glstate->readt==GL_UNSIGNED_BYTE)
-        use_bgra = 1;   // if IMPLEMENTATION_READ is BGRA, then use it as it's probably faster then RGBA.
-    GLvoid *pixels = malloc(width*height*4);
-    gles_glReadPixels(x, y, width, height, use_bgra?GL_BGRA:GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    if (! pixel_convert(pixels, &dst, width, height,
-                        use_bgra?GL_BGRA:GL_RGBA, GL_UNSIGNED_BYTE, format, type, 0,glstate->texture.pack_align)) {
-        LOGE("ReadPixels error: (%s, UNSIGNED_BYTE -> %s, %s )\n",
-            PrintEnum(use_bgra?GL_BGRA:GL_RGBA), PrintEnum(format), PrintEnum(type));
+
+    int use_bgra = (glstate->readf == GL_BGRA && glstate->readt == GL_UNSIGNED_BYTE) ? 1 : 0;
+
+    GLvoid *pixels = malloc(width * height * 4);
+    if (!pixels) {
+        LOGE("Memory allocation failed for temporary pixel buffer\n");
+        readfboEnd();
+        return;
     }
+
+    gles_glReadPixels(x, y, width, height, use_bgra ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    if (!pixel_convert(pixels, &dst, width, height,
+                       use_bgra ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, format, type, 0, glstate->texture.pack_align)) {
+        LOGE("ReadPixels error: (%s, UNSIGNED_BYTE -> %s, %s )\n",
+             PrintEnum(use_bgra ? GL_BGRA : GL_RGBA), PrintEnum(format), PrintEnum(type));
+    }
+
     free(pixels);
     readfboEnd();
-    return;
 }
 
 
