@@ -34,7 +34,6 @@ static int inline nlevel(int size, int level) {
 void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
                                 GLsizei width,  GLsizei height,  GLint border) {
     DBG(SHUT_LOGD("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%p\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);)
-    SHUT_LOGD("glCopyTexImage2D(%s, %i, %s, %i, %i, %i, %i, %i), glstate->fbo.current_fb=%p\n", PrintEnum(target), level, PrintEnum(internalformat), x, y, width, height, border, glstate->fbo.current_fb);
      //PUSH_IF_COMPILING(glCopyTexImage2D);
     FLUSH_BEGINEND;
     const GLuint itarget = what_target(target);
@@ -72,9 +71,13 @@ void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum 
         if (!depthData) {
             return;
         }
-        gl4es_glReadPixels(x, y, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
-        gl4es_glTexImage2D(target, level, GL_DEPTH_COMPONENT, width, height, border, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
+        gles_glReadPixels(x, y, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
+        gles_glTexImage2D(target, level, GL_DEPTH_COMPONENT, width, height, border, GL_DEPTH_COMPONENT, GL_FLOAT, depthData);
         free(depthData);
+        readfboEnd();
+        // "Remap" if buffer mapped...
+        glstate->vao->pack = pack;
+        glstate->vao->unpack = unpack;
         return;
     }
 
