@@ -468,13 +468,16 @@ extern "C" {
     }
 
     void glDeleteSync(GLsync sync) {
+        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
         gl4es_glDeleteFramebuffers(1, &fbo);
+         */
     }
 
     void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) {
+        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
@@ -502,9 +505,11 @@ extern "C" {
 
             usleep(1000);
         }
+         */
     }
 
     void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values) {
+        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
@@ -517,6 +522,7 @@ extern "C" {
             }
             if (length) *length = 1;
         }
+         */
     }
 
     GLboolean glIsSync(GLsync sync) {
