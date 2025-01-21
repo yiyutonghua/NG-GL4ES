@@ -1404,9 +1404,11 @@ void APIENTRY_GL4ES gl4es_glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX
     GLint width = viewport[2];
     GLint height = viewport[3];
 	
+    // es3 is able to copy DEPTH or STENCIL data
+    /*
     if((mask&GL_COLOR_BUFFER_BIT)==0)
         return; // cannot copy DEPTH or STENCIL data on GLES, only COLOR_BUFFER...
-
+    */
     if(glstate->fbo.fbo_read == glstate->fbo.fbo_draw && srcX0==dstX0 && srcX1==dstX1 && srcY0==dstY0 && srcY1==dstY1)
         return; // no need to try copying on itself
     
