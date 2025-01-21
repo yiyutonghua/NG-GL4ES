@@ -1063,7 +1063,7 @@ void* APIENTRY_GL4ES gl4es_GetProcAddress(const char *name) {
     void* proc = dlsym(RTLD_DEFAULT, (const char*)name);
     if (!proc) {
         fprintf(stderr, "Failed to get OpenGL function %s: %s\n", name, dlerror());
-        SHUT_LOGD("[ERROR] Failed to get OpenGL function: %s", (const char*)name);
+        SHUT_LOGD("[WARNING] Failed to get OpenGL function: %s", (const char*)name);
         return NULL;
     }
     return proc;

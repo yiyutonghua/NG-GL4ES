@@ -19,7 +19,7 @@ void *gl4es_glXGetProcAddress(const char *name) {
 
     if (!proc) {
         fprintf(stderr, "Failed to get OpenGL function %s: %s\n", name, dlerror());
-        SHUT_LOGD("[ERROR] Failed to get OpenGL function: %s", (const char*)name);
+        SHUT_LOGD("[WARNING] Failed to get OpenGL function: %s", (const char*)name);
         return NULL;
     }
 
