@@ -35,12 +35,12 @@ extern "C" {
     VISIBLE void glBindProgramPipeline(GLuint pipeline);
     VISIBLE void APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
     VISIBLE void glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
-    VISIBLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-    VISIBLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
-    VISIBLE void glDeleteSync(GLsync sync);
-    VISIBLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-    VISIBLE GLboolean glIsSync(GLsync sync);
-    VISIBLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
+    //VISIBLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    //VISIBLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
+    //VISIBLE void glDeleteSync(GLsync sync);
+    //VISIBLE GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
+    //VISIBLE GLboolean glIsSync(GLsync sync);
+    //VISIBLE GLsync glFenceSync(GLenum condition, GLbitfield flags);
     VISIBLE void glDispatchComputeIndirect(GLuint indirectBuffer);
     //NEEDTOBEDONE
     //void glUseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
@@ -451,7 +451,9 @@ extern "C" {
         gettimeofday(&time, nullptr);
         return time.tv_sec * 1000000 + time.tv_usec;
     }
-
+    
+    /*
+    
     GLsync glFenceSync(GLenum condition, GLbitfield flags) {
         GLuint fbo, renderbuffer;
         gl4es_glGenFramebuffers(1, &fbo);
@@ -464,20 +466,16 @@ extern "C" {
         gl4es_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer);
 
         return reinterpret_cast<GLsync>(fbo);
-
     }
-
+    
     void glDeleteSync(GLsync sync) {
-        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
         gl4es_glDeleteFramebuffers(1, &fbo);
-         */
     }
 
     void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) {
-        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
@@ -505,11 +503,9 @@ extern "C" {
 
             usleep(1000);
         }
-         */
     }
 
     void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values) {
-        /*
         if (sync == nullptr) return;
 
         GLuint fbo = static_cast<GLuint>(reinterpret_cast<uintptr_t>(sync));
@@ -522,7 +518,6 @@ extern "C" {
             }
             if (length) *length = 1;
         }
-         */
     }
 
     GLboolean glIsSync(GLsync sync) {
@@ -565,4 +560,6 @@ extern "C" {
         }
         return GL_CONDITION_SATISFIED;
     }
+    
+    */
 }

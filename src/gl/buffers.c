@@ -908,16 +908,18 @@ void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTar
 
     glbuffer_t *readbuff = getbuffer_buffer(readTarget);
     glbuffer_t *writebuff = getbuffer_buffer(writeTarget);
+    
     if (!readbuff || !writebuff) {
         errorShim(GL_INVALID_VALUE);
         return;
     }
-
+    
     if ((writebuff->ranged && !(writebuff->access & GL_MAP_PERSISTENT_BIT)) && readTarget != GL_COPY_READ_BUFFER) {
         errorShim(GL_INVALID_OPERATION);
         return;
     }
-
+    
+    /*
     if ((char*)readbuff->data + readOffset >= (char*)readbuff->data + readbuff->size ||
         (char*)writebuff->data + writeOffset >= (char*)writebuff->data + writebuff->size ||
         (readOffset + size > readbuff->size) ||
@@ -930,6 +932,7 @@ void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTar
         errorShim(GL_INVALID_OPERATION);
         return;
     }
+     */
 
     memcpy((char*)writebuff->data + writeOffset, (char*)readbuff->data + readOffset, size);
 
