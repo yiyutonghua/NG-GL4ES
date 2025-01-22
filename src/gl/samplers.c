@@ -104,7 +104,7 @@ void gl4es_glGenSamplers(GLsizei n, GLuint *ids)
 
 void gl4es_glBindSampler(GLuint unit, GLuint sampler)
 {
-    DBG(SHUT_LOGD("gl4es_glBindSample(%u, %u)\n", unit, sampler);)
+    DBG(SHUT_LOGD("gl4es_glBindSampler(%u, %u)\n", unit, sampler);)
 
     if(unit>hardext.maxtex) {
         errorShim(GL_INVALID_VALUE);

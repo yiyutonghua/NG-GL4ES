@@ -1029,105 +1029,6 @@ AliasExport(void,glMultiDrawElements,,( GLenum mode, GLsizei *count, GLenum type
 
 void APIENTRY_GL4ES gl4es_glMultiDrawElementsBaseVertex( GLenum mode, GLsizei *counts, GLenum type, const void * const *indices, GLsizei primcount, const GLint * basevertex) {
     DBG(SHUT_LOGD("glMultiDrawElementsBaseVertex(%s, %p, %s, @%p, %d, @%p), inlist=%i, pending=%d\n", PrintEnum(mode), counts, PrintEnum(type), indices, primcount, basevertex, (glstate->list.active)?1:0, glstate->list.pending);)
-//    // divide the call, should try something better one day...
-//    bool compiling = (glstate->list.active);
-//    bool intercept = should_intercept_render(mode);
-//    //BATCH Mode
-//    GLsizei maxcount=counts[0];
-//    GLsizei mincount=counts[0];
-//    for (int i=1; i<primcount; i++) {
-//        if(counts[i]>maxcount) maxcount=counts[i];
-//        if(counts[i]<mincount) mincount=counts[i];
-//    }
-//    if(!compiling) {
-//        if(!intercept && glstate->list.pending && maxcount>MAX_BATCH)    // too large and will not intercept, stop the BATCH
-//            gl4es_flush();
-//        else if((!intercept && !glstate->list.pending && mincount<MIN_BATCH)
-//            || (intercept && globals4es.maxbatch)) {
-//            compiling = true;
-//            glstate->list.pending = 1;
-//            glstate->list.active = alloc_renderlist();
-//        }
-//    }
-//    renderlist_t *list = NULL;
-//    for (int i=0; i<primcount; i++) {
-//        GLsizei count = adjust_vertices(mode, counts[i]);
-//
-//        if (count<0) {
-//            errorShim(GL_INVALID_VALUE);
-//            continue;
-//        }
-//        if (count==0) {
-//            noerrorShim();
-//            continue;
-//        }
-//
-//        noerrorShim();
-//        GLushort *sindices = NULL;
-//        GLuint *iindices = NULL;
-//
-//        if(type==GL_UNSIGNED_INT && hardext.elementuint && !compiling && !intercept)
-//            iindices = copy_gl_array((glstate->vao->elements)?(void*)((char*)glstate->vao->elements->data + (uintptr_t)indices[i]):indices[i],
-//                type, 1, 0, GL_UNSIGNED_INT, 1, 0, count, NULL);
-//        else
-//            sindices = copy_gl_array((glstate->vao->elements)?(void*)((char*)glstate->vao->elements->data + (uintptr_t)indices[i]):indices[i],
-//                type, 1, 0, GL_UNSIGNED_SHORT, 1, 0, count, NULL);
-//
-//        if (compiling) {
-//            // TODO, handle uint indices
-//            renderlist_t *clist = NULL;
-//            GLsizei min, max;
-//
-//            NewStage(glstate->list.active, STAGE_DRAW);
-//            clist = glstate->list.active;
-//
-//            normalize_indices_us(sindices, &max, &min, count);
-//            clist = arrays_to_renderlist(clist, mode, min + basevertex[i], max + basevertex[i] + 1);
-//            clist->indices = sindices;
-//            clist->ilen = count;
-//            clist->indice_cap = count;
-//            //end_renderlist(list);
-//
-//            if(glstate->list.pending) {
-//                NewStage(glstate->list.active, STAGE_POSTDRAW);
-//            } else {
-//                glstate->list.active = extend_renderlist(clist);
-//            }
-//            continue;
-//        }
-//
-//        if (intercept) {
-//            //TODO handling uint indices
-//            GLsizei min, max;
-//
-//            normalize_indices_us(sindices, &max, &min, count);
-//            if(list) {
-//                NewStage(list, STAGE_DRAW);
-//            }
-//            list = arrays_to_renderlist(list, mode, min + basevertex[i], max + basevertex[i] + 1);
-//            list->indices = sindices;
-//            list->ilen = count;
-//            list->indice_cap = count;
-//            continue;
-//        } else {
-//            if(iindices)
-//                for(int j=0; j<count; j++) iindices[j]+=basevertex[i];
-//            else
-//                for(int j=0; j<count; j++) sindices[j]+=basevertex[i];
-//            GLuint old_index = wantBufferIndex(0);
-//            glDrawElementsCommon(mode, 0, count, 0, sindices, iindices, 1);
-//            if(iindices)
-//                free(iindices);
-//            else
-//                free(sindices);
-//            wantBufferIndex(old_index);
-//        }
-//    }
-//    if(list) {
-//        list = end_renderlist(list);
-//        draw_renderlist(list);
-//        free_renderlist(list);
-//    }
     LOAD_GLES2(glDrawElementsBaseVertex);
     scratch_t scratch = {0};
     realize_glenv(mode==GL_POINTS, 0, 0, type, indices, &scratch);
@@ -1140,11 +1041,6 @@ void APIENTRY_GL4ES gl4es_glMultiDrawElementsBaseVertex( GLenum mode, GLsizei *c
     DBG(SHUT_LOGD("gles_glDrawElementsBaseVertex loop x%d\n", primcount);)
     for (int i = 0; i < primcount; i++) {
         if (counts[i] > 0)
-//            gl4es_glDrawElementsBaseVertex(mode,
-//                                           counts[i],
-//                                           type,
-//                                           indices[i],
-//                                           basevertex[i]);
             gles_glDrawElementsBaseVertex(mode,
                                           counts[i],
                                           type,
@@ -1157,95 +1053,20 @@ AliasExport(void,glMultiDrawElementsBaseVertex,ARB,( GLenum mode, GLsizei *count
 
 void APIENTRY_GL4ES gl4es_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex) {
     DBG(SHUT_LOGD("glDrawElementsBaseVertex(%s, %d, %s, %p, %d), vtx=%p map=%p, pending=%d\n", PrintEnum(mode), count, PrintEnum(type), indices, basevertex, (glstate->vao->vertex)?glstate->vao->vertex->data:NULL, (glstate->vao->elements)?glstate->vao->elements->data:NULL, glstate->list.pending);)
-    if(basevertex==0)
-        gl4es_glDrawElements(mode, count, type, indices);
-    else {
-        count = adjust_vertices(mode, count);
-       
-        if (count<0) {
-            errorShim(GL_INVALID_VALUE);
-            return;
-        }
-        if (count==0) {
-            noerrorShim();
-            return;
-        }
 
-        bool compiling = (glstate->list.active);
-        bool intercept = should_intercept_render(mode);
+    LOAD_GLES2(glDrawElementsBaseVertex);
+    scratch_t scratch = {0};
+    realize_glenv(mode==GL_POINTS, 0, 0, type, indices, &scratch);
+    free_scratch(&scratch);
 
-        //BATCH Mode
-        if(!compiling) {
-            if(!intercept && glstate->list.pending && count>MAX_BATCH)    // too large and will not intercept, stop the BATCH
-                gl4es_flush();
-            else if((!intercept && !glstate->list.pending && count<MIN_BATCH) 
-                || (intercept && globals4es.maxbatch)) {
-                compiling = true;
-                glstate->list.pending = 1;
-                glstate->list.active = alloc_renderlist();
-            }
-        }
-
-        noerrorShim();
-        GLushort *sindices = NULL;
-        GLuint *iindices = NULL;
-
-        if(type==GL_UNSIGNED_INT && hardext.elementuint && !compiling && !intercept)
-            iindices = copy_gl_array((glstate->vao->elements)?(void*)((char*)glstate->vao->elements->data + (uintptr_t)indices):indices,
-                type, 1, 0, GL_UNSIGNED_INT, 1, 0, count, NULL);
-        else
-            sindices = copy_gl_array((glstate->vao->elements)?(void*)((char*)glstate->vao->elements->data + (uintptr_t)indices):indices,
-                type, 1, 0, GL_UNSIGNED_SHORT, 1, 0, count, NULL);
-
-        if (compiling) {
-            // TODO, handle uint indices
-            renderlist_t *list = NULL;
-            GLsizei min, max;
-
-            NewStage(glstate->list.active, STAGE_DRAW);
-            list = glstate->list.active;
-
-            normalize_indices_us(sindices, &max, &min, count);
-            list = arrays_to_renderlist(list, mode, min + basevertex, max + basevertex + 1);
-            list->indices = sindices;
-            list->ilen = count;
-            list->indice_cap = count;
-            //end_renderlist(list);
-            
-            if(glstate->list.pending) {
-                NewStage(glstate->list.active, STAGE_POSTDRAW);
-            } else {
-                glstate->list.active = extend_renderlist(list);
-            }
-            return;
-        }
-
-        if (intercept) {
-            //TODO handling uint indices
-            renderlist_t *list = NULL;
-            GLsizei min, max;
-
-            normalize_indices_us(sindices, &max, &min, count);
-            list = arrays_to_renderlist(list, mode, min + basevertex, max + basevertex + 1);
-            list->indices = sindices;
-            list->ilen = count;
-            list->indice_cap = count;
-            list = end_renderlist(list);
-            draw_renderlist(list);
-            free_renderlist(list);
-            return;
-        } else {
-            if(iindices)
-                for(int i=0; i<count; i++) iindices[i]+=basevertex;
-            else
-                for(int i=0; i<count; i++) sindices[i]+=basevertex;
-            glDrawElementsCommon(mode, 0, count, 0, sindices, iindices, 1);
-            if(iindices)
-                free(iindices);
-            else
-                free(sindices);
-        }
-    }
+    realize_textures(1);
+    bindBuffer(GL_ARRAY_BUFFER, glstate->vao->vertex->real_buffer);
+    bindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
+    gles_glDrawElementsBaseVertex(mode,
+                                  count,
+                                  type,
+                                  indices,
+                                  basevertex);
 }
 AliasExport(void,glDrawElementsBaseVertex,,(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex));
 AliasExport(void,glDrawElementsBaseVertex,ARB,(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex));

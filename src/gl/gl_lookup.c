@@ -1,3 +1,4 @@
+#include "gl4es.h"
 #include "attributes.h"
 #include "wrap/gl4es.h"
 #include "wrap/stub.h"

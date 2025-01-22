@@ -5,6 +5,11 @@ extern "C" {
 #define _GL4ES_GL4ES_H_
 
 //#define DEBUG
+#ifdef DEBUG
+#define DBG(a) a
+#else
+#define DBG(a)
+#endif
 
 #define VISIBLE __attribute__((visibility("default")))
 
@@ -35,6 +40,8 @@ packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 #define ERROR_IN_BEGIN if(glstate->list.begin) {errorShim(GL_INVALID_OPERATION); return;}
 
 void write_log(const char* format, ...);
+
+#include "debug.h"
 
 const GLubyte* APIENTRY_GL4ES gl4es_glGetString(GLenum name);
 void APIENTRY_GL4ES gl4es_glGetIntegerv(GLenum pname, GLint *params);
@@ -118,6 +125,7 @@ static inline void errorGL() {	// next glGetError will be from GL
         glstate->type_error = 1;    // will need to read glGetError...
 }
 static inline void errorShim(GLenum error) {	// next glGetError will be "error" from gl4es
+    DBG(write_log("now ERROR! %s", PrintEnum(error));)
     if(glstate->type_error && glstate->shim_error==GL_NO_ERROR)
 	    glstate->type_error = 1;
     if(glstate->shim_error == GL_NO_ERROR)

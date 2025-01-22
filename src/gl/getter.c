@@ -9,6 +9,7 @@
 #include "matvec.h"
 #include "texgen.h"
 #include "string_utils.h"
+#include "GL/gl.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -965,6 +966,9 @@ void APIENTRY_GL4ES gl4es_glGetIntegerv(GLenum pname, GLint *params) {
         case GL_DEPTH_RANGE:
             params[0] = glstate->depth.Near*2147483647l;
             params[1] = glstate->depth.Far*2147483647l;
+            break;
+        case GL_CONTEXT_PROFILE_MASK:
+            *params = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
             break;
         default:
             errorGL();

@@ -79,6 +79,9 @@ void APIENTRY_GL4ES gl4es_glViewport(GLint x, GLint y, GLsizei width, GLsizei he
 		FLUSH_BEGINEND;
 		if (glstate->raster.bm_drawing)	bitmap_flush();
     	LOAD_GLES(glViewport);
+		if (width <= 0 || height <= 0) {
+			return;
+		}
 		gles_glViewport(x, y, width, height);
 		glstate->raster.viewport.x = x;
 		glstate->raster.viewport.y = y;

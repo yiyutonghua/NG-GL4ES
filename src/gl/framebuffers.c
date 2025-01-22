@@ -244,7 +244,7 @@ void APIENTRY_GL4ES gl4es_glBindFramebuffer(GLenum target, GLuint framebuffer) {
         noerrorShim();
         glstate->fbo.fb_status = GL_FRAMEBUFFER_COMPLETE;
         glstate->fbo.internal = 1;
-        return;    //don't bind for now
+//        return;    //don't bind for now
     } else glstate->fbo.internal = 0;
         
     if (target == GL_DRAW_FRAMEBUFFER) {
@@ -252,10 +252,10 @@ void APIENTRY_GL4ES gl4es_glBindFramebuffer(GLenum target, GLuint framebuffer) {
         glstate->fbo.fbo_draw = fb;
     }
     
-    if (target != GL_FRAMEBUFFER) {
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
+//    if (target != GL_FRAMEBUFFER) {
+//        errorShim(GL_INVALID_ENUM);
+//        return;
+//    }
 
     if(framebuffer==0)
         framebuffer = glstate->fbo.mainfbo_fbo;
