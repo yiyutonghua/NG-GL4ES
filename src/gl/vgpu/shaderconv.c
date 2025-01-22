@@ -179,12 +179,14 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
 
     while (*cursor) {
         if (strncmp(cursor, "uniform", 7) == 0) {
+            char* cursor_start = cursor;
+            
             cursor += 7;
 
             while (isspace((unsigned char)*cursor)) cursor++;
 
             // may be precision qualifier
-            char* precision = "";
+            char* precision = NULL;
             if (startsWith(cursor, "highp")) {
                 precision = " highp";
                 cursor += 5;
@@ -197,13 +199,36 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
                 precision = " mediump";
                 cursor += 7;
                 while (isspace((unsigned char)*cursor)) cursor++;
-            };
+            }
 
             int i = 0;
             while (isalnum((unsigned char)*cursor) || *cursor == '_') {
                 type[i++] = *cursor++;
             }
             type[i] = '\0';
+
+            while (isspace((unsigned char)*cursor)) cursor++;
+
+            // may be precision qualifier
+            if(!precision)
+            {
+                if (startsWith(cursor, "highp")) {
+                    precision = " highp";
+                    cursor += 5;
+                    while (isspace((unsigned char)*cursor)) cursor++;
+                } else if (startsWith(cursor, "lowp")) {
+                    precision = " lowp";
+                    cursor += 4;
+                    while (isspace((unsigned char)*cursor)) cursor++;
+                } else if (startsWith(cursor, "mediump")) {
+                    precision = " mediump";
+                    cursor += 7;
+                    while (isspace((unsigned char)*cursor)) cursor++;
+                } else {
+                    precision = "";
+                }
+            }
+            
             while (isspace((unsigned char)*cursor)) cursor++;
 
             i = 0;
@@ -231,6 +256,8 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
             while (*cursor != ';' && *cursor) {
                 cursor++;
             }
+            
+            char* cursor_end = cursor;
 
             int spaceLeft = maxLength - modifiedCodeIndex;
             int len = 0;
@@ -238,7 +265,15 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
             if (*initial_value) {
                 len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type, name);
             } else {
-                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type, name);
+                // use original declaration
+                size_t length = cursor_end - cursor_start + 1;
+                if (length < spaceLeft) {
+                    memcpy(modifiedGlslCode + modifiedCodeIndex, cursor_start, length);
+                    len = (int)length;
+                } else {
+                    fprintf(stderr, "Error: Not enough space in buffer\n");
+                }
+                // len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type, name);
             }
 
             if (len < 0 || len >= spaceLeft) {
