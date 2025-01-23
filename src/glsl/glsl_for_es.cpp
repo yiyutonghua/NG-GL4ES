@@ -184,33 +184,35 @@ char* disable_GL_ARB_derivative_control(char* glslCode) {
 }
 
 std::string forceSupporter(const std::string& glslCode) {
-
-    std::regex precisionFloatRegex(R"(\n\s*precision\s*\w+\s*float\s*;\s*)");
-    std::regex precisionIntRegex(R"(\n\s*precision\s*\w+\s*int\s*;\s*)");
-
-    bool hasPrecisionFloat = std::regex_search(glslCode, precisionFloatRegex);
-    bool hasPrecisionInt = std::regex_search(glslCode, precisionIntRegex);
-
+    bool hasPrecisionFloat = glslCode.find("precision ") != std::string::npos &&
+                             glslCode.find("float;") != std::string::npos;
+    bool hasPrecisionInt = glslCode.find("precision ") != std::string::npos &&
+                           glslCode.find("int;") != std::string::npos;
+    if (hasPrecisionFloat && hasPrecisionInt) {
+        return glslCode;
+    }
     std::string result = glslCode;
-
-    if (!hasPrecisionFloat) {
+    std::string precisionFloat = hasPrecisionFloat ? "" : "precision highp float;\n";
+    std::string precisionInt = hasPrecisionInt ? "" : "precision highp int;\n";
+    size_t lastExtensionPos = result.rfind("#extension");
+    size_t insertionPos = 0;
+    if (lastExtensionPos != std::string::npos) {
+        size_t nextNewline = result.find('\n', lastExtensionPos);
+        if (nextNewline != std::string::npos) {
+            insertionPos = nextNewline + 1;
+        } else {
+            insertionPos = result.length();
+        }
+    } else {
         size_t firstNewline = result.find('\n');
         if (firstNewline != std::string::npos) {
-            result.insert(firstNewline + 1, "precision highp float;\n");
+            insertionPos = firstNewline + 1;
         } else {
-            result = "precision highp float;\n" + result;
+            result = precisionFloat + precisionInt + result;
+            return result;
         }
     }
-
-    if (!hasPrecisionInt) {
-        size_t firstNewline = result.find('\n');
-        if (firstNewline != std::string::npos) {
-            result.insert(firstNewline + 1, "precision highp int;\n");
-        } else {
-            result = "precision highp int;\n" + result;
-        }
-    }
-
+    result.insert(insertionPos, precisionFloat + precisionInt);
     return result;
 }
 

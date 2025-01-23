@@ -4,7 +4,7 @@
 #define MAJOR 0
 #define MINOR 1
 #define REVISION 0
-#define VERSION_TYPE "R"
+#define VERSION_TYPE "Release "
 #define VERSION_SUFFIX ""
 #define RELEASE 1
 

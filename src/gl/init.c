@@ -1,6 +1,10 @@
 #include <stdio.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #else
 #include <stdio.h>
 #include <direct.h>
@@ -18,6 +22,8 @@
 #include "fpe_cache.h"
 #include "init.h"
 #include "envvars.h"
+#include "config.h"
+
 #if defined(__EMSCRIPTEN__)
 #define NO_INIT_CONSTRUCTOR
 #endif
@@ -92,6 +98,10 @@ void initialize_gl4es() {
 #endif
     // only init 1 time
     if(inited++) return;
+    if(mkdir(NGG_DIRECTORY_PATH, 0755) != 0 && errno != EEXIST) {
+        printf("Error creating NGG directory.\n");
+    }
+    config_refresh();
     // default init of globals
     memset(&globals4es, 0, sizeof(globals4es));
     globals4es.mergelist = 1;
@@ -194,6 +204,14 @@ void initialize_gl4es() {
 
     globals4es.use_mc_color=ReturnEnvVarInt("LIBGL_USE_MC_COLOR");
 
+#define SET_CONFIG_INT(name) globals4es.name=config_get_int(#name)
+#define SET_CONFIG_INT_0(name) globals4es.name=config_get_int(#name)!=-1?config_get_int(#name):0
+#define SET_CONFIG_STRING(name) globals4es.name=config_get_string(#name)
+    SET_CONFIG_INT_0(force_es_copy_tex);
+    // custom egl lib is useless now...
+    // SET_CONFIG_STRING(force_egl_lib);
+    // SET_CONFIG_STRING(force_gles_lib);
+    
     globals4es.gl=ReturnEnvVarInt("LIBGL_GL");
     switch(globals4es.gl) {
       case 10:
@@ -762,7 +780,8 @@ void close_gl4es() {
         #ifdef GL4ES_COMPILE_FOR_USE_IN_SHARED_LIB
         SHUT_LOGD("Shutdown requested\n");
         if(--inited) return;
-    #endif
+        #endif
+    config_cleanup();
     SHUT_LOGD("Shutting down\n");
     #ifndef NOX11
     FreeFBVisual();

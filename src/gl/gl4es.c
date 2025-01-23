@@ -25,6 +25,8 @@
 #include "matrix.h"
 #include "buffers.h"
 #include "logs.h"
+#include "config.h"
+
 #ifdef _WIN32
 #ifdef _WINBASE_
 #define GSM_CAST(c) ((LPFILETIME)c)
@@ -52,10 +54,9 @@ void trim(char* str) {
 }
 
 void write_log(const char* format, ...) {
-    const char* file_path = "/sdcard/ng_gl4es_log.txt";
-    FILE* file = fopen(file_path, "a");
+    FILE* file = fopen(LOG_FILE_PATH, "a");
     if (file == NULL) {
-        fprintf(stderr, "Error opening file '%s': %s\n", file_path, strerror(errno));
+        fprintf(stderr, "Error opening log file '%s': %s\n", LOG_FILE_PATH, strerror(errno));
         return;
     }
     va_list args;
@@ -66,10 +67,9 @@ void write_log(const char* format, ...) {
     fclose(file);
 }
 void clear_log() {
-    const char* file_path = "/sdcard/ng_gl4es_log.txt";
-    FILE* file = fopen(file_path, "w");
+    FILE* file = fopen(LOG_FILE_PATH, "w");
     if (file == NULL) {
-        fprintf(stderr, "Error opening file '%s' for clearing: %s\n", file_path, strerror(errno));
+        fprintf(stderr, "Error opening log file '%s' for clearing: %s\n", LOG_FILE_PATH, strerror(errno));
         return;
     }
     fclose(file);

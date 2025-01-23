@@ -89,6 +89,9 @@ typedef struct _globals4es {
     int vgpu_precision;    // The level of precision used by vgpu
     int vgpu_backport;     // Whether we try hard to backport shaders to #version 100
 
+    int force_es_copy_tex;
+    const char *force_egl_lib;
+    const char *force_gles_lib;
 } globals4es_t;
 
 extern globals4es_t globals4es;

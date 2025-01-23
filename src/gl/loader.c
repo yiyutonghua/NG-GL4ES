@@ -170,7 +170,7 @@ void load_libs() {
     if (! first) return;
     first = 0;
 #ifndef _WIN32
-    const char *gles_override = GetEnvVar("LIBGL_GLES");
+    const char *gles_override = globals4es.force_gles_lib?globals4es.force_gles_lib:GetEnvVar("LIBGL_GLES");
     if (!gles_override) {
         gles_override = DEFAULT_GLES;
 #if defined(BCMHOST) && !defined(ANDROID)
@@ -192,7 +192,7 @@ void load_libs() {
 #ifdef NOEGL
     egl = gles;
 #elif !defined(_WIN32)
-    const char *egl_override = GetEnvVar("LIBGL_EGL");
+    const char *egl_override = globals4es.force_egl_lib?globals4es.force_egl_lib:GetEnvVar("LIBGL_EGL");
     if (!egl_override) {
         egl_override = DEFAULT_EGL;
     }
