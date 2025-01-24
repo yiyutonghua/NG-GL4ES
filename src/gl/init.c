@@ -422,10 +422,10 @@ void initialize_gl4es() {
         SHUT_LOGD("Overide version string with \"%s\" (should be in the form of \"1.x\")\n", env_version);
     }
     if(env_version) {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §aKrypton Wrapper %s%s%d.%d.%d %s§r":"%s Krypton Wrapper %s%s%d.%d.%d%s", env_version, version_color, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%s §aKrypton Wrapper %s%s%d.%d.%d%s§r":"%s Krypton Wrapper %s%s%d.%d.%d%s", env_version, version_color, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %s\n", env_version);
     } else {
-        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §aKrypton Wrapper %s%s%d.%d.%d %s§r":"%d.%d Krypton Wrapper %s%s%d.%d.%d%s", globals4es.gl/10, globals4es.gl%10, version_color, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
+        snprintf(globals4es.version, 49, globals4es.use_mc_color==1?"%d.%d §aKrypton Wrapper %s%s%d.%d.%d%s§r":"%d.%d Krypton Wrapper %s%s%d.%d.%d%s", globals4es.gl/10, globals4es.gl%10, version_color, VERSION_TYPE, MAJOR, MINOR, REVISION, VERSION_SUFFIX);
         SHUT_LOGD("Targeting OpenGL %d.%d\n", globals4es.gl/10, globals4es.gl%10);
     }
 
