@@ -3670,6 +3670,7 @@ packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 #define glReadBuffer_ARG_EXPAND GLenum src
 #define glDispatchComputeIndirect_ARG_EXPAND GLintptr indirect
 #define glCopyBufferSubData_ARG_EXPAND GLenum readtarget, GLenum writetarget, GLintptr readoffset, GLintptr writeoffset, GLsizeiptr size
+#define glDebugMessageControl_ARG_EXPAND GLenum source,GLenum type,GLenum severity,GLsizei count,const GLuint *ids,GLboolean enabled
 
 
 #define glVertexAttribIPointer_INDEX 242
@@ -4176,6 +4177,8 @@ void gl4es_glDispatchCompute(glDispatchCompute_ARG_EXPAND);
 typedef void (*glDispatchCompute_PTR)(glDispatchCompute_ARG_EXPAND);
 void gl4es_glDispatchComputeIndirect(glDispatchComputeIndirect_ARG_EXPAND);
 typedef void (*glDispatchComputeIndirect_PTR)(glDispatchComputeIndirect_ARG_EXPAND);
+void gl4es_glDebugMessageControl(glDebugMessageControl_ARG_EXPAND);
+typedef void (*glDebugMessageControl_PTR)(glDebugMessageControl_ARG_EXPAND);
 typedef void (*glCopyBufferSubData_PTR)(glCopyBufferSubData_ARG_EXPAND);
 
 

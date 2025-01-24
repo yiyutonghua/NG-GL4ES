@@ -133,31 +133,33 @@ void BuildExtensionsList() {
                 "GL_EXT_draw_elements_base_vertex "
                 "GL_ARB_map_buffer_range "
                 "GL_NV_blend_square "
-                "GL_EXT_polygon_offset_clamp"
-                "GL_ARB_clear_texture"
-                "GL_ARB_texture_mirror_clamp_to_edge"
-                "GL_ARB_debug_output"
-                "GL_ARB_enhanced_layouts"
-                "GL_KHR_debug"
-                "GL_ARB_arrays_of_arrays"
-                "GL_ARB_texture_query_levels"
-                "GL_ARB_invalidate_subdata"
-                "GL_ARB_clear_buffer_object"
-                "GL_INTEL_map_texture"
-                "GL_ARB_texture_compression_bptc"
-                "GL_ARB_ES2_compatibility"
-                "GL_ARB_ES3_compatibility"
-                "GL_ARB_robustness"
-                "GL_ARB_robust_buffer_access_behavior"
-                "GL_EXT_texture_sRGB_decode"
-                "GL_ARB_copy_image"
-                "GL_KHR_blend_equation_advanced"
-                "GL_EXT_direct_state_access"
-                "GL_ARB_stencil_texturing"
-                "GL_ARB_texture_stencil8"
-                "GL_ARB_explicit_uniform_location"
-                "GL_ARB_multi_bind"
-                "GL_ARB_indirect_parameters"
+                "GL_EXT_polygon_offset_clamp "
+                "GL_ARB_clear_texture "
+                "GL_ARB_texture_mirror_clamp_to_edge "
+                "GL_ARB_debug_output "
+                "GL_ARB_enhanced_layouts "
+                "GL_KHR_debug "
+                "GL_ARB_arrays_of_arrays "
+                "GL_ARB_texture_query_levels "
+                "GL_ARB_invalidate_subdata "
+                "GL_ARB_clear_buffer_object "
+                "GL_INTEL_map_texture "
+                "GL_ARB_texture_compression_bptc "
+                "GL_ARB_ES2_compatibility "
+                "GL_ARB_ES3_compatibility "
+                "GL_ARB_robustness "
+                "GL_ARB_robust_buffer_access_behavior "
+                "GL_EXT_texture_sRGB_decode "
+                "GL_ARB_copy_image "
+                "GL_KHR_blend_equation_advanced "
+                "GL_EXT_direct_state_access "
+                "GL_ARB_stencil_texturing "
+                "GL_ARB_texture_stencil8 "
+                "GL_ARB_explicit_uniform_location "
+                "GL_ARB_explicit_attrib_location "
+                "GL_ARB_multi_bind "
+                "GL_ARB_indirect_parameters "
+                //"GL_ARB_separate_shader_objects "
 //                "GL_EXT_blend_logic_op "
 				);
         if(!globals4es.notexrect)
@@ -346,12 +348,7 @@ const GLubyte* APIENTRY_GL4ES gl4es_glGetString(GLenum name) {
             return (GLubyte *) result;
         }
 		case GL_SHADING_LANGUAGE_VERSION:
-            if(globals4es.gl==21)
-            return (GLubyte *)"1.20 via gl4es";
-            else if(globals4es.gl==20)
-                return (GLubyte *)"1.10 via gl4es";
-			return (GLubyte *)"1.30 via gl4es";
-			return (GLubyte *)"";
+			return (GLubyte *)"4.50 Krypton Wrapper with glslang and SPIRV-Cross";
         case GL_PROGRAM_ERROR_STRING_ARB:
             return (GLubyte*)glstate->glsl->error_msg;
         default:

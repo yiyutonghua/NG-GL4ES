@@ -34,6 +34,7 @@ extern "C" {
     VISIBLE void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
     VISIBLE void glBindProgramPipeline(GLuint pipeline);
     VISIBLE void APIENTRY glDebugMessageCallback(GLDEBUGPROCARB callback, const void* userParam);
+    VISIBLE void glDebugMessageControl(GLenum source,GLenum type,GLenum severity,GLsizei count,const GLuint *ids,GLboolean enabled);
     VISIBLE void glInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments);
     //VISIBLE void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
     //VISIBLE void glGetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values);
@@ -298,43 +299,18 @@ extern "C" {
             }
         }
     }
-    void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z) {
-        /*
-        computeResults.resize(textureWidth * textureHeight * 4);
-        unsigned int numThreads = std::thread::hardware_concurrency();
-        std::vector<std::thread> threads;
-        GLuint groupSizeX = num_groups_x / numThreads;
-        for (unsigned int i = 0; i < numThreads; ++i) {
-            GLuint startX = i * groupSizeX;
-            GLuint endX = (i == numThreads - 1) ? num_groups_x : startX + groupSizeX;
-            //need to add computeShader
-            threads.emplace_back(threadComputeTask, startX, endX, num_groups_y, num_groups_z, computeShader, std::ref(computeResults), textureWidth, textureHeight);
-        }
-        for (auto& thread : threads) {
-            thread.join();
-        }
 
-        gl4es_glBindTexture(GL_TEXTURE_2D, computeTexture);
-        gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, textureWidth, textureHeight, GL_RGBA, GL_FLOAT, computeResults.data());
-        gl4es_glBindTexture(GL_TEXTURE_2D, 0);  // 解除绑定*/
+    void glDebugMessageControl(GLenum source,GLenum type,GLenum severity,GLsizei count,const GLuint *ids,GLboolean enabled) {
+        LOAD_GLES3(glDebugMessageControl);
+        gles_glDebugMessageControl(source, type, severity, count, ids, enabled);
+    }
+    
+    void glDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z) {
         LOAD_GLES3(glDispatchCompute);
         gles_glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
     }
 
     void glDispatchComputeIndirect(GLuint indirectBuffer) {
-        /*
-        GLuint bufferData[3];
-        gl4es_glBindBuffer(GL_ARRAY_BUFFER, indirectBuffer);
-        gl4es_glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(bufferData), bufferData);
-        gl4es_glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        GLuint num_groups_x = bufferData[0];
-        GLuint num_groups_y = bufferData[1];
-        GLuint num_groups_z = bufferData[2];
-
-        glDispatchCompute(num_groups_x, num_groups_y, num_groups_z, computeShader);
-         */
-
         LOAD_GLES3(glDispatchComputeIndirect);
         gles_glDispatchComputeIndirect(indirectBuffer);
     }
