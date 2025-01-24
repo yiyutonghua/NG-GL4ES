@@ -26,6 +26,7 @@ KHASH_MAP_IMPL_INT(attribloclist, attribloc_t *);
 KHASH_MAP_IMPL_INT(uniformlist, uniform_t *);
 KHASH_MAP_IMPL_INT(programlist, program_t *);
 
+/*
 GLuint VISIBLE glGetUniformBlockIndex(GLuint program, const GLchar* name) {
     CHECK_PROGRAM(GLuint, program);
     glprogram = glprogram;
@@ -236,6 +237,7 @@ void VISIBLE glGetActiveBlockiv(GLuint program, GLuint blockIndex, GLenum pname,
         break;
     }
 }
+
 void VISIBLE glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) {
     CHECK_PROGRAM(void, program);
     glprogram = glprogram;
@@ -250,6 +252,7 @@ void VISIBLE glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLu
     }
     uniform->cache_offs = uniformBlockBinding;
 }
+*/
 
 void VISIBLE glBindFragDataLocation(GLuint program, GLuint colorNumber, const GLchar* name) {
     DBG(SHUT_LOGD("glBindFragDataLocation(%d, %d, \"%s\")\n", program, colorNumber, name))
@@ -269,65 +272,68 @@ void VISIBLE glBindFragDataLocation(GLuint program, GLuint colorNumber, const GL
         }
         sprintf(targetPattern, "out[ ]+[A-Za-z0-9 ]+[ ]+%s", name);
         DBG(SHUT_LOGD("%s\n", targetPattern))
-        char* target = NULL;
         regex_t regex;
-        regmatch_t regmatch[1];
-        int status;
-        status = regcomp(&regex, targetPattern, REG_EXTENDED);
-        free(targetPattern);
-        if (status) {
-            DBG(SHUT_LOGD("Could not compile regex\n"))
-            regfree(&regex);
+        regmatch_t pmatch[1];
+        char *origin = NULL;
+        char *result = NULL;
+
+        if (regcomp(&regex, targetPattern, REG_EXTENDED) != 0) {
+            fprintf(stderr, "Failed to compile regex\n");
             return;
         }
-        status = regexec(&regex, glprogram->last_frag->converted, 1, regmatch, 0);
-        if (status == 0) {
-            DBG(SHUT_LOGD("Match found\n"))
-            int start = regmatch[0].rm_so;
-            int end = regmatch[0].rm_eo;
-            int rlen = end - start;
-            if (rlen <= 0) {
-                DBG(fprintf(stderr, "Invalid regex match length\n"));
-                regfree(&regex);
-                return;
+
+        char *searchStart = glprogram->last_frag->converted;
+        while (regexec(&regex, searchStart, 1, pmatch, 0) == 0) {
+            size_t matchLen = pmatch[0].rm_eo - pmatch[0].rm_so;
+            origin = (char *)malloc(matchLen + 1);
+            if (!origin) {
+                fprintf(stderr, "Memory allocation failed\n");
+                break;
             }
-            target = malloc(sizeof(char) * rlen);
-            if (!target) {
-                DBG(fprintf(stderr, "Memory allocation failed for target\n"));
-                regfree(&regex);
-                return;
+            strncpy(origin, searchStart + pmatch[0].rm_so, matchLen);
+            origin[matchLen] = '\0';
+
+            size_t resultLen = strlen(origin) + 30; // "layout (location = )" + colorNumber + null terminator
+            result = (char *)malloc(resultLen);
+            if (!result) {
+                fprintf(stderr, "Memory allocation failed\n");
+                free(origin);
+                break;
             }
-            memcpy(target, &glprogram->last_frag->converted[start], rlen);
-            regfree(&regex);
-        } else if (status == REG_NOMATCH) {
-            DBG(SHUT_LOGD("No match found\n"))
-            regfree(&regex);
-            return;
-        } else {
-            char msgbuf[100];
-            regerror(status, &regex, msgbuf, sizeof(msgbuf));
-            DBG(fprintf(stderr, "Regex match failed: %s\n", msgbuf);)
-            regfree(&regex);
-            return;
+            snprintf(result, resultLen, "layout (location = %d) %s", colorNumber, origin);
+
+            char *temp = strstr(searchStart, origin);
+            if (temp) {
+                size_t prefixLen = temp - glprogram->last_frag->converted;
+                size_t suffixLen = strlen(temp + matchLen);
+                size_t newLen = prefixLen + strlen(result) + suffixLen + 1;
+
+                char *newConverted = (char *)malloc(newLen);
+                if (!newConverted) {
+                    fprintf(stderr, "Memory allocation failed\n");
+                    free(origin);
+                    free(result);
+                    break;
+                }
+
+                strncpy(newConverted, glprogram->last_frag->converted, prefixLen);
+                newConverted[prefixLen] = '\0';
+                strcat(newConverted, result);
+                strcat(newConverted, temp + matchLen);
+
+                strcpy(glprogram->last_frag->converted, newConverted);
+                free(newConverted);
+            }
+
+            free(origin);
+            free(result);
+
+            searchStart += pmatch[0].rm_eo;
         }
-        size_t target_len = strlen(target);
-        if (target_len > 0 && target[target_len - 1] == '=') {
-            target[target_len - 1] = '\0';
-        }
-        DBG(SHUT_LOGD("%s\n", target))
-        char *replacement = malloc(sizeof(char) * (tlen + 22));
-        if (!replacement) {
-            DBG(fprintf(stderr, "Memory allocation failed for replacement\n"));
-            free(target);
-            return;
-        }
-        sprintf(replacement, "layout (location = %i) %s", colorNumber, target);
-        DBG(SHUT_LOGD("%s\n", replacement))
-        int size = strlen(glprogram->last_frag->converted) + 100;
-        glprogram->last_frag->converted = gl4es_inplace_replace(glprogram->last_frag->converted, &size, target, replacement);
+
+        regfree(&regex);
+        //glprogram->last_frag->converted = gl4es_inplace_replace(glprogram->last_frag->converted, &size, target, replacement);
         DBG(SHUT_LOGD("Resulting shader:\n%s\n", glprogram->last_frag->converted))
-        free(target);
-        free(replacement);
         glprogram->frag_data_changed = 1;
     }
     /*if (!program) {
