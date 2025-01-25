@@ -20,6 +20,48 @@
 void pushViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void popViewport();
 
+const char _blit_vsh[] = "#version 300 es                     \n" \
+"precision highp float;                                       \n" \
+"in highp vec2 aPosition;                                     \n" \
+"in highp vec2 aTexCoord;                                     \n" \
+"out mediump vec2 vTexCoord;                                  \n" \
+"void main(){                                                 \n" \
+"   gl_Position = vec4(aPosition.x, aPosition.y, 0.0 , 1.0);  \n" \
+"   vTexCoord = aTexCoord;                                    \n" \
+"}                                                            \n";
+
+const char _blit_fsh[] = "#version 300 es               \n" \
+"precision highp float;                                 \n" \
+"uniform sampler2D uTex;                                \n" \
+"in mediump vec2 vTexCoord;                             \n" \
+"out vec4 FragColor;                                    \n" \
+"void main(){                                           \n" \
+"   FragColor = texture(uTex, vTexCoord);               \n" \
+"   //FragColor = vec4(0.0, 0.0, 1.0, 1.0);             \n" \
+"}                                                      \n";
+
+const char _blit_vsh_alpha[] = "#version 300 es            \n" \
+"precision highp float;                                    \n" \
+"in highp vec2 aPosition;                                  \n" \
+"in highp vec2 aTexCoord;                                  \n" \
+"out mediump vec2 vTexCoord;                               \n" \
+"void main(){                                              \n" \
+"   gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0);\n" \
+"   vTexCoord = aTexCoord;                                 \n" \
+"}                                                         \n";
+
+const char _blit_fsh_alpha[] = "#version 300 es            \n" \
+"precision highp float;                                    \n" \
+"uniform sampler2D uTex;                                   \n" \
+"in mediump vec2 vTexCoord;                                \n" \
+"out vec4 FragColor;                                       \n" \
+"void main(){                                              \n" \
+"   lowp vec4 p = texture(uTex, vTexCoord);                \n" \
+"   if (p.a==0.0) discard;                                 \n" \
+"   FragColor = p;                                         \n" \
+"   //FragColor = vec4(0.0, 1.0, 0.0, 1.0);                \n" \
+"}                                                         \n";
+
 void gl4es_blitTexture_gles1(GLuint texture,
     GLfloat sx, GLfloat sy,
     GLfloat width, GLfloat height, 
@@ -140,81 +182,6 @@ void gl4es_blitTexture_gles1(GLuint texture,
 
 }
 
-//const char _blit_vsh[] = "#version 100                  \n" \
-//"attribute highp vec2 aPosition;                        \n" \
-//"attribute highp vec2 aTexCoord;                        \n" \
-//"varying mediump vec2 vTexCoord;                        \n" \
-//"void main(){                                           \n" \
-//"gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0);\n" \
-//"vTexCoord = aTexCoord;                                 \n" \
-//"}                                                      \n";
-
-const char _blit_vsh[] = "#version 320 es                     \n" \
-"precision highp float;                                       \n" \
-"in highp vec2 aPosition;                                     \n" \
-"in highp vec2 aTexCoord;                                     \n" \
-"out mediump vec2 vTexCoord;                                  \n" \
-"void main(){                                                 \n" \
-"   gl_Position = vec4(aPosition.x, aPosition.y, 0.0 , 1.0);  \n" \
-"   vTexCoord = aTexCoord;                                    \n" \
-"}                                                            \n";
-
-//const char _blit_fsh[] = "#version 100                  \n" \
-//"uniform sampler2D uTex;                                \n" \
-//"varying mediump vec2 vTexCoord;                        \n" \
-//"void main(){                                           \n" \
-//"gl_FragColor = texture2D(uTex, vTexCoord);             \n" \
-//"}                                                      \n";
-
-const char _blit_fsh[] = "#version 320 es               \n" \
-"precision highp float;                                 \n" \
-"uniform sampler2D uTex;                                \n" \
-"in mediump vec2 vTexCoord;                             \n" \
-"out vec4 FragColor;                                    \n" \
-"void main(){                                           \n" \
-"   FragColor = texture(uTex, vTexCoord);               \n" \
-"   //FragColor = vec4(0.0, 0.0, 1.0, 1.0);             \n" \
-"}                                                      \n";
-
-//const char _blit_vsh_alpha[] = "#version 100            \n" \
-//"attribute highp vec2 aPosition;                        \n" \
-//"attribute highp vec2 aTexCoord;                        \n" \
-//"varying mediump vec2 vTexCoord;                        \n" \
-//"void main(){                                           \n" \
-//"gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0);\n" \
-//"vTexCoord = aTexCoord;                                 \n" \
-//"}                                                      \n";
-
-const char _blit_vsh_alpha[] = "#version 320 es            \n" \
-"precision highp float;                                    \n" \
-"in highp vec2 aPosition;                                  \n" \
-"in highp vec2 aTexCoord;                                  \n" \
-"out mediump vec2 vTexCoord;                               \n" \
-"void main(){                                              \n" \
-"   gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0);\n" \
-"   vTexCoord = aTexCoord;                                 \n" \
-"}                                                         \n";
-
-//const char _blit_fsh_alpha[] = "#version 100            \n" \
-//"uniform sampler2D uTex;                                \n" \
-//"varying mediump vec2 vTexCoord;                        \n" \
-//"void main(){                                           \n" \
-//"lowp vec4 p = texture2D(uTex, vTexCoord);              \n" \
-//"if (p.a==0.0) discard;                                 \n" \
-//"gl_FragColor = p;                                      \n" \
-//"}                                                      \n";
-
-const char _blit_fsh_alpha[] = "#version 320 es            \n" \
-"precision highp float;                                    \n" \
-"uniform sampler2D uTex;                                   \n" \
-"in mediump vec2 vTexCoord;                                \n" \
-"out vec4 FragColor;                                       \n" \
-"void main(){                                              \n" \
-"   lowp vec4 p = texture(uTex, vTexCoord);                \n" \
-"   if (p.a==0.0) discard;                                 \n" \
-"   FragColor = p;                                         \n" \
-"   //FragColor = vec4(0.0, 1.0, 0.0, 1.0);                \n" \
-"}                                                         \n";
 
 void gl4es_blitTexture_gles2(GLuint texture,
     GLfloat sx, GLfloat sy,
