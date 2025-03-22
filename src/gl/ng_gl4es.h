@@ -31,42 +31,4 @@
 #include "gl4es.h"
 #include "wrap/gl4es.h"
 
-enum DebugMessageSeverity {
-    DEBUG_SEVERITY_NOTIFICATION,
-    DEBUG_SEVERITY_LOW,
-    DEBUG_SEVERITY_MEDIUM,
-    DEBUG_SEVERITY_HIGH,
-};
-enum MemoryBarrierType {
-    MEMORY_BARRIER_VERTEX_ATTRIB_ARRAY = 1 << 0,
-    MEMORY_BARRIER_ELEMENT_ARRAY = 1 << 1,
-    MEMORY_BARRIER_UNIFORM_BUFFER = 1 << 2,
-    MEMORY_BARRIER_TEXTURE_FETCH = 1 << 3,
-    MEMORY_BARRIER_FRAMEBUFFER = 1 << 4,
-    MEMORY_BARRIER_SHADER_IMAGE_ACCESS = 1 << 5,
-};
-
-
-enum FramebufferAttachment {
-    COLOR_ATTACHMENT0 = 0,
-    COLOR_ATTACHMENT1,
-    COLOR_ATTACHMENT2,
-    DEPTH_ATTACHMENT,
-    STENCIL_ATTACHMENT,
-};
-
-typedef std::function<void(GLuint x, GLuint y, GLuint z, std::vector<float>& data, int width, int height)> ComputeShaderCallback;
-
-typedef std::function<void(DebugMessageSeverity severity, const std::string& message)> DebugMessageCallback;
-extern GLuint computeTexture;
-extern std::vector<float> computeResults;
-
-extern GLDEBUGPROCARB debugCallback;
-
-struct SyncObject {
-    GLuint fbo;
-    GLuint texture;
-    GLint status;
-};
-
 #endif
