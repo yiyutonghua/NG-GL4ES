@@ -1,14 +1,6 @@
 Krypton Wrapper
 ====
 
-> [!WARNING]
-> 
-> The newer versions of this project WILL NOT be open-sourced for a period of time.
->
-> The latest open-source version:
-> 
-> **Release 0.1.0 Preview 1 Dev-2**
-
 > [!NOTE]
 > 
 > The latest version:
