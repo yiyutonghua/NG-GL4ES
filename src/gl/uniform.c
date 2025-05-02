@@ -5,6 +5,7 @@
 #include "glstate.h"
 #include "loader.h"
 #include "matvec.h"
+#include "GL/gl.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -34,6 +35,7 @@ int uniformsize(GLenum type) {
         GOM(GL_FLOAT, GLfloat);
         GO(GL_SAMPLER_2D, GLint, 1);
         GO(GL_SAMPLER_CUBE , GLint, 1);
+        GO(GL_SAMPLER_2D_SHADOW, GLint, 1);
     // Need other types?
     }
     return 0;
@@ -71,6 +73,7 @@ int is_uniform_int(GLenum type) {
         case GL_BOOL_VEC4:
         case GL_SAMPLER_2D:
         case GL_SAMPLER_CUBE:
+        case GL_SAMPLER_2D_SHADOW:
             return 1;
     }
     return 0;
@@ -94,6 +97,7 @@ int n_uniform(GLenum type) {
         case GL_BOOL:
         case GL_SAMPLER_2D:
         case GL_SAMPLER_CUBE:
+        case GL_SAMPLER_2D_SHADOW:
             return 1;
         case GL_FLOAT_VEC2:
         case GL_INT_VEC2:

@@ -26,234 +26,6 @@ KHASH_MAP_IMPL_INT(attribloclist, attribloc_t *);
 KHASH_MAP_IMPL_INT(uniformlist, uniform_t *);
 KHASH_MAP_IMPL_INT(programlist, program_t *);
 
-/*
-GLuint VISIBLE glGetUniformBlockIndex(GLuint program, const GLchar* name) {
-    CHECK_PROGRAM(GLuint, program);
-    glprogram = glprogram;
-    GLuint blockIndex = (GLuint)-1;
-    for (int i = 0; i < glprogram->num_uniform; i++) {
-        uniform_t* uniform = kh_value(glprogram->uniform, i);
-        if (uniform && strcmp(uniform->name, name) == 0 && uniform->builtin == 0) {
-            blockIndex = i;
-            break;
-        }
-    }
-    return blockIndex;
-}
-void VISIBLE glGetActiveUniformBlockiv(GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint* params) {
-    CHECK_PROGRAM(void, program);
-    glprogram = kh_value(glstate->glsl->programs, k_program);
-    if (uniformBlockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_VALUE);
-        return;
-    }
-    uniform_t* uniform = kh_value(glprogram->uniform, uniformBlockIndex);
-    if (!uniform || uniform->type != GL_UNIFORM_BLOCK) {
-        errorShim(GL_INVALID_OPERATION);
-        return;
-    }
-    switch (pname) {
-    case GL_UNIFORM_BLOCK_BINDING:
-        *params = uniform->id;
-        break;
-    case GL_UNIFORM_BLOCK_DATA_SIZE:
-        *params = uniform->cache_size;
-        break;
-    case GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
-        *params = uniform->size;
-        break;
-    case GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES:
-        for (int i = 0; i < uniform->size; ++i) {
-            params[i] = uniform->id + i;
-        }
-        break;
-    case GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
-        *params = (uniform->builtin & 1) ? GL_TRUE : GL_FALSE;
-        break;
-    case GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
-        *params = (uniform->builtin & 2) ? GL_TRUE : GL_FALSE;
-        break;
-    default:
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
-}
-void VISIBLE glGetActiveUniformName(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei* length, GLchar* name) {
-    CHECK_PROGRAM(void, program);
-    glprogram = kh_value(glstate->glsl->programs, k_program);
-    khash_t(programlist)* programs = glstate->glsl->programs;
-    k_program = kh_get(programlist, programs, program);
-    if (k_program != kh_end(programs)) {
-        glprogram = kh_value(programs, k_program);
-    }
-    if (!glprogram) {
-        errorShim(GL_INVALID_OPERATION);
-        return;
-    }
-    khash_t(uniformlist)* uniforms = glprogram->uniform;
-    if (uniformIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_VALUE);
-        return;
-    }
-    khint_t k_uniform = kh_get(uniformlist, uniforms, uniformIndex);
-    if (k_uniform == kh_end(uniforms)) {
-        errorShim(GL_INVALID_VALUE);
-        return;
-    }
-    uniform_t* uniform = kh_value(uniforms, k_uniform);
-    if (length) {
-        *length = strlen(uniform->name);
-    }
-    if (name) {
-        strncpy(name, uniform->name, bufSize);
-        if (bufSize > 0) {
-            name[bufSize - 1] = '\0';
-        }
-    }
-}
-void VISIBLE glGetActiveUniformsiv(GLuint program, GLsizei uniformCount, const GLuint* uniformIndices, GLenum pname, GLint* params) {
-    CHECK_PROGRAM(void, program);
-    glprogram = kh_value(glstate->glsl->programs, k_program);
-    for (int i = 0; i < uniformCount; ++i) {
-        GLuint uniformIndex = uniformIndices[i];
-        if (uniformIndex >= glprogram->num_uniform) {
-            errorShim(GL_INVALID_VALUE);
-            return;
-        }
-        uniform_t* uniform = kh_value(glprogram->uniform, uniformIndex);
-        if (!uniform) {
-            errorShim(GL_INVALID_OPERATION);
-            return;
-        }
-        switch (pname) {
-        case GL_UNIFORM_TYPE:
-            params[i] = uniform->type;
-            break;
-        case GL_UNIFORM_SIZE:
-            params[i] = uniform->size;
-            break;
-        case GL_UNIFORM_NAME_LENGTH:
-            params[i] = (GLint)strlen(uniform->name) + 1;
-            break;
-        case GL_UNIFORM_OFFSET:
-            params[i] = uniform->cache_offs;
-            break;
-        case GL_UNIFORM_ARRAY_STRIDE:
-            params[i] = uniform->size * sizeof(GLfloat);  // Assuming GLfloat as base type
-            break;
-        case GL_UNIFORM_MATRIX_STRIDE:
-            params[i] = uniform->size * sizeof(GLfloat);  // Assuming matrix elements are floats
-            break;
-        case GL_UNIFORM_IS_ROW_MAJOR:
-            params[i] = GL_FALSE;
-            break;
-        case GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX:
-            params[i] = -1;
-            break;
-        default:
-            errorShim(GL_INVALID_ENUM);
-            return;
-        }
-    }
-}
-void VISIBLE glGetActiveUniformBlockName(GLuint program, GLuint blockIndex, GLsizei bufSize, GLsizei* length, GLchar* name) {
-    CHECK_PROGRAM(void, program);
-    glprogram = glprogram;
-    if (blockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);
-        return;
-    }
-    uniform_t* uniform = kh_value(glprogram->uniform, blockIndex);
-    if (uniform && length) {
-        *length = strlen(uniform->name) + 1;
-    }
-    if (name && bufSize > 0) {
-        strncpy(name, uniform->name, bufSize - 1);
-        name[bufSize - 1] = '\0';
-    }
-}
-int IsActiveUniform(uniform_t* uniform) {
-    if (uniform == NULL) {
-        return 0;
-    }
-    if (uniform->size > 0) {
-        return 1;
-    }
-    return 0;
-}
-void VISIBLE glGetActiveBlockiv(GLuint program, GLuint blockIndex, GLenum pname, GLint* params) {
-    CHECK_PROGRAM(void, program);
-    glprogram = glprogram;
-    if (blockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);
-        return;
-    }
-    uniform_t* uniform = kh_value(glprogram->uniform, blockIndex);
-    if (!uniform) {
-        errorShim(GL_INVALID_OPERATION);
-        return;
-    }
-    switch (pname) {
-    case GL_UNIFORM_BLOCK_DATA_SIZE:
-        *params = uniform->cache_size;
-        break;
-    case GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
-        *params = uniform->size;
-        break;
-    case GL_UNIFORM_BLOCK_BINDING:
-        *params = uniform->cache_offs;
-        break;
-    case GL_UNIFORM_BLOCK_NAME_LENGTH:
-        if (params) {
-            *params = strlen(uniform->name) + 1;
-        }
-        break;
-        {
-            GLint activeUniformCount = 0;
-            GLint* activeUniformIndices = malloc(sizeof(GLint) * uniform->size);
-            for (int i = 0; i < uniform->size; ++i) {
-                uniform_t* u = &glprogram->uniform[i];
-                if (u->builtin || IsActiveUniform(u)) {
-                    activeUniformIndices[activeUniformCount++] = i;
-                }
-            }
-            if (activeUniformCount > 0) {
-                memcpy(params, activeUniformIndices, sizeof(GLint) * activeUniformCount);
-            }
-            else {
-                memset(params, 0, sizeof(GLint));
-            }
-            free(activeUniformIndices);
-            break;
-        }
-    case GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
-        *params = (uniform->type == GL_VERTEX_SHADER) ? GL_TRUE : GL_FALSE;
-        break;
-    case GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
-        *params = (uniform->type == GL_FRAGMENT_SHADER) ? GL_TRUE : GL_FALSE;
-        break;
-    default:
-        errorShim(GL_INVALID_ENUM);
-        break;
-    }
-}
-
-void VISIBLE glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) {
-    CHECK_PROGRAM(void, program);
-    glprogram = glprogram;
-    if (uniformBlockIndex >= glprogram->num_uniform) {
-        errorShim(GL_INVALID_INDEX);
-        return;
-    }
-    uniform_t* uniform = kh_value(glprogram->uniform, uniformBlockIndex);
-    if (!uniform) {
-        errorShim(GL_INVALID_OPERATION);
-        return;
-    }
-    uniform->cache_offs = uniformBlockBinding;
-}
-*/
-
 void VISIBLE glBindFragDataLocation(GLuint program, GLuint colorNumber, const GLchar* name) {
     DBG(SHUT_LOGD("glBindFragDataLocation(%d, %d, \"%s\")\n", program, colorNumber, name))
     FLUSH_BEGINEND;
@@ -972,6 +744,12 @@ static void fill_program(program_t *glprogram)
                         glprogram->texunits[tu_idx].req_tu = glprogram->texunits[tu_idx].act_tu = 0;
                         ++tu_idx;
                     }
+                    else if (type==GL_SAMPLER_2D_SHADOW) {
+                        glprogram->texunits[tu_idx].id = id;
+                        glprogram->texunits[tu_idx].type=TU_TEX2DSH;
+                        glprogram->texunits[tu_idx].req_tu = glprogram->texunits[tu_idx].act_tu = 0;
+                        ++tu_idx;
+                    }
                     DBG(SHUT_LOGD(" uniform #%d : \"%s\"%s type=%s size=%d\n", id, gluniform->name, gluniform->builtin?" (builtin) ":"", PrintEnum(gluniform->type), gluniform->size))
                     if(gluniform->size==1) ++glprogram->num_uniform;
                     id++;
@@ -993,7 +771,7 @@ static void fill_program(program_t *glprogram)
         uniform_t *m;
         khint_t k;
         kh_foreach(glprogram->uniform, k, m,
-            if(m->type == GL_SAMPLER_2D || m->type == GL_SAMPLER_CUBE)
+            if(m->type == GL_SAMPLER_2D || m->type == GL_SAMPLER_CUBE || m->type == GL_SAMPLER_2D_SHADOW)
                 memset((char*)glprogram->cache.cache+m->cache_offs, 0xff, m->cache_size);
         )
     }

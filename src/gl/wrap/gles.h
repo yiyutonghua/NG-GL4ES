@@ -3373,6 +3373,7 @@ packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 #define glTexImage2D_RETURN void
 #define glTexImage2D_ARG_NAMES target, level, internalformat, width, height, border, format, type, data
 #define glTexImage2D_ARG_EXPAND GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data
+#define glGetTexLevelParameteriv_ARG_EXPAND GLenum target, GLint level, GLenum pname, GLint * params
 #define glTexImage2D_PACKED PACKED_void_GLenum_GLint_GLint_GLsizei_GLsizei_GLint_GLenum_GLenum_const_GLvoid___GENPT__
 #define glTexImage2D_INDEXED INDEXED_void_GLenum_GLint_GLint_GLsizei_GLsizei_GLint_GLenum_GLenum_const_GLvoid___GENPT__
 #define glTexImage2D_FORMAT FORMAT_void_GLenum_GLint_GLint_GLsizei_GLsizei_GLint_GLenum_GLenum_const_GLvoid___GENPT__
@@ -4081,6 +4082,8 @@ void APIENTRY_GL4ES gl4es_glTexGeni(glTexGeni_ARG_EXPAND);
 typedef void (APIENTRY_GLES * glTexGeni_PTR)(glTexGeni_ARG_EXPAND);
 void APIENTRY_GL4ES gl4es_glTexImage2D(glTexImage2D_ARG_EXPAND);
 typedef void (APIENTRY_GLES * glTexImage2D_PTR)(glTexImage2D_ARG_EXPAND);
+void APIENTRY_GL4ES gl4es_glGetTexLevelParameteriv(glGetTexLevelParameteriv_ARG_EXPAND);
+typedef void (APIENTRY_GLES * glGetTexLevelParameteriv_PTR)(glGetTexLevelParameteriv_ARG_EXPAND);
 void APIENTRY_GL4ES gl4es_glTexParameterf(glTexParameterf_ARG_EXPAND);
 typedef void (APIENTRY_GLES * glTexParameterf_PTR)(glTexParameterf_ARG_EXPAND);
 void APIENTRY_GL4ES gl4es_glTexParameterfv(glTexParameterfv_ARG_EXPAND);
@@ -4181,7 +4184,41 @@ void gl4es_glDebugMessageControl(glDebugMessageControl_ARG_EXPAND);
 typedef void (*glDebugMessageControl_PTR)(glDebugMessageControl_ARG_EXPAND);
 typedef void (*glCopyBufferSubData_PTR)(glCopyBufferSubData_ARG_EXPAND);
 
+#define glDeleteSamplers_ARG_EXPAND GLsizei n, const GLuint *samplers
+void gl4es_glDeleteSamplers(glDeleteSamplers_ARG_EXPAND);
+typedef void (*glDeleteSamplers_PTR)(glDeleteSamplers_ARG_EXPAND);
 
+#define glGenSamplers_ARG_EXPAND GLsizei n, GLuint *ids
+void gl4es_glGenSamplers(glGenSamplers_ARG_EXPAND);
+typedef void (*glGenSamplers_PTR)(glGenSamplers_ARG_EXPAND);
+
+#define glBindSampler_ARG_EXPAND GLuint unit, GLuint sampler
+void gl4es_glBindSampler(glBindSampler_ARG_EXPAND);
+typedef void (*glBindSampler_PTR)(glBindSampler_ARG_EXPAND);
+
+#define glSamplerParameteri_ARG_EXPAND GLuint sampler, GLenum pname, GLint param
+void gl4es_glSamplerParameteri(glSamplerParameteri_ARG_EXPAND);
+typedef void (*glSamplerParameteri_PTR)(glSamplerParameteri_ARG_EXPAND);
+
+#define glSamplerParameterf_ARG_EXPAND GLuint sampler, GLenum pname, GLfloat param
+void gl4es_glSamplerParameterf(glSamplerParameterf_ARG_EXPAND);
+typedef void (*glSamplerParameterf_PTR)(glSamplerParameterf_ARG_EXPAND);
+
+#define glSamplerParameterfv_ARG_EXPAND GLuint sampler, GLenum pname, GLfloat *params
+void gl4es_glSamplerParameterfv(glSamplerParameterfv_ARG_EXPAND);
+typedef void (*glSamplerParameterfv_PTR)(glSamplerParameterfv_ARG_EXPAND);
+
+#define glSamplerParameteriv_ARG_EXPAND GLuint sampler, GLenum pname, GLint *params
+void gl4es_glSamplerParameteriv(glSamplerParameteriv_ARG_EXPAND);
+typedef void (*glSamplerParameteriv_PTR)(glSamplerParameteriv_ARG_EXPAND);
+
+#define glSamplerParameterIiv_ARG_EXPAND GLuint sampler, GLenum pname, GLint *params
+void gl4es_glSamplerParameterIiv(glSamplerParameterIiv_ARG_EXPAND);
+typedef void (*glSamplerParameterIiv_PTR)(glSamplerParameterIiv_ARG_EXPAND);
+
+#define glSamplerParameterIuiv_ARG_EXPAND GLuint sampler, GLenum pname, GLuint *params
+void gl4es_glSamplerParameterIuiv(glSamplerParameterIuiv_ARG_EXPAND);
+typedef void (*glSamplerParameterIuiv_PTR)(glSamplerParameterIuiv_ARG_EXPAND);
 
 #ifndef direct_glActiveTexture
 #define push_glActiveTexture(texture) { \

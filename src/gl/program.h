@@ -198,7 +198,8 @@ typedef enum {
     TU_TEX2D,
     TU_TEX3D,
     TU_RECTANGLE,
-    TU_CUBE
+    TU_CUBE,
+    TU_TEX2DSH,
 } texunit_type;
 
 typedef struct {

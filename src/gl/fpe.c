@@ -18,6 +18,8 @@
 #define fpe_fpe_t fpe_fpe_t
 #define kh_fpecachelist_t kh_fpecachelist_t
 #include "fpe_cache.h"
+#include "GL/gl.h"
+
 #undef fpe_state_t
 #undef fpe_fpe_t
 #undef kh_fpecachelist_t
@@ -623,6 +625,7 @@ void APIENTRY_GL4ES fpe_SyncUniforms(uniformcache_t *cache, program_t* glprogram
                     break;
                 case GL_SAMPLER_2D:
                 case GL_SAMPLER_CUBE:
+                case GL_SAMPLER_2D_SHADOW:
                 case GL_INT:
                 case GL_INT_VEC2:
                 case GL_INT_VEC3:
