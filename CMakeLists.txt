@@ -46,7 +46,6 @@ set(C_SRC_FILES
         src/gl/fpe_shader.c
         src/gl/framebuffers.c
         src/gl/gl_lookup.c
-        src/gl/getter.c
         src/gl/gl4es.c
         src/gl/glstate.c
         src/gl/hint.c
@@ -99,6 +98,7 @@ set(C_SRC_FILES
 
 set(CPP_SRC_FILES
         src/glsl/glsl_for_es.cpp
+        src/gl/getter.cpp
         )
 
 set(SRC_FILES ${CPP_SRC_FILES} ${C_SRC_FILES})

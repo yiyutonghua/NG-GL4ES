@@ -1,3 +1,10 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <sstream>
+
+extern "C" {
+
 #include <gl4eshint.h>
 #include "../glx/hardext.h"
 #include "debug.h"
@@ -10,6 +17,8 @@
 #include "texgen.h"
 #include "string_utils.h"
 #include "GL/gl.h"
+#include "../../version.h"
+#include "envvars.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -136,9 +145,9 @@ void BuildExtensionsList() {
                 "GL_EXT_polygon_offset_clamp "
                 "GL_ARB_clear_texture "
                 "GL_ARB_texture_mirror_clamp_to_edge "
-                "GL_ARB_debug_output "
+                //"GL_ARB_debug_output "
                 "GL_ARB_enhanced_layouts "
-                "GL_KHR_debug "
+                //"GL_KHR_debug "
                 "GL_ARB_arrays_of_arrays "
                 "GL_ARB_texture_query_levels "
                 "GL_ARB_invalidate_subdata "
@@ -157,7 +166,7 @@ void BuildExtensionsList() {
                 "GL_ARB_texture_stencil8 "
                 "GL_ARB_explicit_uniform_location "
                 "GL_ARB_explicit_attrib_location "
-                "GL_ARB_multi_bind "
+                //"GL_ARB_multi_bind "
                 "GL_ARB_indirect_parameters "
                 //"GL_ARB_separate_shader_objects "
 //                "GL_EXT_blend_logic_op "
@@ -292,6 +301,31 @@ char* getBeforeThirdSpace(const char* str) {
 const char* getGpuName() {
     LOAD_GLES2(glGetString);
     const char *gpuName = (const char *) gles_glGetString(GL_RENDERER);
+
+    if (!gpuName) {
+        return "<unknown>";
+    }
+
+    if (strncmp(gpuName, "ANGLE", 5) == 0) {
+        std::string gpuStr(gpuName);
+
+        size_t firstParen = gpuStr.find('(');
+        size_t secondParen = gpuStr.find('(', firstParen + 1);
+        size_t lastParen = gpuStr.rfind('(');
+
+        std::string gpu = gpuStr.substr(secondParen + 1, lastParen - secondParen - 2);
+
+        size_t vulkanStart = gpuStr.find("Vulkan ");
+        size_t vulkanEnd = gpuStr.find(' ', vulkanStart + 7);
+        std::string vulkanVersion = gpuStr.substr(vulkanStart + 7, vulkanEnd - (vulkanStart + 7));
+
+        std::string formattedGpuName = gpu + " | ANGLE | Vulkan " + vulkanVersion;
+
+        char* result = new char[formattedGpuName.size() + 1];
+        std::strcpy(result, formattedGpuName.c_str());
+        return result;
+    }
+
     return gpuName;
 }
 
@@ -319,33 +353,56 @@ const char* getGLESName() {
     return getBeforeThirdSpace(ESVersion);
 }
 
+static std::string rendererString;
+static std::string versionString;
 const GLubyte* APIENTRY_GL4ES gl4es_glGetString(GLenum name) {
     DBG(SHUT_LOGD("glGetString(%s)\n", PrintEnum(name));)
     if (!globals4es.esversion) set_es_version();
     errorShim(GL_NO_ERROR);
     switch (name) {
         case GL_VERSION:
-            return (GLubyte *)globals4es.version;
+            //return (GLubyte *)globals4es.version;
+            if (versionString.empty()) {
+                int use_mc_color=ReturnEnvVarInt("LIBGL_USE_MC_COLOR");
+                std::ostringstream version_builder;
+                version_builder << (globals4es.gl / 10) << "." << (globals4es.gl % 10);
+
+                if (use_mc_color == 1) {
+                    version_builder
+                    << " §a"
+#if RELEASE == 1
+                            << "Krypton Wrapper §b"
+#else
+                            << "Krypton Wrapper §d"
+#endif
+                            << VERSION_TYPE;
+                } else {
+                    version_builder << " Krypton Wrapper " << VERSION_TYPE;
+                }
+
+                version_builder << MAJOR << "." << MINOR << "." << REVISION << VERSION_SUFFIX;
+
+                if (use_mc_color == 1) {
+                    version_builder << "§r";
+                }
+
+                versionString = version_builder.str();
+            }
+            
+            DBG(SHUT_LOGD("glGetString(GL_VERSION) -> %s", versionString.c_str()))
+            return (GLubyte *)versionString.c_str();
         case GL_EXTENSIONS:
             BuildExtensionsList();
             return glstate->extensions;
 		case GL_VENDOR:
 			return (GLubyte *)"ptitSeb & BZLZHH";
 		case GL_RENDERER: {
-            const char *gles_name = getGLESName();
-            const char *gpu_name = getGpuName();
-            size_t bufferSize =
-                    strlen(gles_name) + strlen(" (") + strlen(gpu_name) + strlen(")") + 1;
-            char *result = (char *) malloc(bufferSize);
-            if (result == NULL) {
-                perror("malloc failed");
-                return NULL;
+            if (rendererString == std::string("")) {
+                const char* gpuName = getGpuName();
+                const char* glesName = getGLESName();
+                rendererString = std::string(gpuName) + " | " + std::string(glesName);
             }
-            strcpy(result, gpu_name);
-            strcat(result, " (");
-            strcat(result, gles_name);
-            strcat(result, ")");
-            return (GLubyte *) result;
+            return (const GLubyte *)rendererString.c_str();
         }
 		case GL_SHADING_LANGUAGE_VERSION:
 			return (GLubyte *)"4.50 Krypton Wrapper with glslang and SPIRV-Cross";
@@ -1276,3 +1333,5 @@ void gl4es_glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat* params)
     errorShim(GL_INVALID_VALUE);
 }
 AliasExport(void, glGetMinmaxParameterfv,,(GLenum target, GLenum pname, GLfloat* params));
+
+}
