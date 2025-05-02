@@ -92,6 +92,8 @@ void tex_coord_npot(GLfloat *tex, GLsizei len,
 
 void tex_coord_matrix(GLfloat *tex, GLsizei len, const GLfloat* mat);
 
+void internal2format_type(GLenum *internalformat, GLenum *format, GLenum *type);
+
 int npot(int n);
 
 typedef enum {

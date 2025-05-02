@@ -9,7 +9,7 @@
 #include "enum_info.h"
 #include "fpe.h"
 #include "framebuffers.h"
-#include "gles.h"
+#include "GL/gl.h"
 #include "init.h"
 #include "loader.h"
 #include "matrix.h"
@@ -29,6 +29,33 @@ static int inline nlevel(int size, int level) {
         if(!size) size=1;
     }
     return size;
+}
+
+static int is_depth_format(GLenum format) {
+    switch(format) {
+        case GL_DEPTH_COMPONENT:
+        case GL_DEPTH_COMPONENT16:
+        case GL_DEPTH_COMPONENT24:
+        case GL_DEPTH_COMPONENT32:
+        case GL_DEPTH_COMPONENT32F:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static GLenum get_binding_for_target(GLenum target) {
+    switch(target) {
+        case GL_TEXTURE_2D: return GL_TEXTURE_BINDING_2D;
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+            return GL_TEXTURE_BINDING_CUBE_MAP;
+        default: return 0;
+    }
 }
 
 void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum internalformat,  GLint x,  GLint y,  
@@ -62,11 +89,11 @@ void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum 
         gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, (GLint *) &glstate->fbo.current_fb->read_format);
         gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE_OES, (GLint *) &glstate->fbo.current_fb->read_type);
     }
+    
+    int copytex = (!is_depth_format(internalformat))
+        || (bound->format==glstate->fbo.current_fb->read_format && bound->type==glstate->fbo.current_fb->read_type);
 
-    int copytex = ((bound->format==GL_RGBA && bound->type==GL_UNSIGNED_BYTE) 
-        || (bound->format==glstate->fbo.current_fb->read_format && bound->type==glstate->fbo.current_fb->read_type));
-
-    if (1 || copytex) {
+    if (copytex) {
         GLenum fmt;
         switch(internalformat) {
             case GL_ALPHA:
@@ -87,10 +114,41 @@ void APIENTRY_GL4ES gl4es_glCopyTexImage2D(GLenum target,  GLint level,  GLenum 
         LOAD_GLES(glCopyTexImage2D);
         gles_glCopyTexImage2D(target, level, fmt, x, y, width, height, border);
     } else {
-        void* tmp = malloc(width*height*4);
-        gl4es_glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp);
-        gl4es_glTexImage2D(target, level, internalformat, width, height, border, GL_RGBA, GL_UNSIGNED_BYTE, tmp);
-        free(tmp);
+        DBG(SHUT_LOGD(" -No use of gles_glCopyTexImage2D"))
+        
+        LOAD_GLES(glTexImage2D)
+        LOAD_GLES(glGetIntegerv)
+        LOAD_GLES(glGenFramebuffers)
+        LOAD_GLES(glBindFramebuffer)
+        LOAD_GLES(glFramebufferTexture2D)
+        LOAD_GLES(glCheckFramebufferStatus)
+        LOAD_GLES(glDeleteFramebuffers)
+        LOAD_GLES(glBlitFramebuffer)
+        GLenum format = GL_DEPTH_COMPONENT;
+        GLenum type = GL_UNSIGNED_INT;
+        internal2format_type(&internalformat, &format, &type);
+        gles_glTexImage2D(target, level, (GLint)internalformat, width, height, border, format, type, NULL);
+        GLint prevDrawFBO;
+        gles_glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+        GLuint tempDrawFBO;
+        gles_glGenFramebuffers(1, &tempDrawFBO);
+        gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tempDrawFBO);
+        GLint currentTex;
+        gles_glGetIntegerv(get_binding_for_target(target), &currentTex);
+        gles_glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, currentTex, level);
+
+        if (gles_glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            gles_glDeleteFramebuffers(1, &tempDrawFBO);
+            gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+            return;
+        }
+
+        gles_glBlitFramebuffer(x, y, x + width, y + height,
+                               0, 0, width, height,
+                               GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+        gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+        gles_glDeleteFramebuffers(1, &tempDrawFBO);
     }
     
     readfboEnd();
@@ -154,10 +212,12 @@ void APIENTRY_GL4ES gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint 
             gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, (GLint *) &glstate->fbo.current_fb->read_format);
             gles_glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE_OES, (GLint *) &glstate->fbo.current_fb->read_type);
         }
-        // it may be chosen by user...
-        copytex = globals4es.force_es_copy_tex
-            || ((bound->format==GL_RGBA && bound->type==GL_UNSIGNED_BYTE)
-            || (bound->format==glstate->fbo.current_fb->read_format && bound->type==glstate->fbo.current_fb->read_type));
+
+        LOAD_GLES2(glGetTexLevelParameteriv)
+        GLint internalFormat;
+        gles_glGetTexLevelParameteriv(target, level, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+        copytex = (!is_depth_format(internalFormat))
+            || (bound->format==glstate->fbo.current_fb->read_format && bound->type==glstate->fbo.current_fb->read_type);
         if (copytex || !glstate->colormask[0] || !glstate->colormask[1] || !glstate->colormask[2] || !glstate->colormask[3]) {
             gles_glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
             if(((((bound->max_level == level) && (level || bound->mipmap_need)) && (globals4es.automipmap!=3) && (bound->mipmap_need!=0))) && !(bound->max_level==bound->base_level && bound->base_level==0)) {
@@ -168,17 +228,38 @@ void APIENTRY_GL4ES gl4es_glCopyTexSubImage2D(GLenum target, GLint level, GLint 
             }
         } else {
             DBG(SHUT_LOGD(" -No use of gles_glCopyTexSubImage2D");)
-            
-            void* tmp = malloc(width*height*4);
-            GLenum format = bound->format;
-            GLenum type = bound->type;
-            // es3 native method may be faster
-            LOAD_GLES(glReadPixels);
-            gles_glReadPixels(x, y, width, height, format, type, tmp);
-            // mipmap will be calculated buy gl4es_glTexSubImage2D
-            LOAD_GLES(glTexSubImage2D);
-            gles_glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, tmp);
-            free(tmp);
+            LOAD_GLES2(glGetIntegerv)
+            LOAD_GLES2(glGenFramebuffers)
+            LOAD_GLES2(glBindFramebuffer)
+            LOAD_GLES2(glFramebufferTexture2D)
+            LOAD_GLES2(glCheckFramebufferStatus)
+            LOAD_GLES2(glDeleteFramebuffers)
+            LOAD_GLES2(glBlitFramebuffer)
+
+            GLint prevReadFBO, prevDrawFBO;
+            gles_glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFBO);
+            gles_glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+
+            GLuint tempDrawFBO;
+            gles_glGenFramebuffers(1, &tempDrawFBO);
+            gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tempDrawFBO);
+
+            GLint currentTex;
+            gles_glGetIntegerv(get_binding_for_target(target), &currentTex);
+            gles_glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, currentTex, level);
+
+            if (gles_glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                gles_glDeleteFramebuffers(1, &tempDrawFBO);
+                gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+                return;
+            }
+
+            gles_glBlitFramebuffer(x, y, x + width, y + height,
+                                   xoffset, yoffset, xoffset + width, yoffset + height,
+                                   GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+            gles_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+            gles_glDeleteFramebuffers(1, &tempDrawFBO);
         }
     }
     readfboEnd();
@@ -206,8 +287,32 @@ void APIENTRY_GL4ES gl4es_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei 
 
     readfboBegin();
 
-    gles_glReadPixels(x, y, width, height, format, type, dst);
-    // just use es3 native method
+    if ((format == GL_RGBA && type == GL_UNSIGNED_BYTE) ||
+        (format == glstate->readf && type == glstate->readt) ||
+        (format == GL_DEPTH_COMPONENT && (type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_INT))) {
+        gles_glReadPixels(x, y, width, height, format, type, dst);
+        readfboEnd();
+        return;
+    }
+
+    int use_bgra = (glstate->readf == GL_BGRA && glstate->readt == GL_UNSIGNED_BYTE) ? 1 : 0;
+
+    GLvoid *pixels = malloc(width * height * 4);
+    if (!pixels) {
+        LOGE("Memory allocation failed for temporary pixel buffer\n");
+        readfboEnd();
+        return;
+    }
+
+    gles_glReadPixels(x, y, width, height, use_bgra ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    if (!pixel_convert(pixels, &dst, width, height,
+                       use_bgra ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, format, type, 0, glstate->texture.pack_align)) {
+        LOGE("ReadPixels error: (%s, UNSIGNED_BYTE -> %s, %s )\n",
+             PrintEnum(use_bgra ? GL_BGRA : GL_RGBA), PrintEnum(format), PrintEnum(type));
+    }
+
+    free(pixels);
     readfboEnd();
 }
 

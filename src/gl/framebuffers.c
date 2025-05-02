@@ -626,7 +626,7 @@ void APIENTRY_GL4ES gl4es_glFramebufferTexture2D(GLenum target, GLenum attachmen
             if(tex && !tex->renderdepth) {
                 gl4es_glGenRenderbuffers(1, &tex->renderdepth);
                 gl4es_glBindRenderbuffer(GL_RENDERBUFFER, tex->renderdepth);
-                gl4es_glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, twidth, theight);
+                gl4es_glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, twidth, theight);
                 gl4es_glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
             gl4es_glFramebufferRenderbuffer(ntarget, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, tex?tex->renderdepth:0);
@@ -764,7 +764,7 @@ void APIENTRY_GL4ES gl4es_glFramebufferTexture2D(GLenum target, GLenum attachmen
                 if(tex && !tex->renderdepth) {
                     gl4es_glGenRenderbuffers(1, &tex->renderdepth);
                     gl4es_glBindRenderbuffer(GL_RENDERBUFFER, tex->renderdepth);
-                    gl4es_glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, twidth, theight);
+                    gl4es_glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, twidth, theight);
                     gl4es_glBindRenderbuffer(GL_RENDERBUFFER, 0);
                 }
                 gl4es_glFramebufferRenderbuffer(ntarget, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, tex?tex->renderdepth:0);
@@ -987,20 +987,22 @@ void APIENTRY_GL4ES gl4es_glRenderbufferStorage(GLenum target, GLenum internalfo
     int use_secondarybuffer = 0;
     int use_secondarytexture = 0;
     GLenum format = internalformat;
-    // check if internal format is GL_DEPTH_STENCIL_EXT
-    if (internalformat == GL_DEPTH_STENCIL)
-        internalformat = GL_DEPTH24_STENCIL8;
+    
     // in that case, create first a STENCIL one then a DEPTH one....
-    if ((internalformat == GL_DEPTH24_STENCIL8 && (hardext.depthstencil==0 || ((hardext.vendor&VEND_IMGTEC)==VEND_IMGTEC)))) {
-        internalformat = (hardext.depth24)?GL_DEPTH_COMPONENT24:GL_DEPTH_COMPONENT16;
-        // create a stencil buffer if needed
-        if(!rend->secondarybuffer) {
-            gles_glGenRenderbuffers(1, &rend->secondarybuffer);
+    if (internalformat == GL_DEPTH_STENCIL) {
+        if(hardext.depthstencil) {
+            internalformat = GL_DEPTH24_STENCIL8;
+        } else {
+            internalformat = GL_DEPTH_COMPONENT32F;
+            // create a stencil buffer if needed
+            if(!rend->secondarybuffer) {
+                gles_glGenRenderbuffers(1, &rend->secondarybuffer);
+            }
         }
         use_secondarybuffer = 1;
     }
-    else if (internalformat == GL_DEPTH_COMPONENT || internalformat == GL_DEPTH_COMPONENT32)    // Not much is supported on GLES...
-        internalformat = GL_DEPTH_COMPONENT16;
+    else if (internalformat == GL_DEPTH_COMPONENT || internalformat == GL_DEPTH_COMPONENT16 || internalformat == GL_DEPTH_COMPONENT24 || internalformat == GL_DEPTH_COMPONENT32)    // Not much is supported on GLES...
+        internalformat = GL_DEPTH_COMPONENT32F;
     else if (internalformat == GL_RGB8 && hardext.rgba8==0)
         internalformat = GL_RGB565_OES;
     else if (internalformat == GL_RGBA8 && hardext.rgba8==0)

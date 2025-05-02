@@ -80,9 +80,19 @@ static int is_fake_compressed_rgba(GLenum internalformat)
     return 0;
 }
 
-void internal2format_type(GLenum internalformat, GLenum *format, GLenum *type)
+void internal2format_type(GLenum *internalformat, GLenum *format, GLenum *type)
 {
-    switch(internalformat) {
+    DBG(char log_buffer[512];
+    int offset = snprintf(log_buffer, sizeof(log_buffer), "tex format converting... ");
+    if (internalformat)
+        offset += snprintf(log_buffer + offset, sizeof(log_buffer) - offset, "internalFormat: %s", PrintEnum(*internalformat));
+    if (format)
+        offset += snprintf(log_buffer + offset, sizeof(log_buffer) - offset, ", format: %s", PrintEnum(*format));
+    if (type)
+        offset += snprintf(log_buffer + offset, sizeof(log_buffer) - offset, ", type: %s", PrintEnum(*type));
+    snprintf(log_buffer+offset,sizeof(log_buffer)-offset, "\n");
+    SHUT_LOGD("%s", log_buffer))
+    switch(*internalformat) {
         case GL_RED:
         case GL_R8:
         case GL_R:
@@ -157,9 +167,29 @@ void internal2format_type(GLenum internalformat, GLenum *format, GLenum *type)
                 *format = GL_RGBA;
             *type = GL_UNSIGNED_BYTE;
             break;
+        case GL_DEPTH_COMPONENT16:
+            if(type)
+                *type = GL_UNSIGNED_SHORT;
+            break;
+
+        case GL_DEPTH_COMPONENT24:
+            if(type)
+                *type = GL_UNSIGNED_INT;
+            break;
+
+        case GL_DEPTH_COMPONENT32:
+            *internalformat = GL_DEPTH_COMPONENT32F;
+            if(type)
+                *type = GL_FLOAT;
+            break;
+
+        case GL_DEPTH_COMPONENT32F:
+            if(type)
+                *type = GL_FLOAT;
+            break;
         case GL_DEPTH_COMPONENT:
             *format = GL_DEPTH_COMPONENT;
-            *type = GL_UNSIGNED_SHORT;
+            *type = GL_UNSIGNED_INT;
             break;
         case GL_DEPTH_STENCIL:
         case GL_DEPTH24_STENCIL8:
@@ -183,11 +213,21 @@ void internal2format_type(GLenum internalformat, GLenum *format, GLenum *type)
             *type = (hardext.floattex)?GL_FLOAT:GL_UNSIGNED_BYTE;
             break;
         default:
-            printf("LIBGL: Warning, unknown Internalformat (%s)\n", PrintEnum(internalformat));
+            DBG(SHUT_LOGE("LIBGL: Warning, unknown Internalformat (%s)\n", PrintEnum(*internalformat)));
             *format = GL_RGBA;
             *type = GL_UNSIGNED_BYTE;
             break;
     }
+    DBG(char log_buffer2[512];
+    int offset2 = snprintf(log_buffer, sizeof(log_buffer), "converted: ");
+    if (internalformat)
+        offset2 += snprintf(log_buffer + offset2, sizeof(log_buffer) - offset2, "internalFormat: %s", PrintEnum(*internalformat));
+    if (format)
+        offset2 += snprintf(log_buffer + offset2, sizeof(log_buffer) - offset2, ", format: %s", PrintEnum(*format));
+    if (type)
+        offset2 += snprintf(log_buffer + offset2, sizeof(log_buffer) - offset2, ", type: %s", PrintEnum(*type));
+    snprintf(log_buffer2+offset2,sizeof(log_buffer2)-offset2, "\n");
+    SHUT_LOGD("%s", log_buffer))
 }
 
 static void* swizzle_texture(GLsizei width, GLsizei height,
@@ -207,7 +247,7 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
     if (internalformat == GL_COMPRESSED_LUMINANCE) internalformat = GL_LUMINANCE;
 
     if (*format != intermediaryformat || intermediaryformat != internalformat) {
-        internal2format_type(intermediaryformat, &dest_format, &dest_type);
+        internal2format_type(&intermediaryformat, &dest_format, &dest_type);
         convert = 1;
         check = 0;
     }
@@ -370,6 +410,17 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
             else convert = 1;
             break;
         case GL_DEPTH_COMPONENT:
+            if (hardext.depthtex) {
+                *format = dest_format = GL_DEPTH_COMPONENT;
+                if (dest_type != GL_UNSIGNED_INT) {
+                    convert = 1;
+                }
+                dest_type = GL_UNSIGNED_INT;
+                check = 0;
+            }
+            else
+                convert = 1;
+            break;
         case GL_DEPTH_COMPONENT16:
         case GL_DEPTH_COMPONENT24:
         case GL_DEPTH_COMPONENT32:
@@ -518,7 +569,7 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
             *format = dest_format;
             if (dest_format != internalformat) {
                 GLvoid* pix2 = (GLvoid*)pixels;
-                internal2format_type(internalformat, &dest_format, &dest_type);
+                internal2format_type(&internalformat, &dest_format, &dest_type);
                 bound->format = dest_format;
                 bound->type = dest_type;
                 if (!pixel_convert(pixels, &pix2, width, height,
@@ -558,7 +609,7 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
         bound->inter_format = dest_format;
         bound->inter_type = dest_type;
         if (convert) {
-            internal2format_type(internalformat, &dest_format, &dest_type); // in case they are differents
+            internal2format_type(&internalformat, &dest_format, &dest_type); // in case they are differents
             *type = dest_type;
             *format = dest_format;
         }
@@ -724,6 +775,13 @@ GLenum swizzle_internalformat(GLenum* internalformat, GLenum format, GLenum type
         }
         break;
     case GL_DEPTH_COMPONENT:
+        if (hardext.depthtex) {
+            sret = ret = GL_DEPTH_COMPONENT;
+        }
+        else {
+            sret = ret = GL_RGBA;
+        }
+            break;
     case GL_DEPTH_COMPONENT16:
     case GL_DEPTH_COMPONENT24:
     case GL_DEPTH_COMPONENT32:
@@ -972,10 +1030,10 @@ void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint interna
                   PrintEnum(target), glstate->texture.unpack_row_length, width, height, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), (internalformat==3)?"3":(internalformat==4?"4":PrintEnum(internalformat)), PrintEnum(type), data, level, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_need, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_auto, glstate->texture.bound[glstate->texture.active][what_target(target)]->base_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->max_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->texture, glstate->texture.bound[glstate->texture.active][what_target(target)]->streamed, glstate->list.compiling);)
 
     if(data==NULL && (internalformat == GL_RGB16F || internalformat == GL_RGBA16F))
-        internal2format_type(internalformat, &format, &type);
-    if(internalformat == GL_R16F ) internal2format_type(internalformat, &format, &type);
+        internal2format_type(&internalformat, &format, &type);
+    if(internalformat == GL_R16F ) internal2format_type(&internalformat, &format, &type);
     if(data==NULL && (internalformat == GL_RED || internalformat == GL_RGB))
-        internal2format_type(internalformat, &format, &type);
+        internal2format_type(&internalformat, &format, &type);
 
     if (internalformat == GL_DEPTH32F_STENCIL8 && type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV) {
         internalformat = GL_DEPTH24_STENCIL8;
