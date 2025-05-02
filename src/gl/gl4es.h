@@ -22,6 +22,7 @@ extern "C" {
 #include "wrap/gles.h"
 #include "gles.h"
 #include "glstate.h"
+#include "logs.h"
 
 packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 

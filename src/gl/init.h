@@ -82,7 +82,7 @@ typedef struct _globals4es {
     #ifndef NO_GBM
     char drmcard[50];
     #endif
-    char version[50];
+    char version[65];
     int use_mc_color;
     int vgpu_dump;         // Whether vgpu dumps the shader input and output.
     int vgpu_force_conv;   // Whether vgpu is forced to convert all shaders
