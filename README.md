@@ -1,6 +1,10 @@
 Krypton Wrapper
 ====
 
+> [!WARNING]
+> 
+> This project is no longer maintained.
+
 > [!NOTE]
 > 
 > The latest version:
