@@ -178,14 +178,14 @@ void internal2format_type(GLenum *internalformat, GLenum *format, GLenum *type)
             break;
 
         case GL_DEPTH_COMPONENT32:
-            *internalformat = GL_DEPTH_COMPONENT32F;
+            *internalformat = GL_DEPTH_COMPONENT;
             if(type)
-                *type = GL_FLOAT;
+                *type = GL_UNSIGNED_INT;
             break;
 
         case GL_DEPTH_COMPONENT32F:
             if(type)
-                *type = GL_FLOAT;
+                *type = GL_UNSIGNED_INT;
             break;
         case GL_DEPTH_COMPONENT:
             *format = GL_DEPTH_COMPONENT;
@@ -246,11 +246,12 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
     if (intermediaryformat == GL_COMPRESSED_LUMINANCE) intermediaryformat = GL_LUMINANCE;
     if (internalformat == GL_COMPRESSED_LUMINANCE) internalformat = GL_LUMINANCE;
 
-    if (*format != intermediaryformat || intermediaryformat != internalformat) {
-        internal2format_type(&intermediaryformat, &dest_format, &dest_type);
-        convert = 1;
-        check = 0;
-    }
+    // if (*format != intermediaryformat || intermediaryformat != internalformat) {
+    //     internal2format_type(&intermediaryformat, &dest_format, &dest_type);
+    //     convert = 1;
+    //     check = 0;
+    // }
+
     else {
         if ((*type) == GL_HALF_FLOAT) (*type) = GL_HALF_FLOAT_OES;    //the define is different between GL and GLES...
         switch (*format) {
@@ -401,45 +402,40 @@ static void* swizzle_texture(GLsizei width, GLsizei height,
         case GL_DEPTH32F_STENCIL8:
         case GL_DEPTH24_STENCIL8:
         case GL_DEPTH_STENCIL:
-            if (hardext.depthtex && hardext.depthstencil) {
+            //if (hardext.depthtex && hardext.depthstencil) {
                 const int is32F = *format == GL_DEPTH32F_STENCIL8;
                 *format = dest_format = GL_DEPTH_STENCIL;
                 dest_type = is32F ? GL_FLOAT_32_UNSIGNED_INT_24_8_REV : GL_UNSIGNED_INT_24_8;
-                check = 0;
-            }
-            else convert = 1;
+             //   check = 0;
+            //}
+            //else convert = 1;
             break;
         case GL_DEPTH_COMPONENT:
-            if (hardext.depthtex) {
+            //if (hardext.depthtex) {
                 *format = dest_format = GL_DEPTH_COMPONENT;
-                if (dest_type != GL_UNSIGNED_INT) {
-                    convert = 1;
-                }
+                //if (dest_type != GL_UNSIGNED_INT) {
+                //    convert = 1;
+                //}
                 dest_type = GL_UNSIGNED_INT;
-                check = 0;
-            }
-            else
-                convert = 1;
+            //    check = 0;
+            //}
+            //else
+            //    convert = 1;
             break;
         case GL_DEPTH_COMPONENT16:
         case GL_DEPTH_COMPONENT24:
         case GL_DEPTH_COMPONENT32:
         case GL_DEPTH_COMPONENT32F:
-            if (hardext.depthtex) {
-                if (dest_type == GL_UNSIGNED_BYTE) {
-                    if (*format == GL_DEPTH_COMPONENT32 || *format == GL_DEPTH_COMPONENT24)
-                        dest_type = GL_UNSIGNED_INT;
-                    else if (*format == GL_DEPTH_COMPONENT32F)
-                        dest_type = GL_FLOAT;
-                    else
-                        dest_type = GL_UNSIGNED_SHORT;
-                    convert = 1;
-                }
-                *format = dest_format = GL_DEPTH_COMPONENT;
-                check = 0;
-            }
-            else
-                convert = 1;
+            //if (hardext.depthtex) {
+            //    if (dest_type == GL_UNSIGNED_BYTE) {
+            *format = dest_format = GL_DEPTH_COMPONENT;
+            dest_type = GL_UNSIGNED_INT;
+            //       convert = 1;
+            //    }
+            //    check = 0;
+            //}
+            //else
+            //    convert = 1;
             break;
         case GL_STENCIL_INDEX8:
             if (hardext.stenciltex)
@@ -775,24 +771,24 @@ GLenum swizzle_internalformat(GLenum* internalformat, GLenum format, GLenum type
         }
         break;
     case GL_DEPTH_COMPONENT:
-        if (hardext.depthtex) {
+        //if (hardext.depthtex) {
             sret = ret = GL_DEPTH_COMPONENT;
-        }
-        else {
-            sret = ret = GL_RGBA;
-        }
+        //}
+        //else {
+        //    sret = ret = GL_RGBA;
+        //}
             break;
     case GL_DEPTH_COMPONENT16:
     case GL_DEPTH_COMPONENT24:
     case GL_DEPTH_COMPONENT32:
     case GL_DEPTH_COMPONENT32F:
-        if (hardext.depthtex) {
+        //if (hardext.depthtex) {
             switch (type) {
             case GL_UNSIGNED_SHORT:
-                sret = ret = GL_DEPTH_COMPONENT16;
+                sret = ret = GL_DEPTH_COMPONENT;
                 break;
             case GL_UNSIGNED_INT:
-                sret = ret = GL_DEPTH_COMPONENT24;
+                sret = ret = GL_DEPTH_COMPONENT;
                 break;
             case GL_FLOAT:
                 sret = ret = GL_DEPTH_COMPONENT32F;
@@ -801,10 +797,10 @@ GLenum swizzle_internalformat(GLenum* internalformat, GLenum format, GLenum type
                 sret = ret = GL_DEPTH_COMPONENT;
                 break;
             }
-        }
-        else {
-            sret = ret = GL_RGBA;
-        }
+        //}
+        //else {
+        //    sret = ret = GL_RGBA;
+        //}
         break;
     case GL_DEPTH_STENCIL:
     case GL_DEPTH24_STENCIL8:
@@ -1028,6 +1024,12 @@ void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint interna
                   GLenum format, GLenum type, const GLvoid *data) {
     DBG(SHUT_LOGD("glTexImage2D on target=%s with unpack_row_length(%i), size(%i,%i) and skip(%i,%i), format(internal)=%s(%s), type=%s, data=%p, level=%i (mipmap_need=%i, mipmap_auto=%i, base_level=%i, max_level=%i) => texture=%u (streamed=%i), glstate->list.compiling=%d\n",
                   PrintEnum(target), glstate->texture.unpack_row_length, width, height, glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), (internalformat==3)?"3":(internalformat==4?"4":PrintEnum(internalformat)), PrintEnum(type), data, level, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_need, glstate->texture.bound[glstate->texture.active][what_target(target)]->mipmap_auto, glstate->texture.bound[glstate->texture.active][what_target(target)]->base_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->max_level, glstate->texture.bound[glstate->texture.active][what_target(target)]->texture, glstate->texture.bound[glstate->texture.active][what_target(target)]->streamed, glstate->list.compiling);)
+
+    // fuck weird depth handling!!!
+    if (format == GL_DEPTH_COMPONENT) {
+        internalformat = GL_DEPTH_COMPONENT;
+        type = GL_UNSIGNED_INT;
+    }
 
     if(data==NULL && (internalformat == GL_RGB16F || internalformat == GL_RGBA16F))
         internal2format_type(&internalformat, &format, &type);

@@ -1092,26 +1092,29 @@ GLboolean APIENTRY_GL4ES gl4es_glIsRenderbuffer(GLuint renderbuffer) {
 
 void APIENTRY_GL4ES gl4es_glGenerateMipmap(GLenum target) {
     DBG(SHUT_LOGD("glGenerateMipmap(%s)\n", PrintEnum(target));)
-    LOAD_GLES2_OR_OES(glGenerateMipmap);
-    
+        LOAD_GLES2_OR_OES(glGenerateMipmap);
+    LOAD_GLES(glBindTexture);
+
     const GLuint rtarget = map_tex_target(target);
-    realize_bound(glstate->texture.active, target);
-    gltexture_t *bound = gl4es_getCurrentTexture(target);
-    if(globals4es.forcenpot && hardext.npot==1) {
-        if(bound->npot) {
-            noerrorShim();
-            return; // no need to generate mipmap, mipmap is disabled here
-        }
+    // Set active texture unit
+    realize_active();
+    // Get bound texture for this target
+    const GLuint itarget = what_target(target);
+    gltexture_t* bound = glstate->texture.bound[glstate->texture.active][itarget];
+    if (!bound) {
+        noerrorShim();
+        return;
     }
+    // Bind the texture to the target
+    gles_glBindTexture(rtarget, bound->glname);
 
     errorGL();
-    if(globals4es.automipmap != 3) {
+    if (globals4es.automipmap != 3) {
         gles_glGenerateMipmap(rtarget);
         bound->mipmap_auto = 1;
-        /*if(bound->sampler.min_filer != bound->actual.min_filter)  // mainly for S3TC textures...
-            gl4es_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, bound->sampler.min_filer);*/
     }
 }
+
 
 void APIENTRY_GL4ES gl4es_glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint *params) {
     DBG(SHUT_LOGD("glGetFramebufferAttachmentParameteriv(%s, %s, %s, %p)\n", PrintEnum(target), PrintEnum(attachment), PrintEnum(pname), params);)

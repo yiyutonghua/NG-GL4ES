@@ -47,6 +47,7 @@ glbuffer_t** BUFF(GLenum target) {
         case GL_COPY_WRITE_BUFFER:
             return &glstate->vao->write;
             break;
+
         default:
         LOGD("Warning, unknown buffer target 0x%04X\n", target);
     }
@@ -81,18 +82,16 @@ glbuffer_t* getbuffer_id(GLuint buffer) {
 }
 
 int buffer_target(GLenum target) {
-    if (target==GL_ARRAY_BUFFER)
-        return 1;
-    if (target==GL_ELEMENT_ARRAY_BUFFER)
-        return 1;
-    if (target==GL_PIXEL_PACK_BUFFER)
-        return 1;
-    if (target==GL_PIXEL_UNPACK_BUFFER)
-        return 1;
-    if (target==GL_COPY_READ_BUFFER)
-        return 1;
-    if (target==GL_COPY_WRITE_BUFFER)
-        return 1;
+    switch (target) {
+        case GL_ARRAY_BUFFER:
+        case GL_ELEMENT_ARRAY_BUFFER:
+        case GL_PIXEL_PACK_BUFFER:
+        case GL_PIXEL_UNPACK_BUFFER:
+        case GL_COPY_READ_BUFFER:
+        case GL_COPY_WRITE_BUFFER:
+        case GL_UNIFORM_BUFFER:
+            return 1;
+	}
     return 0;
 }
 
@@ -132,219 +131,6 @@ void APIENTRY_GL4ES gl4es_glGenBuffers(GLsizei n, GLuint * buffers) {
         buff->mapped = 0;
         buff->real_buffer = 0;
     }
-}
-
-void VISIBLE glBindBufferBase(GLenum target, GLuint index, GLuint buffer) {
-    DBG(SHUT_LOGD("glBindBufferBase(%s, %u, %u)\n", PrintEnum(target), index, buffer);)
-        FLUSH_BEGINEND;
-
-    // Check if the target is valid
-    if (!buffer_target(target)) {
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
-
-    // If buffer is 0, unbind the buffer
-    if (buffer == 0) {
-        // unbind buffer from the specified target and index
-        glstate->vao->vertexattrib[index].real_buffer = 0;
-        glstate->vao->vertexattrib[index].real_pointer = NULL;
-    }
-    else {
-        // Search for the existing buffer or create a new one if not found
-        khint_t k;
-        int ret;
-        glbuffer_t* buff = NULL;
-        khash_t(buff)* list = glstate->buffers;
-        k = kh_get(buff, list, buffer);
-        if (k == kh_end(list)) {
-            // Create a new buffer if not found
-            k = kh_put(buff, list, buffer, &ret);
-            buff = kh_value(list, k) = malloc(sizeof(glbuffer_t));
-            buff->buffer = buffer;
-            buff->type = target;
-            buff->data = NULL;
-            buff->usage = GL_STATIC_DRAW;
-            buff->size = 0;
-            buff->access = GL_READ_WRITE;
-            buff->mapped = 0;
-            buff->real_buffer = 0;
-        }
-        else {
-            buff = kh_value(list, k);
-        }
-
-        // Bind the buffer to the specified index and target
-        glstate->vao->vertexattrib[index].real_buffer = buffer;
-        glstate->vao->vertexattrib[index].real_pointer = NULL; // Real buffer pointer can be updated later
-        bind_buffer(target, buff);
-    }
-
-    noerrorShim();
-}
-
-void VISIBLE glBindBuffersRange(GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes) {
-    DBG(SHUT_LOGD("glBindBuffersRange(%s, %u, %d, %p, %p, %p)\n", PrintEnum(target), first, count, buffers, offsets, sizes);)
-        FLUSH_BEGINEND;
-
-    // Check if the target is valid
-    if (!buffer_target(target)) {
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
-
-    for (GLsizei i = 0; i < count; ++i) {
-        GLuint index = first + i;
-        GLuint buffer = buffers[i];
-        GLintptr offset = offsets[i];
-        GLsizeiptr size = sizes[i];
-
-        // If buffer is 0, unbind the buffer from the specified target and index
-        if (buffer == 0) {
-            glstate->vao->vertexattrib[index].real_buffer = 0;
-            glstate->vao->vertexattrib[index].real_pointer = NULL;
-            glstate->vao->vertexattrib[index].stride = 0;
-        }
-        else {
-            // Search for the existing buffer or create a new one if not found
-            khint_t k;
-            int ret;
-            glbuffer_t* buff = NULL;
-            khash_t(buff)* list = glstate->buffers;
-            k = kh_get(buff, list, buffer);
-            if (k == kh_end(list)) {
-                // Create a new buffer if not found
-                k = kh_put(buff, list, buffer, &ret);
-                buff = kh_value(list, k) = malloc(sizeof(glbuffer_t));
-                buff->buffer = buffer;
-                buff->type = target;
-                buff->data = NULL;
-                buff->usage = GL_STATIC_DRAW;
-                buff->size = 0;
-                buff->access = GL_READ_WRITE;
-                buff->mapped = 0;
-                buff->real_buffer = 0;
-            }
-            else {
-                buff = kh_value(list, k);
-            }
-
-            // Bind the buffer with the specified offset and size
-            glstate->vao->vertexattrib[index].real_buffer = buffer;
-            glstate->vao->vertexattrib[index].real_pointer = (const GLvoid*)(intptr_t)offset;
-            glstate->vao->vertexattrib[index].stride = size;
-            bind_buffer(target, buff);
-        }
-    }
-
-    noerrorShim();
-}
-
-
-void VISIBLE glBindBuffersBase(GLenum target, GLuint first, GLsizei count, const GLuint* buffers) {
-    DBG(SHUT_LOGD("glBindBuffersBase(%s, %u, %d, %p)\n", PrintEnum(target), first, count, buffers);)
-        FLUSH_BEGINEND;
-
-    // Check if the target is valid
-    if (!buffer_target(target)) {
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
-
-    for (GLsizei i = 0; i < count; ++i) {
-        GLuint index = first + i;
-        GLuint buffer = buffers[i];
-
-        // If buffer is 0, unbind the buffer from the specified target and index
-        if (buffer == 0) {
-            glstate->vao->vertexattrib[index].real_buffer = 0;
-            glstate->vao->vertexattrib[index].real_pointer = NULL;
-        }
-        else {
-            // Search for the existing buffer or create a new one if not found
-            khint_t k;
-            int ret;
-            glbuffer_t* buff = NULL;
-            khash_t(buff)* list = glstate->buffers;
-            k = kh_get(buff, list, buffer);
-            if (k == kh_end(list)) {
-                // Create a new buffer if not found
-                k = kh_put(buff, list, buffer, &ret);
-                buff = kh_value(list, k) = malloc(sizeof(glbuffer_t));
-                buff->buffer = buffer;
-                buff->type = target;
-                buff->data = NULL;
-                buff->usage = GL_STATIC_DRAW;
-                buff->size = 0;
-                buff->access = GL_READ_WRITE;
-                buff->mapped = 0;
-                buff->real_buffer = 0;
-            }
-            else {
-                buff = kh_value(list, k);
-            }
-
-            // Bind the buffer to the specified index and target
-            glstate->vao->vertexattrib[index].real_buffer = buffer;
-            glstate->vao->vertexattrib[index].real_pointer = NULL;
-            bind_buffer(target, buff);
-        }
-    }
-
-    noerrorShim();
-}
-
-
-void VISIBLE glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) {
-    DBG(SHUT_LOGD("glBindBufferRange(%s, %u, %u, %ld, %ld)\n", PrintEnum(target), index, buffer, offset, size);)
-        FLUSH_BEGINEND;
-
-    // Check if the target is valid
-    if (!buffer_target(target)) {
-        errorShim(GL_INVALID_ENUM);
-        return;
-    }
-
-    // If buffer is 0, unbind the buffer from the specified target and index
-    if (buffer == 0) {
-        glstate->vao->vertexattrib[index].real_buffer = 0;
-        glstate->vao->vertexattrib[index].real_pointer = NULL;
-    }
-    else {
-        // Search for the existing buffer or create a new one if not found
-        khint_t k;
-        int ret;
-        glbuffer_t* buff = NULL;
-        khash_t(buff)* list = glstate->buffers;
-        k = kh_get(buff, list, buffer);
-        if (k == kh_end(list)) {
-            // Create a new buffer if not found
-            k = kh_put(buff, list, buffer, &ret);
-            buff = kh_value(list, k) = malloc(sizeof(glbuffer_t));
-            buff->buffer = buffer;
-            buff->type = target;
-            buff->data = NULL;
-            buff->usage = GL_STATIC_DRAW;
-            buff->size = 0;
-            buff->access = GL_READ_WRITE;
-            buff->mapped = 0;
-            buff->real_buffer = 0;
-        }
-        else {
-            buff = kh_value(list, k);
-        }
-
-        // Bind the buffer with specified offset and size
-        glstate->vao->vertexattrib[index].real_buffer = buffer;
-        glstate->vao->vertexattrib[index].real_pointer = NULL; // Real buffer pointer can be updated later
-        glstate->vao->vertexattrib[index].pointer = (const GLvoid*)(intptr_t)offset;
-        glstate->vao->vertexattrib[index].stride = size;  // Set the stride to the specified size
-
-        // Bind the buffer with offset and size
-        bind_buffer(target, buff);
-    }
-
-    noerrorShim();
 }
 
 void APIENTRY_GL4ES gl4es_glBindBuffer(GLenum target, GLuint buffer) {
@@ -1045,7 +831,6 @@ void unboundBuffers()
     }
     glstate->bind_buffer.used = 0;
 }
-
 
 //Direct wrapper
 AliasExport(void,glGenBuffers,,(GLsizei n, GLuint * buffers));

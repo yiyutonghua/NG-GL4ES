@@ -329,6 +329,8 @@ void initialize_gl4es() {
         break;
     }
 
+	globals4es.automipmap = 1;
+
     if(IsEnvVarTrue("LIBGL_TEXCOPY")) {
       globals4es.texcopydata = 1;
           SHUT_LOGD("Texture copy enabled\n");
