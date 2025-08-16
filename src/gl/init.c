@@ -327,7 +327,7 @@ void initialize_gl4es() {
         break;
     }
 
-    globals4es.automipmap = 2;
+    globals4es.automipmap = 0;
 
     if (IsEnvVarTrue("LIBGL_TEXCOPY")) {
         globals4es.texcopydata = 1;
