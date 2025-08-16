@@ -53,18 +53,21 @@ void trim(char* str) {
     *(end + 1) = 0;
 }
 
+static FILE* file = NULL;
 void write_log(const char* format, ...) {
-    FILE* file = fopen(LOG_FILE_PATH, "a");
+    if (file == NULL) {
+        file = fopen(LOG_FILE_PATH, "a");
+    }
     if (file == NULL) {
         fprintf(stderr, "Error opening log file '%s': %s\n", LOG_FILE_PATH, strerror(errno));
-        return;
+		return;
     }
     va_list args;
     va_start(args, format);
     vfprintf(file, format, args);
     va_end(args);
     fprintf(file, "\n");
-    fclose(file);
+	fflush(file);
 }
 void clear_log() {
     FILE* file = fopen(LOG_FILE_PATH, "w");

@@ -229,6 +229,7 @@ typedef struct {
     // TODO: Cache VA also?
     glbuffer_t *read;
     glbuffer_t *write;
+    glbuffer_t * uniform;
 } glvao_t;
 
 void VaoSharedClear(glvao_t *vao);

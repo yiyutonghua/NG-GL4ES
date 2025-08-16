@@ -223,6 +223,15 @@ GLenum APIENTRY_GL4ES gl4es_glCheckFramebufferStatus(GLenum target) {
 
 void APIENTRY_GL4ES gl4es_glBindFramebuffer(GLenum target, GLuint framebuffer) {
     DBG(SHUT_LOGD("glBindFramebuffer(%s, %u), list=%s, glstate->fbo.current_fb=%d (draw=%d, read=%d)\n", PrintEnum(target), framebuffer, glstate->list.active?"active":"none", glstate->fbo.current_fb->id, glstate->fbo.fbo_draw->id, glstate->fbo.fbo_read->id);)
+    if (target == GL_FRAMEBUFFER) {
+		gl4es_glBindFramebuffer(GL_FRAMEBUFFER - 1, framebuffer);
+		gl4es_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+		gl4es_glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+        return;
+    }
+        
+    if (target == GL_FRAMEBUFFER - 1) ++target;
+
     PUSH_IF_COMPILING(glBindFramebuffer);
     LOAD_GLES2_OR_OES(glBindFramebuffer);
 //    LOAD_GLES2_OR_OES(glCheckFramebufferStatus);
@@ -428,6 +437,16 @@ int GetAttachmentLevel(glframebuffer_t* fb, GLenum attachment) {
 
 void APIENTRY_GL4ES gl4es_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {
     DBG(SHUT_LOGD("glFramebufferTexture2D(%s, %s, %s, %u, %i) glstate->fbo.current_fb=%d (draw=%d, read=%d)\n", PrintEnum(target), PrintEnum(attachment), PrintEnum(textarget), texture, level, glstate->fbo.current_fb->id, glstate->fbo.fbo_draw->id, glstate->fbo.fbo_read->id);)
+    
+    if (target == GL_FRAMEBUFFER) {
+        gl4es_glFramebufferTexture2D(GL_FRAMEBUFFER - 1, attachment, textarget, texture, level);
+        gl4es_glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, textarget, texture, level);
+		gl4es_glFramebufferTexture2D(GL_READ_FRAMEBUFFER, attachment, textarget, texture, level);
+        return;
+    }
+
+	if (target == GL_FRAMEBUFFER - 1) ++target; 
+
     static GLuint scrap_tex = 0;
     static int scrap_width = 0;
     static int scrap_height = 0;
@@ -1773,7 +1792,7 @@ void gl4es_restoreCurrentFBO()
 // direct wrapper
 
 AliasExport(void,glGenFramebuffers,,(GLsizei n, GLuint *ids));
-AliasExport(void,glDeleteFramebuffers,,(GLsizei n, GLuint *framebuffers));
+AliasExport(void,glDeleteFramebuffers,,(GLsizei n, const GLuint *framebuffers));
 AliasExport(GLboolean,glIsFramebuffer,,(GLuint framebuffer));
 AliasExport(GLenum,glCheckFramebufferStatus,,(GLenum target));
 AliasExport(void,glBindFramebuffer,,(GLenum target, GLuint framebuffer));
@@ -1782,7 +1801,7 @@ AliasExport(void,glFramebufferTexture2D,,(GLenum target, GLenum attachment, GLen
 AliasExport(void,glFramebufferTexture3D,,(GLenum target, GLenum attachment, GLenum textarget, GLuint texture,    GLint level, GLint layer));
 AliasExport(void,glGenRenderbuffers,,(GLsizei n, GLuint *renderbuffers));
 AliasExport(void,glFramebufferRenderbuffer,,(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer));
-AliasExport(void,glDeleteRenderbuffers,,(GLsizei n, GLuint *renderbuffers));
+AliasExport(void,glDeleteRenderbuffers,,(GLsizei n, const GLuint *renderbuffers));
 AliasExport(void,glRenderbufferStorage,,(GLenum target, GLenum internalformat, GLsizei width, GLsizei height));
 AliasExport(void,glBindRenderbuffer,,(GLenum target, GLuint renderbuffer));
 AliasExport(GLboolean,glIsRenderbuffer,,(GLuint renderbuffer));
@@ -1794,7 +1813,7 @@ AliasExport(void,glBlitFramebuffer,,(GLint srcX0, GLint srcY0, GLint srcX1, GLin
 
 // EXT direct wrapper
 AliasExport(void,glGenFramebuffers,EXT,(GLsizei n, GLuint *ids));
-AliasExport(void,glDeleteFramebuffers,EXT,(GLsizei n, GLuint *framebuffers));
+AliasExport(void,glDeleteFramebuffers,EXT,(GLsizei n, const GLuint *framebuffers));
 AliasExport(GLboolean,glIsFramebuffer,EXT,(GLuint framebuffer));
 AliasExport(GLenum,glCheckFramebufferStatus,EXT,(GLenum target));
 AliasExport(void,glBindFramebuffer,EXT,(GLenum target, GLuint framebuffer));
@@ -1803,7 +1822,7 @@ AliasExport(void,glFramebufferTexture2D,EXT,(GLenum target, GLenum attachment, G
 AliasExport(void,glFramebufferTexture3D,EXT,(GLenum target, GLenum attachment, GLenum textarget, GLuint texture,    GLint level, GLint layer));
 AliasExport(void,glGenRenderbuffers,EXT,(GLsizei n, GLuint *renderbuffers));
 AliasExport(void,glFramebufferRenderbuffer,EXT,(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer));
-AliasExport(void,glDeleteRenderbuffers,EXT,(GLsizei n, GLuint *renderbuffers));
+AliasExport(void,glDeleteRenderbuffers,EXT,(GLsizei n, const GLuint *renderbuffers));
 AliasExport(void,glRenderbufferStorage,EXT,(GLenum target, GLenum internalformat, GLsizei width, GLsizei height));
 AliasExport(void,glBindRenderbuffer,EXT,(GLenum target, GLuint renderbuffer));
 AliasExport(GLboolean,glIsRenderbuffer,EXT,(GLuint renderbuffer));

@@ -4,7 +4,7 @@ extern "C" {
 #ifndef _GL4ES_GL4ES_H_
 #define _GL4ES_GL4ES_H_
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DBG(a) a
 #else
@@ -23,6 +23,7 @@ extern "C" {
 #include "gles.h"
 #include "glstate.h"
 #include "logs.h"
+#include <GLES3/gl32.h>
 
 packed_call_t* APIENTRY_GL4ES glCopyPackedCall(const packed_call_t *packed);
 
@@ -127,6 +128,7 @@ static inline void errorGL() {	// next glGetError will be from GL
 }
 static inline void errorShim(GLenum error) {	// next glGetError will be "error" from gl4es
     DBG(write_log("now ERROR! %s", PrintEnum(error));)
+        return;
     if(glstate->type_error && glstate->shim_error==GL_NO_ERROR)
 	    glstate->type_error = 1;
     if(glstate->shim_error == GL_NO_ERROR)

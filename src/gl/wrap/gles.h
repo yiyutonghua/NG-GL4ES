@@ -3769,7 +3769,7 @@ typedef void (APIENTRY_GLES * glDeleteProgram_PTR)(glDeleteProgram_ARG_EXPAND);
 void APIENTRY_GL4ES gl4es_glDeleteRenderbuffers(glDeleteRenderbuffers_ARG_EXPAND);
 typedef void (APIENTRY_GLES * glDeleteRenderbuffers_PTR)(glDeleteRenderbuffers_ARG_EXPAND);
 #define glGetUniformBlockIndex_ARG_EXPAND GLuint program, const GLchar * uniformBlockName
-GLint APIENTRY_GL4ES  gl4es_glGetUniformBlockIndex(glGetUniformBlockIndex_ARG_EXPAND);
+GLuint APIENTRY_GL4ES  gl4es_glGetUniformBlockIndex(glGetUniformBlockIndex_ARG_EXPAND);
 typedef GLuint(APIENTRY_GLES* glGetUniformBlockIndex_PTR)(glGetUniformBlockIndex_ARG_EXPAND);
 #define glUniformBlockBinding_ARG_EXPAND GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding
 void APIENTRY_GL4ES  gl4es_glUniformBlockBinding(glUniformBlockBinding_ARG_EXPAND);

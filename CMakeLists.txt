@@ -101,7 +101,7 @@ set(C_SRC_FILES
         )
 
 set(CPP_SRC_FILES
-        src/glsl/glsl_for_es.cpp
+        src/gl/glsl/glsl_for_es.cpp
         src/gl/getter.cpp
         )
 

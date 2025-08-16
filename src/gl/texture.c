@@ -1267,7 +1267,7 @@ void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint interna
             const GLubyte *src = (GLubyte *)datab;
             src += glstate->texture.unpack_skip_pixels * pixelSize + glstate->texture.unpack_skip_rows * imgWidth;
 
-            for (int y = height; y; --y) {
+            for (int y = height; y; --y) {/*
                 if (dst == NULL || src == NULL) {
                     SHUT_LOGD("LIBGL: Invalid memory pointers in memcpy (src=%p, dst=%p)\n", src, dst);
                     return;  // Exit early or handle the error
@@ -1292,7 +1292,7 @@ void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint interna
                 if ((uintptr_t)dst + height * dstWidth > (uintptr_t)(dst + height * dstWidth)) {
                     SHUT_LOGD("LIBGL: Destination buffer overflow detected (dst=%p, expected=%p)\n", dst, (dst + height * dstWidth));
                     return;  // Exit early or handle the error
-                }
+                }*/
 
                 memcpy(dst, src, dstWidth);
                 src += imgWidth;
@@ -1771,7 +1771,7 @@ void APIENTRY_GL4ES gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoff
         dstWidth = width * pixelSize;
         const GLubyte *src = (GLubyte *)datab;
         src += glstate->texture.unpack_skip_pixels * pixelSize + glstate->texture.unpack_skip_rows * imgWidth;
-        for (int y = height; y; --y) {
+        for (int y = height; y; --y) {/*
             if (dst == NULL || src == NULL) {
                 SHUT_LOGD("LIBGL: Invalid memory pointers in memcpy (src=%p, dst=%p)\n", src, dst);
                 return;  // Exit early or handle the error
@@ -1796,7 +1796,7 @@ void APIENTRY_GL4ES gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoff
             if ((uintptr_t)dst + height * dstWidth > (uintptr_t)(dst + height * dstWidth)) {
                 SHUT_LOGD("LIBGL: Destination buffer overflow detected (dst=%p, expected=%p)\n", dst, (dst + height * dstWidth));
                 return;  // Exit early or handle the error
-            }
+            }*/
 
             memcpy(dst, src, dstWidth);
             src += imgWidth;

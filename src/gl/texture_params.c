@@ -214,6 +214,7 @@ void APIENTRY_GL4ES gl4es_glBindTexture(GLenum target, GLuint texture) {
             case GL_TEXTURE_2D:
             case GL_TEXTURE_3D:
             case GL_TEXTURE_RECTANGLE_ARB:
+            case GL_TEXTURE_BUFFER:
                 if (glstate->bound_changed < glstate->texture.active + 1)
                     glstate->bound_changed = glstate->texture.active + 1;
                 if (glstate->fpe_state && glstate->fpe_bound_changed < glstate->texture.active + 1)
@@ -739,6 +740,7 @@ void realize_bound(int TMU, GLenum target) {
     case GL_TEXTURE_2D:
     case GL_TEXTURE_3D:
     case GL_TEXTURE_RECTANGLE_ARB:
+    case GL_TEXTURE_BUFFER:
 #ifdef TEXSTREAM
         if (glstate->bound_stream[TMU]) {
             realize_active();
@@ -968,7 +970,7 @@ AliasExport(void, glTexParameteri, , (GLenum target, GLenum pname, GLint param))
 AliasExport(void, glTexParameterf, , (GLenum target, GLenum pname, GLfloat param));
 AliasExport(void, glTexParameterfv, , (GLenum target, GLenum pname, const GLfloat* params));
 AliasExport(void, glTexParameteriv, , (GLenum target, GLenum pname, const GLint* params));
-AliasExport(void, glGetTexLevelParameterfv, , (GLenum target, GLint level, GLenum pname, GLint* params));
+AliasExport(void, glGetTexLevelParameterfv, , (GLenum target, GLint level, GLenum pname, GLfloat* params));
 AliasExport(GLboolean, glAreTexturesResident, , (GLsizei n, const GLuint* textures, GLboolean* residences));
 AliasExport(void, glActiveTexture, , (GLenum texture));
 AliasExport(void, glClientActiveTexture, , (GLenum texture));

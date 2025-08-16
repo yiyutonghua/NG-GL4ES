@@ -370,6 +370,7 @@ typedef struct {
 typedef struct {
     GLuint  array;
     GLuint  index;
+    GLuint  uniform;
     GLuint  want_index;
     int     used;
     GLuint copy_write;

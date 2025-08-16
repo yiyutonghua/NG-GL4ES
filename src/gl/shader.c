@@ -8,7 +8,7 @@
 #include "loader.h"
 #include "shaderconv.h"
 #include "vgpu/shaderconv.h"
-#include "../glsl/glsl_for_es.h"
+#include "glsl/glsl_for_es.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -213,7 +213,8 @@ void APIENTRY_GL4ES gl4es_glShaderSource(GLuint shader, GLsizei count, const GLc
                 glshader->is_converted_essl_320 = 0;
             }
             else {
-                char* result = GLSLtoGLSLES(glshader->source, glshader->type, globals4es.esversion);
+                int returnCode = 0; // TODO: handle returnCode
+                char* result = GLSLtoGLSLES_c(glshader->source, glshader->type, globals4es.esversion, glsl_version, &returnCode);
                 glshader->converted = strdup(result!=NULL?process_uniform_declarations(result, glshader->uniforms_declarations, &glshader->uniforms_declarations_count):ConvertShaderConditionally(glshader));
                 glshader->is_converted_essl_320 = 1;
             }
@@ -285,7 +286,8 @@ void redoShader(GLuint shader, shaderconv_need_t *need) {
             glshader->is_converted_essl_320 = 0;
         }
         else {
-            char* result = GLSLtoGLSLES(glshader->source, glshader->type, globals4es.esversion);
+            int returnCode = 0;
+            char* result = GLSLtoGLSLES_c(glshader->source, glshader->type, globals4es.esversion, glsl_version, &returnCode);
             glshader->converted = strdup(result!=NULL?process_uniform_declarations(result, glshader->uniforms_declarations, &glshader->uniforms_declarations_count):ConvertShaderConditionally(glshader));
             glshader->is_converted_essl_320 = 1;
         }
