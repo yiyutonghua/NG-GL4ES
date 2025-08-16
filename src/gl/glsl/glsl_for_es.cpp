@@ -341,12 +341,18 @@ bool checkIfAtomicCounterBufferEmulated(const std::string& glslCode) {
     return glslCode.find(atomicCounterEmulatedWatermark) != std::string::npos;
 }
 
-void GLSLtoGLSLES_c(const char* glsl_code, GLenum glsl_type, unsigned int essl_version, unsigned int glsl_version, int* return_code, char* out_buf, size_t buf_size) {
+char* GLSLtoGLSLES_c(const char* glsl_code, GLenum glsl_type, unsigned int essl_version, unsigned int glsl_version, int* return_code)  {
     int tmp_return_code = 0;
     std::string result = GLSLtoGLSLES(glsl_code, glsl_type, essl_version, glsl_version, tmp_return_code);
     *return_code = tmp_return_code;
-    strncpy(out_buf, result.c_str(), buf_size);
-    out_buf[buf_size - 1] = '\0';
+
+    char* cstr = (char*)malloc(result.size() + 1);
+    if (!cstr) {
+        *return_code = -1;
+        return nullptr;
+    }
+    memcpy(cstr, result.c_str(), result.size() + 1);
+    return cstr;
 }
 
 std::string GLSLtoGLSLES(const char* glsl_code, GLenum glsl_type, unsigned int essl_version, unsigned int glsl_version, int& return_code) {
