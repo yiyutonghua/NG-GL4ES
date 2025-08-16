@@ -24,9 +24,7 @@ Features
 
 2. Be able to render some minecraft shaders (with or without realtime shadows) with a high efficiency with Minecraft [Iris](https://github.com/IrisShaders/Iris) mod;
 
-3. Be able to run Minecraft in most versions (like Minecraft 1.21.4 / Minecraft 1.12.2).
-
-> Minecraft version 25w16a+ (1.21.6+) is not supported!
+3. Be able to run Minecraft in most versions (like Minecraft 1.21.8 / Minecraft 1.12.2).
 
 Change Log
 ===
