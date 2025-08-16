@@ -1,6 +1,7 @@
 #include <GLES/gl3.h>
 #include "buffers.h"
 
+#include "GLES3/gl32.h"
 #include "khash.h"
 #include "../glx/hardext.h"
 #include "attributes.h"
@@ -11,10 +12,6 @@
 #include "logs.h"
 #include "init.h"
 #include "loader.h"
-
-void VISIBLE glTexBuffer(GLenum target, GLenum internalformat, GLuint buffer) {
-    SHUT_LOGD("NOT supported: glTexBuffer(%s, %s, %u)\n", PrintEnum(target), PrintEnum(internalformat), buffer);
-}
 
 // #define DEBUG
 #ifdef DEBUG
@@ -52,6 +49,10 @@ glbuffer_t** BUFF(GLenum target) {
         break;
     case GL_UNIFORM_BUFFER:
         return &glstate->vao->uniform;
+        break;
+        break;
+    case GL_TEXTURE_BUFFER:
+        return &glstate->vao->textureBuffer;
         break;
 
     default:
@@ -91,6 +92,7 @@ int buffer_target(GLenum target) {
     case GL_COPY_READ_BUFFER:
     case GL_COPY_WRITE_BUFFER:
     case GL_UNIFORM_BUFFER:
+    case GL_TEXTURE_BUFFER:
         return 1;
     }
     return 0;
@@ -104,6 +106,13 @@ void rebind_real_buff_arrays(int old_buffer, int new_buffer) {
                 glstate->vao->vertexattrib[j].real_pointer = 0;*/
         }
     }
+}
+
+void VISIBLE glTexBuffer(GLenum target, GLenum internalformat, GLuint buffer) {
+    DBG(SHUT_LOGD("glTexBuffer(%s, %s, %u)\n", PrintEnum(target), PrintEnum(internalformat), buffer);)
+    LOAD_GLES3(glTexBuffer);
+    glbuffer_t* realBuffer = getbuffer_id(buffer);
+    gles_glTexBuffer(target, internalformat, realBuffer->real_buffer);
 }
 
 void APIENTRY_GL4ES gl4es_glGenBuffers(GLsizei n, GLuint* buffers) {
@@ -195,7 +204,9 @@ void APIENTRY_GL4ES gl4es_glBufferData(GLenum target, GLsizeiptr size, const GLv
         (usage == GL_STREAM_DRAW || usage == GL_STATIC_DRAW || usage == GL_DYNAMIC_DRAW) && globals4es.usevbo)
         go_real = 1;
 
-    if (target == GL_UNIFORM_BUFFER || target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER) go_real = 1;
+    if (target == GL_UNIFORM_BUFFER || target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER ||
+        target == GL_TEXTURE_BUFFER)
+        go_real = 1;
 
     if (buff->real_buffer && !go_real) {
         rebind_real_buff_arrays(buff->real_buffer, 0);
@@ -253,7 +264,8 @@ void APIENTRY_GL4ES gl4es_glNamedBufferData(GLuint buffer, GLsizeiptr size, cons
         (usage == GL_STREAM_DRAW || usage == GL_STATIC_DRAW || usage == GL_DYNAMIC_DRAW) && globals4es.usevbo)
         go_real = 1;
 
-    if (buff->type == GL_UNIFORM_BUFFER || buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER)
+    if (buff->type == GL_UNIFORM_BUFFER || buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER ||
+        buff->type == GL_TEXTURE_BUFFER)
         go_real = 1;
 
     if (buff->real_buffer && !go_real) {
@@ -309,7 +321,7 @@ void APIENTRY_GL4ES gl4es_glBufferSubData(GLenum target, GLintptr offset, GLsize
     }
 
     if ((target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER || target == GL_UNIFORM_BUFFER ||
-         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER) &&
+         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER || target == GL_TEXTURE_BUFFER) &&
         buff->real_buffer) {
         LOAD_GLES(glBufferSubData);
         LOAD_GLES(glBindBuffer);
@@ -334,7 +346,7 @@ void APIENTRY_GL4ES gl4es_glNamedBufferSubData(GLuint buffer, GLintptr offset, G
     }
 
     if ((buff->type == GL_ARRAY_BUFFER || buff->type == GL_ELEMENT_ARRAY_BUFFER || buff->type == GL_UNIFORM_BUFFER ||
-         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER) &&
+         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER || buff->type == GL_TEXTURE_BUFFER) &&
         buff->real_buffer) {
         LOAD_GLES(glBufferSubData);
         LOAD_GLES(glBindBuffer);
@@ -372,6 +384,7 @@ void APIENTRY_GL4ES gl4es_glDeleteBuffers(GLsizei n, const GLuint* buffers) {
                     if (glstate->vao->pack == buff) glstate->vao->pack = NULL;
                     if (glstate->vao->unpack == buff) glstate->vao->unpack = NULL;
                     if (glstate->vao->uniform == buff) glstate->vao->uniform = NULL;
+                    if (glstate->vao->textureBuffer == buff) glstate->vao->textureBuffer = NULL;
                     for (int j = 0; j < hardext.maxvattrib; j++)
                         if (glstate->vao->vertexattrib[j].buffer == buff) {
                             glstate->vao->vertexattrib[j].buffer = NULL;
@@ -525,7 +538,7 @@ GLboolean APIENTRY_GL4ES gl4es_glUnmapBuffer(GLenum target) {
 
     if (buff->real_buffer &&
         (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER || target == GL_UNIFORM_BUFFER ||
-         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER) &&
+         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER || target == GL_TEXTURE_BUFFER) &&
         buff->mapped && !buff->ranged && (buff->access == GL_WRITE_ONLY || buff->access == GL_READ_WRITE)) {
         LOAD_GLES(glBufferSubData);
         LOAD_GLES(glBindBuffer);
@@ -535,7 +548,7 @@ GLboolean APIENTRY_GL4ES gl4es_glUnmapBuffer(GLenum target) {
 
     if (buff->real_buffer &&
         (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER || target == GL_UNIFORM_BUFFER ||
-         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER) &&
+         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER || target == GL_TEXTURE_BUFFER) &&
         buff->mapped && buff->ranged && (buff->access & GL_MAP_WRITE_BIT_EXT) &&
         !(buff->access & GL_MAP_FLUSH_EXPLICIT_BIT_EXT)) {
         LOAD_GLES(glBufferSubData);
@@ -563,7 +576,7 @@ GLboolean APIENTRY_GL4ES gl4es_glUnmapNamedBuffer(GLuint buffer) {
 
     if (buff->real_buffer &&
         (buff->type == GL_ARRAY_BUFFER || buff->type == GL_ELEMENT_ARRAY_BUFFER || buff->type == GL_UNIFORM_BUFFER ||
-         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER) &&
+         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER || buff->type == GL_TEXTURE_BUFFER) &&
         buff->mapped && (buff->access == GL_WRITE_ONLY || buff->access == GL_READ_WRITE)) {
         LOAD_GLES(glBufferSubData);
         LOAD_GLES(glBindBuffer);
@@ -573,7 +586,7 @@ GLboolean APIENTRY_GL4ES gl4es_glUnmapNamedBuffer(GLuint buffer) {
 
     if (buff->real_buffer &&
         (buff->type == GL_ARRAY_BUFFER || buff->type == GL_ELEMENT_ARRAY_BUFFER || buff->type == GL_UNIFORM_BUFFER ||
-         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER) &&
+         buff->type == GL_COPY_WRITE_BUFFER || buff->type == GL_COPY_READ_BUFFER || buff->type == GL_TEXTURE_BUFFER) &&
         buff->mapped && buff->ranged && (buff->access & GL_MAP_WRITE_BIT_EXT) &&
         !(buff->access & GL_MAP_FLUSH_EXPLICIT_BIT_EXT)) {
         LOAD_GLES(glBufferSubData);
@@ -695,7 +708,7 @@ void APIENTRY_GL4ES gl4es_glFlushMappedBufferRange(GLenum target, GLintptr offse
     // UBO FIX: Add GL_UNIFORM_BUFFER to the condition for flushing data.
     if (buff->real_buffer &&
         (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER || target == GL_UNIFORM_BUFFER ||
-         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER) &&
+         target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER || target == GL_TEXTURE_BUFFER) &&
         (buff->access & GL_MAP_WRITE_BIT_EXT)) {
         LOAD_GLES(glBufferSubData);
         bindBuffer(buff->type, buff->real_buffer);
@@ -750,7 +763,7 @@ void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTar
     if (writebuff->real_buffer &&
         (writebuff->type == GL_ARRAY_BUFFER || writebuff->type == GL_ELEMENT_ARRAY_BUFFER ||
          writebuff->type == GL_UNIFORM_BUFFER || writebuff->type == GL_COPY_WRITE_BUFFER ||
-         writebuff->type == GL_COPY_READ_BUFFER) &&
+         writebuff->type == GL_COPY_READ_BUFFER || writebuff->type == GL_TEXTURE_BUFFER) &&
         writebuff->mapped && (writebuff->access == GL_WRITE_ONLY || writebuff->access == GL_READ_WRITE)) {
         LOAD_GLES(glBufferSubData);
         bindBuffer(writebuff->type, writebuff->real_buffer);
@@ -888,6 +901,11 @@ void bindBuffer(GLenum target, GLuint buffer) {
         glstate->bind_buffer.uniform = buffer;
         DBG(SHUT_LOGD("Bind buffer %d to GL_UNIFORM_BUFFER\n", buffer);)
         gles_glBindBuffer(target, buffer);
+    } else if (target == GL_TEXTURE_BUFFER) {
+        if (glstate->bind_buffer.texture == buffer) return;
+        glstate->bind_buffer.texture = buffer;
+        DBG(SHUT_LOGD("Bind buffer %d to GL_TEXTURE_BUFFER\n", buffer);)
+        gles_glBindBuffer(target, buffer);
     } else {
         LOGE("Warning, unhandled Buffer type %s in bindBuffer\n", PrintEnum(target));
         return;
@@ -917,6 +935,7 @@ void deleteSingleBuffer(GLuint buffer) {
     if (glstate->bind_buffer.want_index == buffer) glstate->bind_buffer.want_index = 0;
     if (glstate->bind_buffer.array == buffer) glstate->bind_buffer.array = 0;
     if (glstate->bind_buffer.uniform == buffer) glstate->bind_buffer.uniform = 0;
+    if (glstate->bind_buffer.texture == buffer) glstate->bind_buffer.texture = 0;
     gles_glDeleteBuffers(1, &buffer);
 }
 
@@ -948,6 +967,11 @@ void unboundBuffers() {
         glstate->bind_buffer.uniform = 0;
         gles_glBindBuffer(GL_UNIFORM_BUFFER, 0);
         DBG(SHUT_LOGD("Bind buffer %d to GL_UNIFORM_BUFFER\n", 0);)
+    }
+    if (glstate->bind_buffer.texture) {
+        glstate->bind_buffer.texture = 0;
+        gles_glBindBuffer(GL_TEXTURE_BUFFER, 0);
+        DBG(SHUT_LOGD("Bind buffer %d to GL_TEXTURE_BUFFER\n", 0);)
     }
     glstate->bind_buffer.used = 0;
 }
@@ -1050,6 +1074,10 @@ void APIENTRY_GL4ES gl4es_glBindVertexArray(GLuint array) {
             glvao->elements = glstate->vao->elements;
             glvao->pack = glstate->vao->pack;
             glvao->unpack = glstate->vao->unpack;
+            glvao->textureBuffer = glstate->vao->textureBuffer;
+            glvao->read = glstate->vao->read;
+            glvao->write = glstate->vao->write;
+            glvao->uniform = glstate->vao->uniform;
             glvao->maxtex = glstate->vao->maxtex;
 
             // just put is number

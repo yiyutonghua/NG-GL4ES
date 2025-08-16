@@ -4244,6 +4244,14 @@ typedef void (*glBindBufferRange_PTR)(glBindBufferRange_ARG_EXPAND);
 void gl4es_glBindBufferBase(glBindBufferBase_ARG_EXPAND);
 typedef void (*glBindBufferBase_PTR)(glBindBufferBase_ARG_EXPAND);
 
+#define glTexBuffer_ARG_EXPAND GLenum target, GLenum internalformat, GLuint buffer
+void gl4es_glTexBuffer(glTexBuffer_ARG_EXPAND);
+typedef void (*glTexBuffer_PTR)(glTexBuffer_ARG_EXPAND);
+
+#define glGetTexLevelParameterfv_ARG_EXPAND GLenum target, GLint level, GLenum pname, GLfloat *params
+void gl4es_glGetTexLevelParameterfv(glGetTexLevelParameterfv_ARG_EXPAND);
+typedef void (*glGetTexLevelParameterfv_PTR)(glGetTexLevelParameterfv_ARG_EXPAND);
+
 #ifndef direct_glActiveTexture
 #define push_glActiveTexture(texture) { \
     glActiveTexture_PACKED *packed_data = malloc(sizeof(glActiveTexture_PACKED)); \

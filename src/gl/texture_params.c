@@ -175,6 +175,12 @@ void APIENTRY_GL4ES gl4es_glBindTexture(GLenum target, GLuint texture) {
     DBG(SHUT_LOGD("glBindTexture(%s, %u), active=%i, client=%i, list.active=%p (compiling=%d, pending=%d)\n",
                   PrintEnum(target), texture, glstate->texture.active, glstate->texture.client, glstate->list.active,
                   glstate->list.compiling, glstate->list.pending);)
+    if (target == GL_TEXTURE_BUFFER) {
+        LOAD_GLES(glBindTexture);
+        gles_glBindTexture(target, texture);
+        return;
+    }
+
     if ((target != GL_PROXY_TEXTURE_2D) && glstate->list.compiling && glstate->list.active && !glstate->list.pending) {
         // check if already a texture binded, if yes, create a new list
         NewStage(glstate->list.active, STAGE_BINDTEX);
@@ -283,6 +289,13 @@ GLenum get_texture_wrap_t(gltexture_t* texture, glsampler_t* sampler) {
 void APIENTRY_GL4ES gl4es_glTexParameterfv(GLenum target, GLenum pname, const GLfloat* params) {
     DBG(SHUT_LOGD("glTexParameterfv(%s, %s, [%f(%s)...])\n", PrintEnum(target), PrintEnum(pname), params[0],
                   PrintEnum(params[0]));)
+
+    if (target == GL_TEXTURE_BUFFER) {
+        LOAD_GLES(glTexParameterfv);
+        gles_glTexParameterfv(target, pname, params);
+        return;
+    }
+
     if (!glstate->list.pending) {
         PUSH_IF_COMPILING(glTexParameterfv);
     }
@@ -473,6 +486,13 @@ void APIENTRY_GL4ES gl4es_glGetTexLevelParameterfv(GLenum target, GLint level, G
     DBG(SHUT_LOGD("glGetTexLevelParameteriv(%s, %d, %s, %p)\n", PrintEnum(target), level, PrintEnum(pname), params);)
     // simplification: (mostly) not taking "target" into account here
     FLUSH_BEGINEND;
+
+    if (target == GL_TEXTURE_BUFFER) {
+        LOAD_GLES(glGetTexLevelParameterfv);
+        gles_glGetTexLevelParameterfv(target, level, pname, params);
+        return;
+    }
+
     *params = 0;
     noerrorShim();
     const GLuint itarget = what_target(target);

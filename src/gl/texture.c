@@ -1694,253 +1694,117 @@ void APIENTRY_GL4ES gl4es_glTexImage2D(GLenum target, GLint level, GLint interna
     if (glstate->bound_changed < glstate->texture.active + 1) glstate->bound_changed = glstate->texture.active + 1;
 }
 
+static size_t pad_to(size_t v, GLint align) {
+    if (align <= 1) return v;
+    size_t rem = v % (size_t)align;
+    return rem ? v + ((size_t)align - rem) : v;
+}
+
 void APIENTRY_GL4ES gl4es_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width,
                                           GLsizei height, GLenum format, GLenum type, const GLvoid* data) {
-
     if (glstate->list.pending) {
         gl4es_flush();
     } else {
         PUSH_IF_COMPILING(glTexSubImage2D);
     }
+
     realize_bound(glstate->texture.active, target);
 
-#ifdef __BIG_ENDIAN__
-    if (type == GL_UNSIGNED_INT_8_8_8_8)
-#else
-    if (type == GL_UNSIGNED_INT_8_8_8_8_REV)
-#endif
-        type = GL_UNSIGNED_BYTE;
-
-    GLvoid* datab = (GLvoid*)data;
-    if (glstate->vao->unpack) datab = (char*)datab + (uintptr_t)glstate->vao->unpack->data;
-    GLvoid* pixels = (GLvoid*)datab;
-
-    const GLuint itarget = what_target(target);
-    const GLuint rtarget = map_tex_target(target);
-
-    LOAD_GLES(glTexSubImage2D);
-    // void gles_glTexParameteri(glTexParameteri_ARG_EXPAND);
-    LOAD_GLES(glTexParameteri);
-    noerrorShim();
-    DBG(SHUT_LOGD(
-            "glTexSubImage2D on target=%s with unpack_row_length(%d), size(%d,%d), pos(%d,%d) and skip={%d,%d}, "
-            "format=%s, type=%s, level=%d(base=%d, max=%d), mipmap={need=%d, auto=%d}, texture=%u, data=%p(vao=%p)\n",
-            PrintEnum(target), glstate->texture.unpack_row_length, width, height, xoffset, yoffset,
-            glstate->texture.unpack_skip_pixels, glstate->texture.unpack_skip_rows, PrintEnum(format), PrintEnum(type),
-            level, glstate->texture.bound[glstate->texture.active][itarget]->base_level,
-            glstate->texture.bound[glstate->texture.active][itarget]->max_level,
-            glstate->texture.bound[glstate->texture.active][itarget]->mipmap_need,
-            glstate->texture.bound[glstate->texture.active][itarget]->mipmap_auto,
-            glstate->texture.bound[glstate->texture.active][itarget]->texture, data, glstate->vao->unpack);)
-    if (width == 0 || height == 0) {
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+    if (!data) {
+        SHUT_LOGD("LIBGL: glTexSubImage2D called with NULL data\n");
+        return;
+    }
+    int pixelSize = pixel_sizeof(format, type);
+    if (pixelSize <= 0) {
+        SHUT_LOGD("LIBGL: invalid pixel size (format/type) in glTexSubImage2D\n");
         return;
     }
 
-    gltexture_t* bound = glstate->texture.bound[glstate->texture.active][itarget];
-    if (bound == NULL) {
-        SHUT_LOGD("LIBGL: Invalid bound texture (bound=%p)\n", bound);
-        return; // Exit early or handle the error
-    }
+    const GLubyte* pixels_src = (const GLubyte*)data;
+    GLubyte* temp_pixels = NULL;
 
-    // FIX: If texture was created with glTexImage2D(NULL), its state might be incomplete.
-    // Update the base_level here to mark it as initialized before proceeding.
-    if (bound->base_level == -1 && level == 0) {
-        bound->base_level = level;
-    }
+    if (glstate->texture.unpack_row_length != 0 || glstate->texture.unpack_skip_pixels != 0 ||
+        glstate->texture.unpack_skip_rows != 0 || glstate->texture.unpack_align != 4) {
 
-    if (globals4es.automipmap) {
-        if (level > 0)
-            if ((globals4es.automipmap == 1) || (globals4es.automipmap == 3) || bound->mipmap_need) {
-                return; // has been handled by auto_mipmap
-            } else
-                bound->mipmap_need = 1;
-    } else if (level && bound->mipmap_auto)
-        return;
-    if (!(format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_INT) &&
-        ((glstate->texture.unpack_row_length && glstate->texture.unpack_row_length != width) ||
-         glstate->texture.unpack_skip_pixels || glstate->texture.unpack_skip_rows)) {
-        int imgWidth, pixelSize, dstWidth;
-        pixelSize = pixel_sizeof(format, type);
-        imgWidth = ((glstate->texture.unpack_row_length) ? glstate->texture.unpack_row_length : width) * pixelSize;
-        GLubyte* dst = (GLubyte*)malloc(width * height * pixelSize);
-        pixels = (GLvoid*)dst;
-        dstWidth = width * pixelSize;
-        const GLubyte* src = (GLubyte*)datab;
-        src += glstate->texture.unpack_skip_pixels * pixelSize + glstate->texture.unpack_skip_rows * imgWidth;
-        for (int y = height; y; --y) {
-            memcpy(dst, src, dstWidth);
-            src += imgWidth;
-            dst += dstWidth;
-        }
-    }
+        size_t ui_width = (size_t)width;
+        size_t ui_height = (size_t)height;
+        size_t up_row_pixels =
+            (glstate->texture.unpack_row_length ? (size_t)glstate->texture.unpack_row_length : ui_width);
+        GLint up_align = glstate->texture.unpack_align;
+        if (up_align <= 0) up_align = 1;
 
-    GLvoid* old = pixels;
-#ifdef TEXSTREAM
-    if (globals4es.texstream && (bound->streamed)) {
-        // Optimisation, let's do convert directly to the right place...
-        GLvoid* tmp = GetStreamingBuffer(bound->streamingID);
-        tmp += (yoffset * bound->width + xoffset) * 2;
-        if (!pixel_convert(old, &tmp, width, height, format, type, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, bound->width,
-                           glstate->texture.unpack_align)) {
-            SHUT_LOGD("LIBGL: swizzle error: (%#4x, %#4x -> GL_RGB, UNSIGNED_SHORT_5_6_5)\n", format, type);
-        }
-        format = GL_RGB;
-        type = GL_UNSIGNED_SHORT_5_6_5;
-    } else
-#endif
-    {
-        if (!pixel_convert(old, &pixels, width, height, format, type, bound->inter_format, bound->inter_type, 0,
-                           glstate->texture.unpack_align)) {
-            SHUT_LOGD("LIBGL: Error in pixel_convert while glTexSubImage2D\n");
-        } else {
-            format = bound->inter_format;
-            type = bound->inter_type;
-            if (bound->inter_format != bound->format || bound->inter_type != bound->type) {
-                GLvoid* pix2 = pixels;
-                if (!pixel_convert(pixels, &pix2, width, height, format, type, bound->format, bound->type, 0,
-                                   glstate->texture.unpack_align)) {
-                    SHUT_LOGD("LIBGL: Error in pixel_convert while glTexSubImage2D\n");
-                }
-                if (pixels != pix2 && pixels != old) free(pixels);
-                pixels = pix2;
-                format = bound->format;
-                type = bound->type;
-            }
-        }
-    }
-    if (old != pixels && old != datab) free(old);
-
-    if (bound->shrink || bound->useratio) {
-        // special case for width/height == 1
-        if (width == 1) width += (xoffset % 2);
-        if (height == 1) height += (yoffset % 2);
-        if ((width == 1) || (height == 1)) {
-            // nothing to do...
-            if (pixels != datab) free((GLvoid*)pixels);
+        size_t src_row_raw = up_row_pixels * (size_t)pixelSize;
+        if (up_row_pixels != 0 && src_row_raw / up_row_pixels != (size_t)pixelSize) {
+            SHUT_LOGD("LIBGL: overflow src_row_raw\n");
             return;
         }
-        // ok, now standard cases....
-        old = pixels;
-        if (bound->useratio) {
-            xoffset *= bound->ratiox;
-            yoffset *= bound->ratioy;
-            int newwidth = width * bound->ratiox;
-            int newheight = height * bound->ratioy;
-            pixel_scale(pixels, &old, width, height, newwidth, newheight, format, type);
-            width = newwidth;
-            height = newheight;
-            if (old != pixels && pixels != datab) free(pixels);
-            pixels = old;
-        } else {
-            xoffset /= 2 * bound->shrink;
-            yoffset /= 2 * bound->shrink;
-            int shrink = bound->shrink;
-            while (shrink) {
-                int toshrink = (shrink > 1) ? 2 : 1;
-                GLvoid* out = pixels;
-                if (toshrink == 1)
-                    pixel_halfscale(pixels, &old, width, height, format, type);
-                else
-                    pixel_quarterscale(pixels, &old, width, height, format, type);
-                if (old != pixels && pixels != datab) free(pixels);
-                pixels = old;
-                width = nlevel(width, toshrink);
-                height = nlevel(height, toshrink);
-                shrink -= toshrink;
-            }
+        size_t src_row_bytes = pad_to(src_row_raw, up_align);
+
+        size_t dst_row_bytes = ui_width * (size_t)pixelSize;
+        if (ui_width != 0 && dst_row_bytes / ui_width != (size_t)pixelSize) {
+            SHUT_LOGD("LIBGL: overflow dst_row_bytes\n");
+            return;
         }
-    }
 
-    if (globals4es.texdump) {
-        pixel_to_ppm(pixels, width, height, format, type, bound->texture, glstate->texture.pack_align);
-    }
-
-    int callgeneratemipmap = 0;
-    if ((target != GL_TEXTURE_RECTANGLE_ARB) && (bound->mipmap_need || bound->mipmap_auto)) {
-        if (hardext.esversion < 2) {
-            // gles_glTexParameteri( rtarget, GL_GENERATE_MIPMAP, GL_TRUE );
-        } else
-            callgeneratemipmap = 1;
-    }
-
-    if (globals4es.texstream && bound->streamed) {
-        /* // copy the texture to the buffer
-                void* tmp = GetStreamingBuffer(bound->streamingID);
-                for (int yy=0; yy<height; yy++) {
-                        memcpy(tmp+((yy+yoffset)*bound->width+xoffset)*2, pixels+(yy*width)*2, width*2);
-                }*/
-    } else {
-        errorGL();
-        gles_glTexSubImage2D(rtarget, level, xoffset, yoffset, width, height, format, type, pixels);
-        DBG(CheckGLError(1);)
-        // check if base_level is set... and calculate lower level mipmap
-        if (bound->base_level == level && !(bound->max_level == level && level == 0)) {
-            int leveln = level, nw = width, nh = height, xx = xoffset, yy = yoffset;
-            void* ndata = pixels;
-            while (leveln) {
-                if (pixels) {
-                    GLvoid* out = ndata;
-                    pixel_doublescale(ndata, &out, nw, nh, format, type);
-                    if (out != ndata && ndata != pixels) free(ndata);
-                    ndata = out;
-                }
-                nw <<= 1;
-                nh <<= 1;
-                xx <<= 1;
-                yy <<= 1;
-                --leveln;
-                gles_glTexSubImage2D(rtarget, leveln, xx, yy, nw, nh, format, type, ndata);
-            }
-            if (ndata != pixels) free(ndata);
+        size_t total_dst = dst_row_bytes * ui_height;
+        if (ui_height != 0 && total_dst / ui_height != dst_row_bytes) {
+            SHUT_LOGD("LIBGL: overflow total_dst\n");
+            return;
         }
-        // check if max_level is set... and calculate higher level mipmap
-        int genmipmap = 0;
-        if (((bound->max_level == level) && (level || bound->mipmap_need))) genmipmap = 1;
-        if (callgeneratemipmap && ((level == 0) || (level == bound->max_level))) genmipmap = 1;
-        if ((bound->max_level == bound->base_level) && (bound->base_level == 0)) genmipmap = 0;
-        if (genmipmap && (globals4es.automipmap != 3)) {
-            int leveln = level, nw = width, nh = height, xx = xoffset, yy = yoffset;
-            void* ndata = pixels;
-            while (nw != 1 || nh != 1) {
-                if (pixels) {
-                    GLvoid* out = ndata;
-                    pixel_halfscale(ndata, &out, nw, nh, format, type);
-                    if (out != ndata && ndata != pixels) free(ndata);
-                    ndata = out;
-                }
-                nw = nlevel(nw, 1);
-                nh = nlevel(nh, 1);
-                xx = xx >> 1;
-                yy = yy >> 1;
-                ++leveln;
-                gles_glTexSubImage2D(rtarget, leveln, xx, yy, nw, nh, format, type, ndata);
-            }
-            if (ndata != pixels) free(ndata);
+
+        size_t skip_pixels = (size_t)glstate->texture.unpack_skip_pixels;
+        size_t skip_rows = (size_t)glstate->texture.unpack_skip_rows;
+
+        size_t skip_pixels_bytes = skip_pixels * (size_t)pixelSize;
+        if (skip_pixels != 0 && skip_pixels_bytes / skip_pixels != (size_t)pixelSize) {
+            SHUT_LOGD("LIBGL: overflow skip_pixels_bytes\n");
+            return;
         }
+
+        size_t skip_rows_bytes = skip_rows * src_row_bytes;
+        if (skip_rows != 0 && skip_rows_bytes / skip_rows != src_row_bytes) {
+            SHUT_LOGD("LIBGL: overflow skip_rows_bytes\n");
+            return;
+        }
+
+        if (up_row_pixels < (skip_pixels + ui_width)) {
+            SHUT_LOGD("LIBGL: unpack_row_length (%zu) too small for skip+width (%zu)\n", up_row_pixels,
+                      (size_t)(skip_pixels + ui_width));
+            return;
+        }
+
+        size_t src_offset = skip_rows_bytes + skip_pixels_bytes;
+        if (src_offset < skip_rows_bytes || src_offset < skip_pixels_bytes) {
+            SHUT_LOGD("LIBGL: overflow src_offset\n");
+            return;
+        }
+
+        temp_pixels = (GLubyte*)malloc(total_dst);
+        if (!temp_pixels) {
+            SHUT_LOGD("LIBGL: malloc failed in glTexSubImage2D (bytes=%zu)\n", total_dst);
+            return;
+        }
+
+        const GLubyte* src_base = (const GLubyte*)pixels_src;
+        const GLubyte* src_start = src_base + src_offset;
+
+        size_t y;
+        for (y = 0; y < ui_height; ++y) {
+            const GLubyte* src_row = src_start + y * src_row_bytes;
+            GLubyte* dst_row = temp_pixels + y * dst_row_bytes;
+            memcpy(dst_row, src_row, dst_row_bytes);
+        }
+
+        pixels_src = (const GLubyte*)temp_pixels;
     }
 
-    /*if (bound->mipmap_need && !bound->mipmap_auto && (globals4es.automipmap!=3) && (!globals4es.texstream ||
-        (globals4es.texstream && !bound->streamed))) gles_glTexParameteri( rtarget, GL_GENERATE_MIPMAP, GL_FALSE );*/
+    LOAD_GLES2(glTexSubImage2D);
+    gles_glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, (const GLvoid*)pixels_src);
 
-    if ((target == GL_TEXTURE_2D) && globals4es.texcopydata &&
-        ((globals4es.texstream && !bound->streamed) || !globals4es.texstream)) {
-        // printf("*texcopy* glTexSubImage2D, xy=%i,%i, size=%i,%i=>%i,%i, format=%s, type=%s, tex=%u\n", xoffset,
-        // yoffset, width, height, bound->width, bound->height, PrintEnum(format), PrintEnum(type), bound->glname);
-        GLvoid* tmp = (char*)bound->data + (yoffset * bound->width + xoffset) * 4;
-        if (!pixel_convert(pixels, &tmp, width, height, format, type, GL_RGBA, GL_UNSIGNED_BYTE, bound->width,
-                           glstate->texture.unpack_align))
-            SHUT_LOGD("LIBGL: Error on pixel_convert while TEXCOPY in glTexSubImage2D\n");
-    }
-
-    if (pixels != datab) free((GLvoid*)pixels);
-
-    LOAD_GLES(glGetError);
-    // get gl error
-    GLenum err;
-    while ((err = gles_glGetError()) != GL_NO_ERROR) {
-        DBG(LOGE("glTexSubImage2D: gles error occured: %s", PrintEnum(err));)
-        errorShim(err);
-    }
+    if (temp_pixels) free(temp_pixels);
 }
 
 // 1d stubs
