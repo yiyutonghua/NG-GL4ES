@@ -303,8 +303,12 @@ void APIENTRY_GL4ES gl4es_glTexParameterfv(GLenum target, GLenum pname, const GL
     const GLint itarget = what_target(target);
     const GLuint rtarget = map_tex_target(target);
     gltexture_t* texture = glstate->texture.bound[glstate->texture.active][itarget];
+    LOAD_GLES(glTexParameterfv);
+    realize_bound(glstate->texture.active, target);
+    gles_glTexParameterfv(rtarget, pname, params);
+    errorGL();
+
     if (!samplerParameterfv(&texture->sampler, pname, params)) {
-        LOAD_GLES(glTexParameterfv);
         GLint param = params[0];
         switch (pname) {
         case GL_TEXTURE_MAX_LEVEL:
@@ -353,10 +357,6 @@ void APIENTRY_GL4ES gl4es_glTexParameterfv(GLenum target, GLenum pname, const GL
             texture->aniso = param;
             break;
         }
-        FLUSH_BEGINEND;
-        realize_bound(glstate->texture.active, target);
-        gles_glTexParameterfv(rtarget, pname, params);
-        errorGL();
     }
 }
 
