@@ -52,11 +52,13 @@ Please see [LICENSE](https://github.com/BZLZHH/NG-GL4ES/blob/main/LICENSE).
 Third party components
 ====
 
-**SPIRV-Cross** by **KhronosGroup**: [github](https://github.com/KhronosGroup/SPIRV-Cross)
+**SPIRV-Cross** by **KhronosGroup** - [Apache License 2.0](https://github.com/KhronosGroup/SPIRV-Cross/blob/master/LICENSE): [github](https://github.com/KhronosGroup/SPIRV-Cross)
 
-**glslang** by **KhronosGroup**: [github](https://github.com/KhronosGroup/glslang)
+**glslang** by **KhronosGroup** - [Various Licenses](https://github.com/KhronosGroup/glslang/blob/main/LICENSE.txt): [github](https://github.com/KhronosGroup/glslang)
 
-**cJSON** by **DaveGamble**: [github](https://github.com/DaveGamble/cJSON)
+**cJSON** by **DaveGamble** - [MIT License](https://github.com/DaveGamble/cJSON/blob/master/LICENSE): [github](https://github.com/DaveGamble/cJSON)
+
+Some code is from MobileGlues.
 
 Sponsor
 ====
