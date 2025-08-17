@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "config.h"
 
 #else
 #include <stdio.h>
@@ -75,6 +76,20 @@ void set_getprocaddress(void*(APIENTRY_GL4ES* new_proc_address)(const char*)) {
     gles_getProcAddress = new_proc_address;
 }
 
+void initialize_ng_gl4es() {
+    int enableANGLE = config_get_int("enableANGLE");
+    if (enableANGLE) {
+        setenv("LIBGL_GLES", "libGLESv2_angle.so", 1);
+        setenv("LIBGL_EGL", "libEGL_angle.so", 1);
+        LOGD("ANGLE enabled and used")
+    } else {
+        setenv("LIBGL_GLES", "", 1);
+        setenv("LIBGL_EGL", "", 1);
+        LOGD("ANGLE disabled and not used")
+    }
+}
+char* NGGDirectory;
+
 #ifdef NO_INIT_CONSTRUCTOR
 EXPORT
 #else
@@ -89,6 +104,19 @@ __attribute__((constructor(101)))
 #endif
 #endif
 void initialize_gl4es() {
+    NGGDirectory = (char*)GetEnvVar("NGG_DIR_PATH");
+    if (!NGGDirectory || strlen(NGGDirectory) == 0) {
+        NGGDirectory = malloc(strlen(DEFAULT_NGG_DIRECTORY_PATH) + 1);
+        strcpy(NGGDirectory, DEFAULT_NGG_DIRECTORY_PATH);
+    }
+
+    clear_log();
+    SHUT_LOGD("Initialising Krypton Wrapper\n")
+
+    config_refresh();
+
+    initialize_ng_gl4es();
+
 #ifdef BUILD_WINDOWS_DLL
     if (!dll_inited) {
         LOGE("Windows ES emulator's can't be initialized from DllMain (directX limitation)\n");
@@ -97,16 +125,11 @@ void initialize_gl4es() {
 #endif
     // only init 1 time
     if (inited++) return;
-    if (mkdir(NGG_DIRECTORY_PATH, 0755) != 0 && errno != EEXIST) {
-        printf("Error creating NGG directory.\n");
-    }
-    config_refresh();
     // default init of globals
     memset(&globals4es, 0, sizeof(globals4es));
     globals4es.mergelist = 1;
     globals4es.queries = 1;
     globals4es.beginend = 1;
-    clear_log();
 #ifdef PYRA
     GetEnvVarInt("LIBGL_DEEPBIND", &globals4es.deepbind, 0);
 #else
@@ -118,8 +141,6 @@ void initialize_gl4es() {
 #else
     globals4es.nobanner = IsEnvVarTrue("LIBGL_NOBANNER");
 #endif
-
-    SHUT_LOGD("Initialising Krypton Wrapper\n");
 
     if (!globals4es.nobanner) print_build_infos();
 
