@@ -705,7 +705,6 @@ void APIENTRY_GL4ES gl4es_glFlushMappedBufferRange(GLenum target, GLintptr offse
         return;
     }
 
-    // UBO FIX: Add GL_UNIFORM_BUFFER to the condition for flushing data.
     if (buff->real_buffer &&
         (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER || target == GL_UNIFORM_BUFFER ||
          target == GL_COPY_WRITE_BUFFER || target == GL_COPY_READ_BUFFER || target == GL_TEXTURE_BUFFER) &&
@@ -737,11 +736,6 @@ void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTar
         return;
     }
 
-    if ((writebuff->ranged && !(writebuff->access & GL_MAP_PERSISTENT_BIT)) && readTarget != GL_COPY_READ_BUFFER) {
-        errorShim(GL_INVALID_OPERATION);
-        return;
-    }
-
     LOAD_GLES3(glCopyBufferSubData);
     if (!gles_glCopyBufferSubData) {
         if (writebuff->real_buffer &&
@@ -763,8 +757,10 @@ void APIENTRY_GL4ES gl4es_glCopyBufferSubData(GLenum readTarget, GLenum writeTar
             gles_glBufferSubData(writebuff->type, writeOffset, size, (char*)writebuff->data + writeOffset);
         }
     } else {
-        bindBuffer(writeTarget, writebuff->real_buffer);
+        glstate->vao->read = readbuff;
         bindBuffer(readTarget, readbuff->real_buffer);
+        glstate->vao->write = writebuff;
+        bindBuffer(writeTarget, writebuff->real_buffer);
 
         gles_glCopyBufferSubData(readTarget, writeTarget, readOffset, writeOffset, size);
     }
