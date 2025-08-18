@@ -72,7 +72,7 @@ void clear_log() {
     strcat(path, LOG_FILE_PATH);
     file = fopen(path, "w");
     if (file == NULL) {
-        LOGE("Failed to open log file '%s'", path);
+        DBG(LOGE("Failed to open log file '%s'", path);)
         return;
     }
     free(path);
