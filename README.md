@@ -1,9 +1,9 @@
 Krypton Wrapper
 ====
 
-> [!WARNING]
+> [!NOTE]
 > 
-> This project is no longer maintained.
+> This project may be no longer maintained.
 
 > [!NOTE]
 > 
