@@ -4288,6 +4288,10 @@ typedef void (*glWaitSync_PTR)(glWaitSync_ARG_EXPAND);
 void gl4es_glGetSynciv(glGetSynciv_ARG_EXPAND);
 typedef void (*glGetSynciv_PTR)(glGetSynciv_ARG_EXPAND);
 
+#define glMultiDrawElementsBaseVertex_ARG_EXPAND GLenum mode, const GLsizei *count, GLenum type, const void *const* indices, GLsizei drawcount, const GLint *basevertex
+void gl4es_glMultiDrawElementsBaseVertex(glMultiDrawElementsBaseVertex_ARG_EXPAND);
+typedef void (*glMultiDrawElementsBaseVertex_PTR)(glMultiDrawElementsBaseVertex_ARG_EXPAND);
+
 #ifndef direct_glActiveTexture
 #define push_glActiveTexture(texture) { \
     glActiveTexture_PACKED *packed_data = malloc(sizeof(glActiveTexture_PACKED)); \

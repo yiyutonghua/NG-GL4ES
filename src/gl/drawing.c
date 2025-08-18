@@ -1059,7 +1059,7 @@ void internal_glDrawElementsBaseVertex_gles32(GLenum mode, GLsizei count, GLenum
                                               GLint basevertex) {
     DBG(SHUT_LOGD("internal_glDrawElementsBaseVertex_gles32(%s, %p, %s, @%p, %d, @%p)", PrintEnum(mode), counts,
                   PrintEnum(type), indices, primcount, basevertex;))
-    LOAD_GLES3(glDrawElementsBaseVertex);
+    LOAD_GLES3_OR_EXT(glDrawElementsBaseVertex);
     gles_glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
 }
 
@@ -1084,7 +1084,7 @@ AliasExport(void, glDrawElementsBaseVertex, ,
 AliasExport(void, glDrawElementsBaseVertex, ARB,
             (GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex));
 
-void internal_glMultiDrawElementsBaseVertex_gles32(GLenum mode, GLsizei* counts, GLenum type,
+void internal_glMultiDrawElementsBaseVertex_gles32(GLenum mode, const GLsizei* counts, GLenum type,
                                                    const void* const* indices, GLsizei primcount,
                                                    const GLint* basevertex) {
     LOAD_GLES2(glDrawElementsBaseVertex);
@@ -1102,7 +1102,7 @@ void internal_glMultiDrawElementsBaseVertex_gles32(GLenum mode, GLsizei* counts,
     }
 }
 
-void internal_glMultiDrawElementsBaseVertex_gles30(GLenum mode, GLsizei* counts, GLenum type,
+void internal_glMultiDrawElementsBaseVertex_gles30(GLenum mode, const GLsizei* counts, GLenum type,
                                                    const void* const* indices, GLsizei primcount,
                                                    const GLint* basevertex) {
     bool compiling = (glstate->list.active);
@@ -1222,24 +1222,28 @@ void internal_glMultiDrawElementsBaseVertex_gles30(GLenum mode, GLsizei* counts,
     }
 }
 
-static void (*internal_glMultiDrawElementsBaseVertex)(GLenum mode, GLsizei* counts, GLenum type,
+static void (*internal_glMultiDrawElementsBaseVertex)(GLenum mode, const GLsizei* counts, GLenum type,
                                                       const void* const* indices, GLsizei primcount,
                                                       const GLint* basevertex);
 
 void init_internal_glDrawElementsBaseVertex() {
-    LOAD_GLES3_OR_EXT(glDrawElementsBaseVertex);
-    LOGD("Switch to GLES %d basevertex implementation", globals4es.esversion);
-
-    if (globals4es.esversion >= 320) {
+    if (hardext.basevertex) {
+        LOGD("Switch to native basevertex implementation");
         internal_glDrawElementsBaseVertex = internal_glDrawElementsBaseVertex_gles32;
         internal_glMultiDrawElementsBaseVertex = internal_glMultiDrawElementsBaseVertex_gles32;
     } else {
+        LOGD("Switch to emulated basevertex implementation");
         internal_glDrawElementsBaseVertex = internal_glDrawElementsBaseVertex_gles30;
         internal_glMultiDrawElementsBaseVertex = internal_glMultiDrawElementsBaseVertex_gles30;
     }
+
+    if (hardext.multidraw && hardext.basevertex) {
+        LOGD("Extension GL_EXT_draw_elements_base_vertex and GL_EXT_multi_draw_arrays detected and "
+             "glMultiDrawElementsBaseVertexEXT used");
+    }
 }
 
-void gl4es_glMultiDrawElementsBaseVertex(GLenum mode, GLsizei* counts, GLenum type, const void* const* indices,
+void gl4es_glMultiDrawElementsBaseVertex(GLenum mode, const GLsizei* counts, GLenum type, const void* const* indices,
                                          GLsizei primcount, const GLint* basevertex) {
     DBG(SHUT_LOGD("glMultiDrawElementsBaseVertex(%s, %p, %s, @%p, %d, @%p), inlist=%i, pending=%d\n", PrintEnum(mode),
                   counts, PrintEnum(type), indices, primcount, basevertex, (glstate->list.active) ? 1 : 0,
@@ -1254,7 +1258,12 @@ void gl4es_glMultiDrawElementsBaseVertex(GLenum mode, GLsizei* counts, GLenum ty
     bindBuffer(GL_ARRAY_BUFFER, glstate->vao->vertex->real_buffer);
     bindBuffer(GL_ELEMENT_ARRAY_BUFFER, glstate->vao->elements->real_buffer);
 
-    internal_glMultiDrawElementsBaseVertex(mode, counts, type, indices, primcount, basevertex);
+    if (hardext.multidraw && hardext.basevertex) {
+        LOAD_GLES_EXT(glMultiDrawElementsBaseVertex);
+        gles_glMultiDrawElementsBaseVertex(mode, counts, type, indices, primcount, basevertex);
+    } else {
+        internal_glMultiDrawElementsBaseVertex(mode, counts, type, indices, primcount, basevertex);
+    }
 }
 AliasExport(void, glMultiDrawElementsBaseVertex, ,
             (GLenum mode, GLsizei* counts, GLenum type, const void* const* indices, GLsizei primcount,
