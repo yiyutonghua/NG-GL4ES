@@ -1055,92 +1055,6 @@ void internal_glDrawElementsBaseVertex_gles30(GLenum mode, GLsizei count, GLenum
     }
 }
 
-static _Bool g_indirect_cmds_inited = false;
-static GLsizei g_cmdbufsize = 0;
-static GLuint g_indirectbuffer = 0;
-static GLuint prevIndirectBuffer = 0;
-
-typedef struct {
-    GLuint count;
-    GLuint instanceCount;
-    GLuint firstIndex;
-    GLint baseVertex;
-    GLuint baseInstance;
-} DrawElementsIndirectCommand;
-
-void prepare_indirect_buffer(const GLsizei* counts, GLenum type, const void* const* indices, GLsizei primcount,
-                             const GLint* basevertex) {
-    LOAD_GLES3(glGetIntegerv);
-    LOAD_GLES3(glGenBuffers);
-    LOAD_GLES3(glBindBuffer);
-    LOAD_GLES3(glBufferData);
-    LOAD_GLES3(glMapBufferRange);
-    LOAD_GLES3(glUnmapBuffer);
-    gles_glGetIntegerv(GL_DRAW_INDIRECT_BUFFER_BINDING, (GLint*)&prevIndirectBuffer);
-    if (!g_indirect_cmds_inited) {
-        gles_glGenBuffers(1, &g_indirectbuffer);
-        gles_glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_indirectbuffer);
-        g_cmdbufsize = 1;
-        gles_glBufferData(GL_DRAW_INDIRECT_BUFFER, g_cmdbufsize * sizeof(DrawElementsIndirectCommand), NULL,
-                          GL_DYNAMIC_DRAW);
-
-        g_indirect_cmds_inited = true;
-    }
-    gles_glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_indirectbuffer);
-
-    if (g_cmdbufsize < primcount) {
-        size_t sz = g_cmdbufsize;
-        // 2-exponential to reduce reallocation
-        while (sz < primcount)
-            sz *= 2;
-
-        gles_glBufferData(GL_DRAW_INDIRECT_BUFFER, sz * sizeof(DrawElementsIndirectCommand), NULL, GL_DYNAMIC_DRAW);
-        g_cmdbufsize = sz;
-    }
-
-    DrawElementsIndirectCommand* pcmds = (DrawElementsIndirectCommand*)gles_glMapBufferRange(
-        GL_DRAW_INDIRECT_BUFFER, 0, primcount * sizeof(DrawElementsIndirectCommand),
-        GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-    GLsizei elementSize;
-    switch (type) {
-    case GL_UNSIGNED_BYTE:
-        elementSize = 1;
-        break;
-    case GL_UNSIGNED_SHORT:
-        elementSize = 2;
-        break;
-    case GL_UNSIGNED_INT:
-        elementSize = 4;
-        break;
-    default:
-        elementSize = 4;
-    }
-
-    for (GLsizei i = 0; i < primcount; ++i) {
-        uintptr_t byteOffset = (uintptr_t)(indices[i]);
-        pcmds[i].firstIndex = (GLuint)(byteOffset / elementSize);
-        pcmds[i].count = counts[i];
-        pcmds[i].instanceCount = 1;
-        pcmds[i].baseVertex = basevertex ? basevertex[i] : 0;
-        pcmds[i].baseInstance = 0;
-    }
-
-    gles_glUnmapBuffer(GL_DRAW_INDIRECT_BUFFER);
-}
-
-void internal_glDrawElementsBaseVertex_gles31(GLenum mode, GLsizei count, GLenum type, const void* indices,
-                                              GLint basevertex) {
-    DBG(SHUT_LOGD("internal_glDrawElementsBaseVertex_gles31(%s, %p, %s, @%p, %d, @%p)", PrintEnum(mode), counts,
-                  PrintEnum(type), indices, primcount, basevertex;))
-    prepare_indirect_buffer(&count, type, &indices, 1, &basevertex);
-    LOAD_GLES3(glBindBuffer);
-    LOAD_GLES3(glDrawElementsIndirect);
-    gles_glDrawElementsIndirect(mode, type, 0);
-
-    gles_glBindBuffer(GL_DRAW_INDIRECT_BUFFER, prevIndirectBuffer);
-}
-
 void internal_glDrawElementsBaseVertex_gles32(GLenum mode, GLsizei count, GLenum type, const void* indices,
                                               GLint basevertex) {
     DBG(SHUT_LOGD("internal_glDrawElementsBaseVertex_gles32(%s, %p, %s, @%p, %d, @%p)", PrintEnum(mode), counts,
@@ -1186,21 +1100,6 @@ void internal_glMultiDrawElementsBaseVertex_gles32(GLenum mode, GLsizei* counts,
     for (int i = 0; i < primcount; i++) {
         if (counts[i] > 0) gles_glDrawElementsBaseVertex(mode, counts[i], type, indices[i], basevertex[i]);
     }
-}
-
-void internal_glMultiDrawElementsBaseVertex_gles31(GLenum mode, GLsizei* counts, GLenum type,
-                                                   const void* const* indices, GLsizei primcount,
-                                                   const GLint* basevertex) {
-    prepare_indirect_buffer(counts, type, indices, primcount, basevertex);
-    LOAD_GLES3(glDrawElementsIndirect);
-    LOAD_GLES2(glBindBuffer);
-    // Draw indirect!
-    for (GLsizei i = 0; i < primcount; ++i) {
-        const GLvoid* offset = (void*)(i * sizeof(DrawElementsIndirectCommand));
-        gles_glDrawElementsIndirect(mode, type, offset);
-    }
-
-    gles_glBindBuffer(GL_DRAW_INDIRECT_BUFFER, prevIndirectBuffer);
 }
 
 void internal_glMultiDrawElementsBaseVertex_gles30(GLenum mode, GLsizei* counts, GLenum type,
@@ -1306,6 +1205,7 @@ void internal_glMultiDrawElementsBaseVertex_gles30(GLenum mode, GLsizei* counts,
             }
             GLuint old_index = wantBufferIndex(0);
             glDrawElementsCommon(mode, 0, count, 0, sindices, iindices, 1);
+
             if (iindices) {
                 free(iindices);
             } else {
@@ -1327,16 +1227,15 @@ static void (*internal_glMultiDrawElementsBaseVertex)(GLenum mode, GLsizei* coun
                                                       const GLint* basevertex);
 
 void init_internal_glDrawElementsBaseVertex() {
+    LOAD_GLES3_OR_EXT(glDrawElementsBaseVertex);
     LOGD("Switch to GLES %d basevertex implementation", globals4es.esversion);
-    if (globals4es.esversion >= 3200) {
+
+    if (globals4es.esversion >= 320) {
         internal_glDrawElementsBaseVertex = internal_glDrawElementsBaseVertex_gles32;
         internal_glMultiDrawElementsBaseVertex = internal_glMultiDrawElementsBaseVertex_gles32;
-    } else if (globals4es.esversion <= 300) {
+    } else {
         internal_glDrawElementsBaseVertex = internal_glDrawElementsBaseVertex_gles30;
         internal_glMultiDrawElementsBaseVertex = internal_glMultiDrawElementsBaseVertex_gles30;
-    } else {
-        internal_glDrawElementsBaseVertex = internal_glDrawElementsBaseVertex_gles31;
-        internal_glMultiDrawElementsBaseVertex = internal_glMultiDrawElementsBaseVertex_gles31;
     }
 }
 
