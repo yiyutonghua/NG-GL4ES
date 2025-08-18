@@ -10,11 +10,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -flto -pipe -funroll-loops -fPIC -DNO_GBM -DDEFAULT_ES=3 -fvisibility=hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe -Ofast -fomit-frame-pointer -fPIC -DNO_GBM -DDEFAULT_ES=3 -fvisibility=hidden -flto -mllvm -aarch64-enable-compress-jump-tables=true -mllvm -aarch64-enable-atomic-cfg-cleanup=true -mllvm -aarch64-enable-ccmp=true")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -flto -pipe -funroll-loops -fPIC -DNO_GBM -DDEFAULT_ES=3 -fvisibility=hidden")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -Ofast -fomit-frame-pointer -fPIC -DNO_GBM -DDEFAULT_ES=3 -fvisibility=hidden -flto -mllvm -aarch64-enable-compress-jump-tables=true -mllvm -aarch64-enable-atomic-cfg-cleanup=true -mllvm -aarch64-enable-ccmp=true")
 
 if(ANDROID)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNOX11") # TODO: build glx source files for non-Android
