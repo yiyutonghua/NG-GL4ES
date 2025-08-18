@@ -4252,6 +4252,18 @@ typedef void (*glTexBuffer_PTR)(glTexBuffer_ARG_EXPAND);
 void gl4es_glGetTexLevelParameterfv(glGetTexLevelParameterfv_ARG_EXPAND);
 typedef void (*glGetTexLevelParameterfv_PTR)(glGetTexLevelParameterfv_ARG_EXPAND);
 
+#define glMapBufferRange_ARG_EXPAND GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access
+void* gl4es_glMapBufferRange(glMapBufferRange_ARG_EXPAND);
+typedef void* (*glMapBufferRange_PTR)(glMapBufferRange_ARG_EXPAND);
+
+#define glUnmapBuffer_ARG_EXPAND GLenum target
+GLboolean gl4es_glUnmapBuffer(glUnmapBuffer_ARG_EXPAND);
+typedef GLboolean (*glUnmapBuffer_PTR)(glUnmapBuffer_ARG_EXPAND);
+
+#define glDrawElementsIndirect_ARG_EXPAND GLenum mode, GLenum type, const void *indirect
+void gl4es_glDrawElementsIndirect(glDrawElementsIndirect_ARG_EXPAND);
+typedef void (*glDrawElementsIndirect_PTR)(glDrawElementsIndirect_ARG_EXPAND);
+
 #ifndef direct_glActiveTexture
 #define push_glActiveTexture(texture) { \
     glActiveTexture_PACKED *packed_data = malloc(sizeof(glActiveTexture_PACKED)); \
