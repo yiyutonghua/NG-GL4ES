@@ -3010,8 +3010,8 @@ Bool gl4es_glXQueryVersion(Display *display, int *major, int *minor) {
 const char *gl4es_glXGetClientString(Display *display, int name) {
     DBG(SHUT_LOGD("glXGetClientString(%p, %d)\n", display, name);)
     switch (name) {
-        case GLX_VENDOR: return gl4es_glGetString(GL_VENDOR);
-        case GLX_VERSION: return gl4es_glGetString(GL_VERSION);
+        case GLX_VENDOR: return "ptitSeb & BZLZHH";//gl4es_glGetString(GL_VENDOR);
+        case GLX_VERSION: return "3.0";//gl4es_glGetString(GL_VERSION);
         case GLX_EXTENSIONS: return gl4es_glXQueryExtensionsString(display, 0);
     }
     return 0;    
@@ -3169,4 +3169,141 @@ __GLXextFuncPtr __glXGLLoadGLXFunction(
     *ptr = (__GLXextFuncPtr) gl4es_glXGetProcAddress((const GLubyte *) name);
 
     return *ptr;
+}
+
+__attribute__((visibility("default")))
+int XDefaultDepth(Display *display, int screen_number) {
+    DBG(SHUT_LOGD("XDefaultDepth"))
+    if (!display) return 0;
+
+    int screen = DefaultScreen(display);
+    Screen *scr = ScreenOfDisplay(display, screen);
+    if (!scr) return 0;
+
+    DBG(SHUT_LOGD("XDefaultDepth -> %d", scr->root_depth))
+    return scr->root_depth;
+}
+
+
+#ifndef XFree
+# define XFree(ptr) free(ptr)
+#endif
+
+__attribute__((visibility("default")))
+XVisualInfo *XGetVisualInfo(Display *display,
+                            long vinfo_mask,
+                            XVisualInfo *vinfo_template,
+                            int *nitems_return)
+{
+    if (!display || !nitems_return) return NULL;
+
+    int n_screens = ScreenCount(display);
+    size_t cap = 16;
+    XVisualInfo *out = (XVisualInfo *)malloc(cap * sizeof(XVisualInfo));
+    if (!out) {
+        *nitems_return = 0;
+        return NULL;
+    }
+    size_t out_count = 0;
+
+    for (int scr = 0; scr < n_screens; ++scr) {
+        Screen *screen = ScreenOfDisplay(display, scr);
+        if (!screen) continue;
+
+        int ndepths = screen->ndepths;
+        for (int di = 0; di < ndepths; ++di) {
+            Depth *depthp = &screen->depths[di];
+            int depth_val = depthp->depth;
+            int nvisuals = depthp->nvisuals;
+            for (int vi = 0; vi < nvisuals; ++vi) {
+                Visual *visual = NULL;
+                visual = &depthp->visuals[vi];
+
+                if (!visual) continue;
+
+                XVisualInfo xi;
+                memset(&xi, 0, sizeof(xi));
+                xi.visual = visual;
+                xi.visualid = XVisualIDFromVisual(visual);
+                xi.screen = scr;
+                xi.depth = depth_val;
+
+                xi.class = visual->class;
+                xi.red_mask = visual->red_mask;
+                xi.green_mask = visual->green_mask;
+                xi.blue_mask = visual->blue_mask;
+
+#ifdef MAP_ENTRIES_MEMBER_EXISTS
+                xi.colormap_size = visual->map_entries;
+#else
+                /* most X Visual has map_entries; we'll try to access it safely */
+                xi.colormap_size = (int)(visual->map_entries ? visual->map_entries : (1 << (xi.depth > 0 ? xi.depth : 8)));
+#endif
+                xi.bits_per_rgb = visual->bits_per_rgb;
+
+                bool match = true;
+                if (vinfo_mask & VisualIDMask) {
+                    if (xi.visualid != vinfo_template->visualid) match = false;
+                }
+                if (vinfo_mask & VisualScreenMask) {
+                    if (xi.screen != vinfo_template->screen) match = false;
+                }
+                if (vinfo_mask & VisualDepthMask) {
+                    if (xi.depth != vinfo_template->depth) match = false;
+                }
+                if (vinfo_mask & VisualClassMask) {
+                    if (xi.class != vinfo_template->class) match = false;
+                }
+                if (vinfo_mask & VisualRedMaskMask) {
+                    if (xi.red_mask != vinfo_template->red_mask) match = false;
+                }
+                if (vinfo_mask & VisualGreenMaskMask) {
+                    if (xi.green_mask != vinfo_template->green_mask) match = false;
+                }
+                if (vinfo_mask & VisualBlueMaskMask) {
+                    if (xi.blue_mask != vinfo_template->blue_mask) match = false;
+                }
+                if (vinfo_mask & VisualColormapSizeMask) {
+                    if (xi.colormap_size != vinfo_template->colormap_size) match = false;
+                }
+                if (vinfo_mask & VisualBitsPerRGBMask) {
+                    if (xi.bits_per_rgb != vinfo_template->bits_per_rgb) match = false;
+                }
+
+                if (!match) continue;
+
+                /* append */
+                if (out_count + 1 > cap) {
+                    size_t newcap = cap * 2;
+                    XVisualInfo *tmp = (XVisualInfo *)realloc(out, newcap * sizeof(XVisualInfo));
+                    if (!tmp) {
+                        XFree(out);
+                        *nitems_return = 0;
+                        return NULL;
+                    }
+                    out = tmp;
+                    cap = newcap;
+                }
+                out[out_count++] = xi;
+            } /* each visual */
+        } /* each depth */
+    } /* each screen */
+
+    if (out_count == 0) {
+        XFree(out);
+        *nitems_return = 0;
+        return NULL;
+    }
+
+    XVisualInfo *result = (XVisualInfo *)realloc(out, out_count * sizeof(XVisualInfo));
+    if (result) out = result;
+
+    *nitems_return = (int)out_count;
+    return out;
+}
+
+__attribute__((visibility("default")))
+VisualID XVisualIDFromVisual(Visual *visual) {
+    if (!visual) return (VisualID)0;
+    return (VisualID)visual->visualid;
 }
