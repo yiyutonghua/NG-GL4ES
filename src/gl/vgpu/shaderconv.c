@@ -67,7 +67,7 @@ void set_uniforms_default_value(GLuint program, uniforms_declarations uniformVec
         GLint location = gl4es_glGetUniformLocation(program, uniform->variable);
 
         if (location == -1) {
-            SHUT_LOGD("Uniform variable %s not found in shader program.\n", uniform->variable);
+            DBG(SHUT_LOGD("Uniform variable %s not found in shader program.\n", uniform->variable);)
             continue;
         }
 
@@ -157,7 +157,9 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
     int modifiedCodeIndex = 0;
     size_t maxLength = 1024 * 10;
     char* modifiedGlslCode = (char*)malloc(maxLength * sizeof(char));
-    if (!modifiedGlslCode) return NULL;
+    if (!modifiedGlslCode) return glslCode;
+
+    name[0] = type[0] = initial_value[0] = '\0';
 
     while (*cursor) {
         if (strncmp(cursor, "uniform", 7) == 0) {
@@ -168,7 +170,6 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
             while (isspace((unsigned char)*cursor))
                 cursor++;
 
-            // may be precision qualifier
             char* precision = NULL;
             if (startsWith(cursor, "highp")) {
                 precision = " highp";
@@ -189,14 +190,14 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
 
             int i = 0;
             while (isalnum((unsigned char)*cursor) || *cursor == '_') {
-                type[i++] = *cursor++;
+                if (i < (int)sizeof(type) - 1) type[i++] = *cursor;
+                cursor++;
             }
             type[i] = '\0';
 
             while (isspace((unsigned char)*cursor))
                 cursor++;
 
-            // may be precision qualifier
             if (!precision) {
                 if (startsWith(cursor, "highp")) {
                     precision = " highp";
@@ -222,70 +223,97 @@ char* process_uniform_declarations(char* glslCode, uniforms_declarations uniform
                 cursor++;
 
             i = 0;
-            while (isalnum((unsigned char)*cursor) || *cursor == '_') {
-                name[i++] = *cursor++;
+            bool isArray = false;
+            while (isalnum((unsigned char)*cursor) || *cursor == '_' || *cursor == '[') {
+                if (*cursor == '[') {
+                    isArray = true;
+                    break;
+                }
+                if (i < (int)sizeof(name) - 1) name[i++] = *cursor;
+                cursor++;
             }
             name[i] = '\0';
-            while (isspace((unsigned char)*cursor))
-                cursor++;
 
-            initial_value[0] = '\0';
-            if (*cursor == '=') {
-                cursor++;
-                i = 0;
-                while (*cursor && *cursor != ';') {
-                    initial_value[i++] = *cursor++;
+            if (!isArray) {
+                while (isspace((unsigned char)*cursor))
+                    cursor++;
+
+                initial_value[0] = '\0';
+                if (*cursor == '=') {
+                    cursor++;
+                    i = 0;
+                    while (*cursor && *cursor != ';' && i < (int)sizeof(initial_value) - 1) {
+                        initial_value[i++] = *cursor++;
+                    }
+                    initial_value[i] = '\0';
+                    trim(initial_value);
                 }
-                initial_value[i] = '\0';
-                trim(initial_value);
-            }
 
-            strcpy(uniformVector[*uniformCount].variable, name);
-            strcpy(uniformVector[*uniformCount].initial_value, initial_value);
-            (*uniformCount)++;
+                if (*uniformCount >= 0) {
+                    strcpy(uniformVector[*uniformCount].variable, name);
+                    strcpy(uniformVector[*uniformCount].initial_value, initial_value);
+                    (*uniformCount)++;
+                }
 
-            while (*cursor != ';' && *cursor) {
-                cursor++;
-            }
+                while (*cursor && *cursor != ';')
+                    cursor++;
+                if (*cursor == ';') cursor++;
 
-            char* cursor_end = cursor;
-
-            int spaceLeft = maxLength - modifiedCodeIndex;
-            int len = 0;
-
-            if (*initial_value) {
-                len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type,
-                               name);
-            } else {
-                // use original declaration
-                size_t length = cursor_end - cursor_start + 1;
-                if (length < spaceLeft) {
-                    memcpy(modifiedGlslCode + modifiedCodeIndex, cursor_start, length);
-                    len = (int)length;
+                int spaceLeft = (int)(maxLength - modifiedCodeIndex);
+                int len = 0;
+                if (initial_value[0]) {
+                    len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type,
+                                   name);
                 } else {
-                    fprintf(stderr, "Error: Not enough space in buffer\n");
+                    size_t length = (size_t)(cursor - cursor_start);
+                    if (length < (size_t)spaceLeft) {
+                        memcpy(modifiedGlslCode + modifiedCodeIndex, cursor_start, length);
+                        len = (int)length;
+                    } else {
+                        fprintf(stderr, "Error: Not enough space in buffer\n");
+                        free(modifiedGlslCode);
+                        return glslCode;
+                    }
                 }
-                // len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type,
-                // name);
-            }
 
-            if (len < 0 || len >= spaceLeft) {
-                free(modifiedGlslCode);
-                return NULL;
-            }
-            modifiedCodeIndex += len;
+                if (len < 0 || len >= spaceLeft) {
+                    free(modifiedGlslCode);
+                    return glslCode;
+                }
+                modifiedCodeIndex += len;
 
-            while (*cursor == ';')
-                cursor++;
+            } else {
+                while (isalnum((unsigned char)*cursor) || *cursor == '_' || *cursor == '[' || *cursor == ']') {
+                    if (i < (int)sizeof(name) - 1) name[i++] = *cursor;
+                    cursor++;
+                }
+                name[i] = '\0';
+                int spaceLeft = (int)(maxLength - modifiedCodeIndex);
+                int len = snprintf(modifiedGlslCode + modifiedCodeIndex, spaceLeft, "uniform%s %s %s;", precision, type,
+                                   name);
+                if (len < 0 || len >= spaceLeft) {
+                    free(modifiedGlslCode);
+                    return glslCode;
+                }
+                modifiedCodeIndex += len;
+
+                while (*cursor && *cursor != ';')
+                    cursor++;
+                if (*cursor == ';') cursor++;
+            }
 
         } else {
             modifiedGlslCode[modifiedCodeIndex++] = *cursor++;
         }
 
-        if (modifiedCodeIndex >= maxLength - 1) {
+        if (modifiedCodeIndex >= (int)maxLength - 1) {
             maxLength *= 2;
-            modifiedGlslCode = (char*)realloc(modifiedGlslCode, maxLength);
-            if (!modifiedGlslCode) return NULL;
+            char* tmp = (char*)realloc(modifiedGlslCode, maxLength);
+            if (!tmp) {
+                free(modifiedGlslCode);
+                return glslCode;
+            }
+            modifiedGlslCode = tmp;
         }
     }
 

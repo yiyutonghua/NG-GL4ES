@@ -135,13 +135,13 @@ void APIENTRY_GL4ES gl4es_glCompileShader(GLuint shader) {
             GLint status = 0;
             gles_glGetShaderiv(glshader->id, GL_COMPILE_STATUS, &status);
             if (status != GL_TRUE) {
-                // SHUT_LOGD("LIBGL: Error while compiling shader %d. Original source is:\n%s\n=======\n", glshader->id,
-                //           glshader->source);
-                // SHUT_LOGD("ShaderConv Source is:\n%s\n=======\n", glshader->converted);
+                SHUT_LOGD("LIBGL: Error while compiling shader %d. Original source is:\n%s\n=======\n", glshader->id,
+                          glshader->source);
+                SHUT_LOGD("ShaderConv Source is:\n%s\n=======\n", glshader->converted);
                 char tmp[500];
                 GLint length;
                 gles_glGetShaderInfoLog(glshader->id, 500, &length, tmp);
-                // SHUT_LOGD("Compiler message is\n%s\nLIBGL: End of Error log\n", tmp);
+                SHUT_LOGD("Compiler message is\n%s\nLIBGL: End of Error log\n", tmp);
             }
         }
     } else
@@ -700,6 +700,9 @@ void APIENTRY_GL4ES gl4es_glShaderSource(GLuint shader, GLsizei count, const GLc
                         strdup(result != NULL ? process_uniform_declarations(result, glshader->uniforms_declarations,
                                                                              &glshader->uniforms_declarations_count)
                                               : ConvertShaderConditionally(glshader));
+                    glshader->converted = process_uniform_declarations(
+                        glshader->converted, glshader->uniforms_declarations, &glshader->uniforms_declarations_count);
+
                     /*if (isBSL)*/ glshader->converted = bsl_patch(glshader->converted);
                     glshader->is_converted_essl_320 = 0;
                 } else {
